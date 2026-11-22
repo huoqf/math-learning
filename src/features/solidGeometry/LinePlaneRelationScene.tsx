@@ -223,11 +223,13 @@ export const LinePlaneRelationScene: React.FC<LinePlaneRelationSceneProps> = ({
                     tex="a"
                   />
 
-                  {/* 直线 b */}
+                  {/* 直线 b（相交取次色，平行反例高亮第3色对应图例） */}
                   <Segment3D
                     from={lineBStart}
                     to={lineBEnd}
-                    colorKey="paramSecondary"
+                    colorKey={
+                      intersectType === 1 ? "paramSecondary" : "paramTertiary"
+                    }
                     lineWidth={2.5}
                   />
                   <FormulaLabel3D
@@ -239,8 +241,8 @@ export const LinePlaneRelationScene: React.FC<LinePlaneRelationSceneProps> = ({
                     tex="b"
                   />
 
-                  {/* 交点 P 与两条直角标记 */}
-                  {intersectType === 1 && (
+                  {/* 交点 P 与两条直角标记；平行反例态高亮垂直两平行线却斜交平面的倾角摆动 */}
+                  {intersectType === 1 ? (
                     <>
                       <Point3D
                         position={{ x: 0, y: 0, z: 0 }}
@@ -279,6 +281,48 @@ export const LinePlaneRelationScene: React.FC<LinePlaneRelationSceneProps> = ({
                           />
                         </>
                       )}
+                    </>
+                  ) : (
+                    <>
+                      <Point3D
+                        position={{ x: 0, y: 0, z: 0 }}
+                        colorKey="paramPrimary"
+                        radius={0.05}
+                      />
+                      {/* l 在任意倾角下均保持 l ⊥ a（y-z 面内摆动） */}
+                      {showAngleArc && (
+                        <AngleArc3D
+                          vertex={{ x: 0, y: 0, z: 0 }}
+                          dirA={lineDir}
+                          dirB={{ x: 1, y: 0, z: 0 }}
+                          radius={0.45}
+                          colorKey="paramPrimary"
+                          isRight
+                        />
+                      )}
+                      {/* 斜交地面射影虚线，直观凸显 l 可倾斜且不垂直平面 α */}
+                      <Segment3D
+                        from={{ x: 0, y: 0, z: 0 }}
+                        to={{ x: endPoint.x, y: endPoint.y, z: 0 }}
+                        dashed
+                        colorKey="highlight"
+                        lineWidth={1.8}
+                      />
+                      <Segment3D
+                        from={endPoint}
+                        to={{ x: endPoint.x, y: endPoint.y, z: 0 }}
+                        dashed
+                        colorKey="highlight"
+                        lineWidth={1.8}
+                      />
+                      <FormulaLabel3D
+                        position={{ x: 0, y: 1.5, z: 0.45 }}
+                        tex={
+                          Math.abs(thetaDeg - 90) > 1.5
+                            ? "a \\parallel b,\\; l \\perp a,b,\\; l \\not\\perp \\alpha"
+                            : "a \\parallel b,\\; l \\perp a,b"
+                        }
+                      />
                     </>
                   )}
                 </>
@@ -338,7 +382,7 @@ export const LinePlaneRelationScene: React.FC<LinePlaneRelationSceneProps> = ({
               />
               <FormulaLabel3D
                 position={{ x: 0.15, y: 0.15, z: 2.6 }}
-                tex="\\vec{n}"
+                tex="\vec{n}"
               />
               {thetaDeg > 0 && thetaDeg < 90 && (
                 <AngleArc3D

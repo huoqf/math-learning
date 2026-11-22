@@ -5,15 +5,23 @@ import {
   LeftPanel,
   LeftPanelSection,
   ParamControl,
+  StepNavigator,
   MathPanel,
   SelectGrid,
   TabSwitcher,
   Toggle,
   TipCard,
 } from "@/components/UI";
-import type { ParamConfig } from "@/components/UI";
-import { Legend3D, CameraRig, CameraFit } from "@/components/Math3D";
+import type { ParamConfig, AnswerStepItem } from "@/components/UI";
+import {
+  Legend3D,
+  CameraRig,
+  CameraFit,
+  AnswerStepOverlay3D,
+  SphereCrossSectionOverlay2D,
+} from "@/components/Math3D";
 import { getPolyhedronCircumSphereBounds } from "@/math3d/legacy3dBounds";
+import { getPolyhedronSphereOverlayData } from "@/math3d/overlaySamplers";
 import { PolyhedronSphereScene } from "@/components/Math3D/solids";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
@@ -61,6 +69,19 @@ export default function PolyhedronCircumSphereAnimation() {
       }),
     [params, modelType],
   );
+
+  const [activeAnswerStep, setActiveAnswerStep] = useState(1);
+  const answerSteps = useMemo<AnswerStepItem[]>(
+    () =>
+      (mathData.reasoningSteps ?? []).map((rs) => ({
+        step: rs.step,
+        title: rs.title,
+        sceneHint: rs.rubric,
+      })),
+    [mathData.reasoningSteps],
+  );
+  const effectiveAnswerStep =
+    answerSteps.length > 0 ? Math.min(activeAnswerStep, answerSteps.length) : 1;
 
   // 2. 2×2 黄金预设定义（纯净单行加粗学术标题，纯粹自解释，等高对称，杜绝折行与冗余公式）
   const presetsByModel: Record<
@@ -186,6 +207,7 @@ export default function PolyhedronCircumSphereAnimation() {
   const handleModelTypeChange = (nextModel: ModelType) => {
     setModelType(nextModel);
     setPresetKey("free");
+    setActiveAnswerStep(1);
     const freeP = presetsByModel[nextModel]?.find((p) => p.key === "free");
     if (freeP) {
       setParams((prev) => ({ ...prev, ...freeP.values }));
@@ -194,6 +216,7 @@ export default function PolyhedronCircumSphereAnimation() {
 
   const handlePresetChange = (key: string) => {
     setPresetKey(key);
+    setActiveAnswerStep(1);
     const target = presetsByModel[modelType]?.find((p) => p.key === key);
     if (target) {
       setParams((prev) => ({ ...prev, ...target.values }));
@@ -503,6 +526,17 @@ export default function PolyhedronCircumSphereAnimation() {
             )}
           </LeftPanelSection>
 
+          {answerSteps.length > 0 && (
+            <LeftPanelSection title="分步作答导航">
+              <StepNavigator
+                steps={answerSteps}
+                active={effectiveAnswerStep}
+                onChange={setActiveAnswerStep}
+                hint="右屏已同步高亮对应采分步卡片"
+              />
+            </LeftPanelSection>
+          )}
+
           {/* Step 4: 图层与标注显示控制 */}
           <LeftPanelSection title="图层控制" compact>
             <div className="flex flex-col gap-2">
@@ -566,6 +600,20 @@ export default function PolyhedronCircumSphereAnimation() {
       center={
         <ThreeDCanvas
           cameraPosition={cameraPosition}
+          overlay={
+            <>
+              <AnswerStepOverlay3D
+                steps={answerSteps}
+                activeStep={
+                  answerSteps.length > 0 ? effectiveAnswerStep : undefined
+                }
+              />
+              <SphereCrossSectionOverlay2D
+                {...getPolyhedronSphereOverlayData(modelType, params)}
+                position="bottom-left"
+              />
+            </>
+          }
           legend={
             <Legend3D
               title={
@@ -612,12 +660,17 @@ export default function PolyhedronCircumSphereAnimation() {
             showComplementFrame={showComplementFrame}
             showSphere={showSphere}
             showRadiusLines={showRadiusLines}
+            activeStep={
+              answerSteps.length > 0 ? effectiveAnswerStep : undefined
+            }
           />
         </ThreeDCanvas>
       }
       right={
         <MathPanel
           {...mathData}
+          focusStep={answerSteps.length > 0 ? effectiveAnswerStep : undefined}
+          focusTarget="reasoning"
           title={`${
             modelType === "corner"
               ? "墙角模型"

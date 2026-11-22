@@ -12,8 +12,14 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { Legend3D, CameraRig, CameraFit } from "@/components/Math3D";
+import {
+  Legend3D,
+  CameraRig,
+  CameraFit,
+  SphereCrossSectionOverlay2D,
+} from "@/components/Math3D";
 import { getAdvancedSphereBounds } from "@/math3d/legacy3dBounds";
+import { getAdvancedSphereOverlayData } from "@/math3d/overlaySamplers";
 import type { LegendItem } from "@/components/Math3D";
 import {
   AdvancedSphereScene,
@@ -623,6 +629,12 @@ export default function AdvancedSphereAnimation() {
       center={
         <ThreeDCanvas
           cameraPosition={cameraPosition}
+          overlay={
+            <SphereCrossSectionOverlay2D
+              {...getAdvancedSphereOverlayData(modelType, params)}
+              position="bottom-left"
+            />
+          }
           legend={<Legend3D items={legendItems} />}
         >
           <CameraRig ref={controlsRef} />

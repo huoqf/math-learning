@@ -51,7 +51,7 @@ export function CoplanarModeScene({
           <Vector3DArrow from={O} to={vecA} colorKey="paramPrimary" />
           <FormulaLabel3D
             position={{ x: vecA.x * 0.5, y: -0.28, z: 0 }}
-            tex="\\vec{a}"
+            tex="\vec{a}"
           />
           <Point3D position={pointA} colorKey="paramPrimary" />
           <PointLabel3D position={pointA} text="A" offset={[0.15, -0.15, 0]} />
@@ -63,7 +63,7 @@ export function CoplanarModeScene({
               y: vecB.y * 0.5 + 0.15,
               z: 0,
             }}
-            tex="\\vec{b}"
+            tex="\vec{b}"
           />
           <Point3D position={pointB} colorKey="paramSecondary" />
           <PointLabel3D position={pointB} text="B" offset={[-0.15, 0.15, 0]} />
@@ -75,7 +75,7 @@ export function CoplanarModeScene({
               y: pointC.y * 0.5,
               z: pointC.z * 0.5 + 0.18,
             }}
-            tex="\\vec{c}"
+            tex="\vec{c}"
           />
           <Point3D position={pointC} colorKey="paramTertiary" />
           <PointLabel3D position={pointC} text="C" offset={[0, 0.08, 0.18]} />
@@ -329,7 +329,7 @@ export function CoplanarModeScene({
               y: (pointA.y + P.y) * 0.5,
               z: (pointA.z + P.z) * 0.5 + 0.15,
             }}
-            tex="\\overrightarrow{AP}"
+            tex="\overrightarrow{AP}"
           />
         </>
       )}

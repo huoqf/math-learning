@@ -7,6 +7,7 @@ import {
   ThreeViewsPanel,
   Legend3D,
   Point3D,
+  Segment3D,
   ModeSwitchOverlay3D,
   CameraFit,
 } from "@/components/Math3D";
@@ -22,7 +23,12 @@ import {
   type Polyhedron,
 } from "@/math3d/sectionIntersection";
 import { computeSectionProjectionDetails } from "@/math3d/sectionArea";
-import { buildPolyhedronConstructionSteps } from "@/math3d/sectionConstruction";
+import {
+  buildPolyhedronConstructionSteps,
+  getControlEdgeEndpoints,
+  getPolyhedronEdgeEndpoints,
+  type SectionPresetKind,
+} from "@/math3d/sectionConstruction";
 import { planeFromPoints } from "@/math3d/plane";
 import type { Vec3 } from "@/math3d/vector3";
 import { projectPointOnSegment } from "@/math3d/vector3";
@@ -33,27 +39,31 @@ import {
   LeftPanel,
   LeftPanelSection,
   ParamControl,
+  ParamPlayBar,
+  StepNavigator,
   MathPanel,
   TabSwitcher,
   SelectGrid,
   TipCard,
   type ParamConfig,
+  type AnswerStepItem,
 } from "@/components/UI";
 import { use3DViewport, type CameraPreset } from "@/hooks/use3DViewport";
+import { useParamPlay } from "@/hooks/useParamPlay";
+import { AnswerStepOverlay3D } from "@/components/Math3D/AnswerStepOverlay3D";
+import { ParamCurveOverlay2D } from "@/components/Math3D/ParamCurveOverlay2D";
+import { sampleSectionAreaCurve } from "@/math3d/overlaySamplers";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { sectionMeta } from "@/data/registries/solidGeometry";
 import { buildSolidViews } from "@/features/solidGeometry/threeViews/buildSolidViews";
 import { MATH_COLORS } from "@/theme";
 import * as THREE from "three";
-import { Line } from "@react-three/drei";
 import { mathToThree } from "@/math3d/coordinateConvention";
-import { getPolyhedronEdgeEndpoints } from "@/math3d/sectionConstruction";
 
 type SectionMode = "construction" | "extrema";
 type SolidKind = "cuboid" | "pyramid" | "prism" | "tetrahedron" | "frustum";
 type ViewMode = "3d" | "views";
-type PresetScenario =
-  "free" | "cubeHexagon" | "cubeTrapezoid" | "cubeTriangle" | "tetraSection";
+type PresetScenario = SectionPresetKind;
 
 /**
  * 通用多面体 3D 实体与边线渲染组件
@@ -102,47 +112,28 @@ function PolyhedronSolid({
           depthWrite={false}
         />
       </mesh>
-      {polyhedron.edges.map((e, idx) => {
-        const p1 = mathToThree(polyhedron.vertices[e.a]);
-        const p2 = mathToThree(polyhedron.vertices[e.b]);
-        return (
-          <Line
-            key={`poly-edge-${idx}`}
-            points={[new THREE.Vector3(...p1), new THREE.Vector3(...p2)]}
-            color={MATH_COLORS.line}
-            lineWidth={1.2}
-          />
-        );
-      })}
+      {polyhedron.edges.map((e, idx) => (
+        <Segment3D
+          key={`poly-edge-${idx}`}
+          from={polyhedron.vertices[e.a]}
+          to={polyhedron.vertices[e.b]}
+          colorKey="line"
+          lineWidth={1.2}
+        />
+      ))}
     </group>
   );
 }
 
 /**
- * 侧棱动点位置解算纯函数 (严格基于 Polyhedron 真实侧棱端点)
+ * 棱上动点位置解算纯函数（严格基于 Polyhedron 与当前情境选棱端点）
  */
-function getEdgePoint(
-  kind: SolidKind,
-  edgeIdx: number,
-  t: number,
-  width: number,
-  depth: number,
-  height: number,
-): Vec3 {
+function getPointOnControlEdge(start: Vec3, end: Vec3, t: number): Vec3 {
   const clampT = Math.max(0.05, Math.min(0.95, t));
-  const { baseVertices, topVertices } = getPolyhedronEdgeEndpoints(
-    kind,
-    width,
-    depth,
-    height,
-  );
-  const i = edgeIdx % baseVertices.length;
-  const A = baseVertices[i];
-  const B = topVertices[i];
   return {
-    x: (1 - clampT) * A.x + clampT * B.x,
-    y: (1 - clampT) * A.y + clampT * B.y,
-    z: (1 - clampT) * A.z + clampT * B.z,
+    x: (1 - clampT) * start.x + clampT * end.x,
+    y: (1 - clampT) * start.y + clampT * end.y,
+    z: (1 - clampT) * start.z + clampT * end.z,
   };
 }
 
@@ -161,7 +152,7 @@ export default function SectionCuboidDemo() {
   // 2. 动点极值探究参数 (P(t) 沿第一侧棱滑动)
   const [tParam, setTParam] = useState(0.5);
 
-  // 高考典型情景切换处理
+  // 高考典型情景切换处理（同步设置预设选棱与典型比例，保证几何形态严格吻合）
   const handleScenarioChange = (sc: PresetScenario) => {
     setScenario(sc);
     if (sc === "cubeHexagon") {
@@ -172,15 +163,15 @@ export default function SectionCuboidDemo() {
       setStep(4);
     } else if (sc === "cubeTrapezoid") {
       setSolidKind("cuboid");
-      setPosP(0.2);
-      setPosQ(0.8);
+      setPosP(0.5);
+      setPosQ(0.5);
       setPosR(0.8);
       setStep(3);
     } else if (sc === "cubeTriangle") {
       setSolidKind("cuboid");
-      setPosP(0.4);
-      setPosQ(0.4);
-      setPosR(0.05);
+      setPosP(0.6);
+      setPosQ(0.6);
+      setPosR(0.6);
       setStep(2);
     } else if (sc === "tetraSection") {
       setSolidKind("tetrahedron");
@@ -188,6 +179,12 @@ export default function SectionCuboidDemo() {
       setPosQ(0.5);
       setPosR(0.5);
       setStep(2);
+    } else {
+      setSolidKind("cuboid");
+      setPosP(0.35);
+      setPosQ(0.7);
+      setPosR(0.45);
+      setStep(1);
     }
   };
 
@@ -198,10 +195,14 @@ export default function SectionCuboidDemo() {
   const { preset, viewToken, cameraPosition, setCameraPreset, controlsRef } =
     use3DViewport("iso");
 
-  // 多面体几何尺寸
+  // 多面体几何尺寸（正方体情景严格取 3×3×3）
+  const isCubeScenario =
+    scenario === "cubeHexagon" ||
+    scenario === "cubeTrapezoid" ||
+    scenario === "cubeTriangle";
   const width = 3;
   const depth = 3;
-  const height = 3.5;
+  const height = isCubeScenario ? 3 : 3.5;
   const currentHeight = solidKind === "tetrahedron" ? 2.2 * Math.SQRT2 : height;
 
   const sceneBounds = useMemo(
@@ -226,28 +227,34 @@ export default function SectionCuboidDemo() {
     return buildCuboidPolyhedron(width, depth, currentHeight);
   }, [solidKind, width, depth, currentHeight]);
 
+  // 当前情景 P, Q, R 控制棱（SSOT）
+  const controlEdges = useMemo(
+    () =>
+      getControlEdgeEndpoints(solidKind, width, depth, currentHeight, scenario),
+    [solidKind, width, depth, currentHeight, scenario],
+  );
+
   // 三点控制点坐标
   const pointPPos = useMemo<Vec3>(
     () =>
-      getEdgePoint(
-        solidKind,
-        0,
+      getPointOnControlEdge(
+        controlEdges[0].start,
+        controlEdges[0].end,
         mode === "extrema" ? tParam : posP,
-        width,
-        depth,
-        currentHeight,
       ),
-    [solidKind, mode, tParam, posP, width, depth, currentHeight],
+    [controlEdges, mode, tParam, posP],
   );
 
   const pointQPos = useMemo<Vec3>(
-    () => getEdgePoint(solidKind, 1, posQ, width, depth, currentHeight),
-    [solidKind, posQ, width, depth, currentHeight],
+    () =>
+      getPointOnControlEdge(controlEdges[1].start, controlEdges[1].end, posQ),
+    [controlEdges, posQ],
   );
 
   const pointRPos = useMemo<Vec3>(
-    () => getEdgePoint(solidKind, 2, posR, width, depth, currentHeight),
-    [solidKind, posR, width, depth, currentHeight],
+    () =>
+      getPointOnControlEdge(controlEdges[2].start, controlEdges[2].end, posR),
+    [controlEdges, posR],
   );
 
   // 作图推演步骤数据 (仅在 construction 模式下，针对所有几何体模型动态求解)
@@ -261,8 +268,19 @@ export default function SectionCuboidDemo() {
       posQ,
       posR,
       step,
+      scenario,
     );
-  }, [solidKind, width, depth, currentHeight, posP, posQ, posR, step]);
+  }, [
+    solidKind,
+    width,
+    depth,
+    currentHeight,
+    posP,
+    posQ,
+    posR,
+    step,
+    scenario,
+  ]);
 
   // 计算切割平面 (Plane) 严格由空间三点 P, Q, R 唯一确定（符合高中立体几何三点确定平面基本事实）
   const plane = useMemo((): Plane => {
@@ -355,7 +373,11 @@ export default function SectionCuboidDemo() {
     let minA = Infinity;
     let maxA = -Infinity;
     for (let t = 0.05; t <= 0.95; t += 0.05) {
-      const pP = getEdgePoint(solidKind, 0, t, width, depth, currentHeight);
+      const pP = getPointOnControlEdge(
+        controlEdges[0].start,
+        controlEdges[0].end,
+        t,
+      );
       const pl = planeFromPoints(pP, pointQPos, pointRPos);
       const pts = intersectConvexPolyhedronPlane(currentPolyhedron, pl);
       const d = computeSectionProjectionDetails(pts, pl.normal);
@@ -368,16 +390,7 @@ export default function SectionCuboidDemo() {
       minArea: Number.isFinite(minA) ? minA : 0,
       maxArea: Number.isFinite(maxA) ? maxA : 0,
     };
-  }, [
-    mode,
-    solidKind,
-    width,
-    depth,
-    currentHeight,
-    pointQPos,
-    pointRPos,
-    currentPolyhedron,
-  ]);
+  }, [mode, controlEdges, pointQPos, pointRPos, currentPolyhedron]);
 
   // 组装 MathPanel 右屏看板数据
   const mathData = useMemo(() => {
@@ -447,6 +460,39 @@ export default function SectionCuboidDemo() {
     extremaAnalysis,
   ]);
 
+  const [activeAnswerStep, setActiveAnswerStep] = useState(1);
+  const answerSteps = useMemo<AnswerStepItem[]>(
+    () =>
+      (mathData.reasoningSteps ?? []).map((rs) => ({
+        step: rs.step,
+        title: rs.title,
+        sceneHint: rs.rubric,
+      })),
+    [mathData.reasoningSteps],
+  );
+  const effectiveAnswerStep =
+    answerSteps.length > 0 ? Math.min(activeAnswerStep, answerSteps.length) : 1;
+
+  const extremaPlay = useParamPlay({
+    min: 0.05,
+    max: 0.95,
+    ratePerSecond: 0.3,
+    step: 0.02,
+    mode: "bounce",
+    getValue: () => tParam,
+    onChange: setTParam,
+  });
+
+  const constructionPlay = useParamPlay({
+    min: 1,
+    max: Math.max(2, constructionData.totalSteps),
+    ratePerSecond: 0.7,
+    step: 1,
+    mode: "loop",
+    getValue: () => step,
+    onChange: (nextStep) => setStep(Math.round(nextStep)),
+  });
+
   // 组装左屏参数配置（仅保留纯连续数值参数，步骤控制独立为推演组件）
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     const currentKeys: string[] =
@@ -479,7 +525,8 @@ export default function SectionCuboidDemo() {
   }, [mode, posP, posQ, posR, tParam]);
 
   const handleParamChange = (key: string, value: number) => {
-    if (scenario !== "free") setScenario("free");
+    if (key === "tParam" && extremaPlay.isPlaying) extremaPlay.pause();
+    if (key === "step" && constructionPlay.isPlaying) constructionPlay.pause();
     if (key === "posP") setPosP(value);
     else if (key === "posQ") setPosQ(value);
     else if (key === "posR") setPosR(value);
@@ -488,7 +535,11 @@ export default function SectionCuboidDemo() {
   };
 
   const handleReset = () => {
+    extremaPlay.pause();
+    constructionPlay.pause();
+    setActiveAnswerStep(1);
     setScenario("free");
+    setSolidKind("cuboid");
     setPosP(0.35);
     setPosQ(0.7);
     setPosR(0.45);
@@ -498,24 +549,25 @@ export default function SectionCuboidDemo() {
 
   // 生成三视图
   const viewsData = useMemo(() => {
-    let solidType: "cuboid" | "pyramid" | "frustum" = "cuboid";
+    let solidType: "cuboid" | "pyramid" | "prism" | "frustum" = "cuboid";
     if (solidKind === "pyramid" || solidKind === "tetrahedron")
       solidType = "pyramid";
+    if (solidKind === "prism") solidType = "prism";
     if (solidKind === "frustum") solidType = "frustum";
 
     return buildSolidViews(solidType, {
       width,
       depth,
       height: currentHeight,
-      sides: solidKind === "tetrahedron" ? 3 : 4,
-      baseRadius: 2.2,
+      sides: solidKind === "tetrahedron" || solidKind === "prism" ? 3 : 4,
+      baseRadius: solidKind === "prism" ? 2.0 : 2.2,
     });
   }, [solidKind, width, depth, currentHeight]);
 
   // 左屏教学提示与题设导引（说明初始条件与探究设问）
   const tipConfig = useMemo(() => {
     const solidNames: Record<SolidKind, string> = {
-      cuboid: "长方体/正方体",
+      cuboid: isCubeScenario ? "正方体" : "长方体 / 正方体",
       pyramid: "正四棱锥",
       tetrahedron: "正四面体",
       prism: "正三棱柱",
@@ -523,25 +575,49 @@ export default function SectionCuboidDemo() {
     };
     const sName = solidNames[solidKind] ?? "多面体";
 
+    const scenarioConditionMap: Record<PresetScenario, string> = {
+      free: `已知${sName}的三条侧棱上各给定定点 $P, Q, R$（支持沿棱自由调节比例）。`,
+      cubeHexagon:
+        "在正方体 $ABCD-A_1B_1C_1D_1$（棱长 $a=3$）中，点 $P \\in AB$、$Q \\in BC$、$R \\in CC_1$（默认取各棱中点）。",
+      cubeTrapezoid:
+        "在正方体 $ABCD-A_1B_1C_1D_1$（棱长 $a=3$）中，点 $P \\in D_1A_1$、$Q \\in D_1C_1$、$R \\in DA$（满足 $DR > D_1P$）。",
+      cubeTriangle:
+        "在正方体 $ABCD-A_1B_1C_1D_1$（棱长 $a=3$）中，点 $P \\in AA_1$、$Q \\in AB$、$R \\in AD$ 位于共顶点 $A$ 的三条邻棱上。",
+      tetraSection:
+        "在正四面体 $S-ABC$ 中，点 $P, Q, R$ 分别位于三条侧棱 $SA, SB, SC$ 上。",
+    };
+
+    const scenarioQuestionMap: Record<PresetScenario, string> = {
+      free: "(1) 作图破题：运用基本事实与平行性质顺次求解交线；(2) 面积求解：建立空间直角坐标系求法向量，用面积射影公式 $S_{\\text{截}} = S_{\\text{投}}/\\cos\\theta$ 求截面积。",
+      cubeHexagon:
+        "(1) 利用基本事实 3 延长 $PQ$ 求出外点 $K_1, K_2$ 并作出正六边形截面；(2) 证明各对边平行且六边相等，求解截面正六边形面积。",
+      cubeTrapezoid:
+        "(1) 运用面面平行性质定理过 $R$ 作 $RS \\parallel PQ$ 封闭梯形截面；(2) 当 $D_1P=D_1Q$ 时求证截面为等腰梯形并计算其面积。",
+      cubeTriangle:
+        "(1) 直接利用基本事实 1 连结相邻表面截线封闭 $\\triangle PQR$；(2) 当 $AP=AQ=AR$ 时求正三角形截面积与到顶点 $A$ 的距离。",
+      tetraSection:
+        "(1) 运用基本事实 1 直接连结封闭截面三角形；(2) 当 $P,Q,R$ 为各棱中点时求截面面积与底面面积之比。",
+    };
+
     switch (mode) {
       case "construction":
         return {
           variant: "warning" as const,
           badge: `高考必考 · ${sName}截面作图通法 (${constructionData.methodName})`,
-          condition: `已知${sName}三条侧棱上各给定已知定点 P, Q, R。`,
-          question:
-            "(1) 作图破题：运用基本事实与平行性质顺次求解交线；(2) 面积求解：建立空间直角坐标系列垂直方程求法向量，用面积射影公式求截面积。",
+          condition: scenarioConditionMap[scenario],
+          question: scenarioQuestionMap[scenario],
         };
       case "extrema":
         return {
           variant: "success" as const,
           badge: `高考压轴 · ${sName}动点截面面积极值探究`,
-          condition: `定点 Q, R 保持固定，动点 P(t) 沿第一侧棱从底向顶滑动 (t ∈ [0.05, 0.95])。`,
+          condition: `定点 $Q, R$ 保持固定，动点 $P(t)$ 沿选定棱滑动（$t \\in [0.05, 0.95]$）。`,
           question:
-            "(1) 观察动点滑动过程中截面图形的边数退化临界；(2) 求解截面面积函数 S(t) 在棱上的最小值点与最大值点。",
+            "(1) 判定动点滑动过程中截面图形的边数退化临界；(2) 求解截面面积函数 $S(t)$ 在棱上的最小值点与最大值点。",
         };
     }
-  }, [mode, solidKind, constructionData.methodName]);
+    // 依赖中保留二级选项变量：TipCard 教学提示须随二级选项切换同步特化（项目纪律 left/tipcard-secondary-sync）
+  }, [mode, solidKind, scenario, isCubeScenario, constructionData.methodName]);
 
   return (
     <ThreePanel
@@ -555,7 +631,12 @@ export default function SectionCuboidDemo() {
                 { key: "extrema", label: "动点截面 (极值探究)" },
               ]}
               value={mode}
-              onChange={(m) => setMode(m as SectionMode)}
+              onChange={(m) => {
+                extremaPlay.pause();
+                constructionPlay.pause();
+                setMode(m as SectionMode);
+                setActiveAnswerStep(1);
+              }}
             />
           </LeftPanelSection>
 
@@ -571,7 +652,12 @@ export default function SectionCuboidDemo() {
                 { key: "tetraSection", label: "正四面体截面" },
               ]}
               value={scenario}
-              onChange={(sc) => handleScenarioChange(sc as PresetScenario)}
+              onChange={(sc) => {
+                extremaPlay.pause();
+                constructionPlay.pause();
+                setActiveAnswerStep(1);
+                handleScenarioChange(sc as PresetScenario);
+              }}
             />
           </LeftPanelSection>
 
@@ -591,7 +677,12 @@ export default function SectionCuboidDemo() {
                   { key: "frustum", label: "正四棱台" },
                 ]}
                 value={solidKind}
-                onChange={(k) => setSolidKind(k as SolidKind)}
+                onChange={(k) => {
+                  extremaPlay.pause();
+                  constructionPlay.pause();
+                  setSolidKind(k as SolidKind);
+                  setActiveAnswerStep(1);
+                }}
                 columns={2}
               />
             </LeftPanelSection>
@@ -609,7 +700,10 @@ export default function SectionCuboidDemo() {
                   description: opt.description,
                 }))}
                 value={String(Math.min(step, constructionData.totalSteps))}
-                onChange={(s) => setStep(Number(s))}
+                onChange={(s) => {
+                  constructionPlay.pause();
+                  setStep(Number(s));
+                }}
                 columns={2}
               />
             </LeftPanelSection>
@@ -622,7 +716,37 @@ export default function SectionCuboidDemo() {
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
+            <div className="mt-2.5">
+              {mode === "construction" ? (
+                <ParamPlayBar
+                  isPlaying={constructionPlay.isPlaying}
+                  onToggle={constructionPlay.toggle}
+                  speed={constructionPlay.speed}
+                  onSpeedChange={constructionPlay.setSpeed}
+                  label="演示截面交线作图"
+                />
+              ) : (
+                <ParamPlayBar
+                  isPlaying={extremaPlay.isPlaying}
+                  onToggle={extremaPlay.toggle}
+                  speed={extremaPlay.speed}
+                  onSpeedChange={extremaPlay.setSpeed}
+                  label="连续扫掠截面积极值"
+                />
+              )}
+            </div>
           </LeftPanelSection>
+
+          {answerSteps.length > 0 && (
+            <LeftPanelSection title="分步作答导航">
+              <StepNavigator
+                steps={answerSteps}
+                active={effectiveAnswerStep}
+                onChange={setActiveAnswerStep}
+                hint="右屏已同步高亮对应采分步卡片"
+              />
+            </LeftPanelSection>
+          )}
 
           {/* 6. 空间视角 */}
           <LeftPanelSection title="空间视角">
@@ -667,15 +791,41 @@ export default function SectionCuboidDemo() {
         ) : (
           <ThreeDCanvas
             cameraPosition={cameraPosition}
+            frameloop={
+              extremaPlay.isPlaying || constructionPlay.isPlaying
+                ? "always"
+                : "demand"
+            }
             overlay={
-              (mode === "construction" || mode === "extrema") &&
-              viewMode === "3d" ? (
-                <ModeSwitchOverlay3D
-                  mode={interactionMode}
-                  onModeChange={setInteractionMode}
-                  pointCount={mode === "extrema" ? 1 : 3}
+              <>
+                {(mode === "construction" || mode === "extrema") &&
+                  viewMode === "3d" && (
+                    <ModeSwitchOverlay3D
+                      mode={interactionMode}
+                      onModeChange={setInteractionMode}
+                      pointCount={mode === "extrema" ? 1 : 3}
+                    />
+                  )}
+                <AnswerStepOverlay3D
+                  steps={answerSteps}
+                  activeStep={
+                    answerSteps.length > 0 ? effectiveAnswerStep : undefined
+                  }
                 />
-              ) : undefined
+                {mode === "extrema" && viewMode === "3d" && (
+                  <ParamCurveOverlay2D
+                    {...sampleSectionAreaCurve(
+                      currentPolyhedron,
+                      controlEdges[0].start,
+                      controlEdges[0].end,
+                      pointQPos,
+                      pointRPos,
+                      tParam,
+                    )}
+                    position="bottom-left"
+                  />
+                )}
+              </>
             }
             legend={
               <Legend3D
@@ -685,12 +835,12 @@ export default function SectionCuboidDemo() {
                   {
                     colorKey: "paramPrimary",
                     swatch: "area",
-                    label: "截面多边形 S_截",
+                    label: "截面多边形",
                   },
                   {
                     colorKey: "secondary",
                     swatch: "area",
-                    label: "底面射影阴影 S_投",
+                    label: "底面射影阴影",
                   },
                   {
                     colorKey: "highlight",
@@ -782,36 +932,29 @@ export default function SectionCuboidDemo() {
               </group>
             ))}
 
-            {/* 控制点交互渲染与标签 (P, Q, R，严格使用空间侧棱正交投影 projectPointOnSegment，拖拽联动切回自由探索) */}
+            {/* 控制点交互渲染与标签 (P, Q, R，严格使用当前选棱正交投影 projectPointOnSegment) */}
             {(mode === "construction" || mode === "extrema") &&
               (() => {
-                const { baseVertices, topVertices } =
-                  getPolyhedronEdgeEndpoints(
-                    solidKind,
-                    width,
-                    depth,
-                    currentHeight,
-                  );
-                const A0 = baseVertices[0];
-                const A1 = topVertices[0];
-                const B0 = baseVertices[1];
-                const B1 = topVertices[1];
-                const C0 = baseVertices[2];
-                const C1 = topVertices[2];
+                const [edgeP, edgeQ, edgeR] = controlEdges;
 
                 return (
                   <>
-                    {/* 点 P (绑定 paramPrimary 鲜红，严格在第 1 条侧棱上滑动) */}
+                    {/* 点 P (绑定 paramPrimary 鲜红，严格在对应选棱上滑动) */}
                     <Point3D
                       position={pointPPos}
                       draggable={interactionMode === "drag"}
                       constrain={(raw) =>
-                        projectPointOnSegment(raw, A0, A1).point
+                        projectPointOnSegment(raw, edgeP.start, edgeP.end).point
                       }
                       onDrag={(next) => {
-                        if (scenario !== "free") setScenario("free");
-                        const proj = projectPointOnSegment(next, A0, A1);
-                        const tVal = Number(proj.t.toFixed(2));
+                        const proj = projectPointOnSegment(
+                          next,
+                          edgeP.start,
+                          edgeP.end,
+                        );
+                        const tVal = Number(
+                          Math.max(0.05, Math.min(0.95, proj.t)).toFixed(2),
+                        );
                         if (mode === "extrema") setTParam(tVal);
                         else setPosP(tVal);
                       }}
@@ -824,17 +967,24 @@ export default function SectionCuboidDemo() {
                       offset={[0, 0, 0.25]}
                     />
 
-                    {/* 点 Q (绑定 paramSecondary 暖橙，严格在第 2 条侧棱上滑动) */}
+                    {/* 点 Q (绑定 paramSecondary 暖橙，严格在对应选棱上滑动) */}
                     <Point3D
                       position={pointQPos}
                       draggable={interactionMode === "drag"}
                       constrain={(raw) =>
-                        projectPointOnSegment(raw, B0, B1).point
+                        projectPointOnSegment(raw, edgeQ.start, edgeQ.end).point
                       }
                       onDrag={(next) => {
-                        if (scenario !== "free") setScenario("free");
-                        const proj = projectPointOnSegment(next, B0, B1);
-                        setPosQ(Number(proj.t.toFixed(2)));
+                        const proj = projectPointOnSegment(
+                          next,
+                          edgeQ.start,
+                          edgeQ.end,
+                        );
+                        setPosQ(
+                          Number(
+                            Math.max(0.05, Math.min(0.95, proj.t)).toFixed(2),
+                          ),
+                        );
                       }}
                       colorKey="paramSecondary"
                     />
@@ -845,17 +995,24 @@ export default function SectionCuboidDemo() {
                       offset={[0, 0, 0.25]}
                     />
 
-                    {/* 点 R (绑定 paramTertiary 翠绿，严格在第 3 条侧棱上滑动) */}
+                    {/* 点 R (绑定 paramTertiary 翠绿，严格在对应选棱上滑动) */}
                     <Point3D
                       position={pointRPos}
                       draggable={interactionMode === "drag"}
                       constrain={(raw) =>
-                        projectPointOnSegment(raw, C0, C1).point
+                        projectPointOnSegment(raw, edgeR.start, edgeR.end).point
                       }
                       onDrag={(next) => {
-                        if (scenario !== "free") setScenario("free");
-                        const proj = projectPointOnSegment(next, C0, C1);
-                        setPosR(Number(proj.t.toFixed(2)));
+                        const proj = projectPointOnSegment(
+                          next,
+                          edgeR.start,
+                          edgeR.end,
+                        );
+                        setPosR(
+                          Number(
+                            Math.max(0.05, Math.min(0.95, proj.t)).toFixed(2),
+                          ),
+                        );
                       }}
                       colorKey="paramTertiary"
                     />
@@ -930,7 +1087,14 @@ export default function SectionCuboidDemo() {
           </ThreeDCanvas>
         )
       }
-      right={<MathPanel {...mathData} title="多面体截面数学看板" />}
+      right={
+        <MathPanel
+          {...mathData}
+          focusStep={answerSteps.length > 0 ? effectiveAnswerStep : undefined}
+          focusTarget="reasoning"
+          title="多面体截面数学看板"
+        />
+      }
     />
   );
 }

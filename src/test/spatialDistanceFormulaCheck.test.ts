@@ -60,6 +60,7 @@ describe("空间距离页面左右屏所有 LaTeX 公式合法性全量检测", 
   // SSOT：模式与典型情景清单直接取自页面模块，测试侧不得另抄一份 key 清单
   const DISTANCE_MODES: DistanceMode[] = [
     "skewDistance",
+    "pointLineDistance",
     "pointPlaneDistance",
     "volumeExtrema",
   ];

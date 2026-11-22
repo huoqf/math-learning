@@ -15,5 +15,6 @@ export interface FoldingSceneCommonProps {
   a: number;
   /** 仅直角梯形翻折模型使用（矩形宽），其余模型传入 0 即可 */
   b: number;
-  onPointDrag: (newZ: number, maxRadius: number) => void;
+  activeStep?: number;
+  onPointDrag: (nextAlphaDeg: number) => void;
 }

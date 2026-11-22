@@ -22,6 +22,9 @@ export interface ConstructionPoint {
 
 export type ConstructionMethodType = "direct" | "parallel" | "intersection";
 
+export type SectionPresetKind =
+  "free" | "cubeHexagon" | "cubeTrapezoid" | "cubeTriangle" | "tetraSection";
+
 export interface ConstructionStepOption {
   step: number;
   label: string;
@@ -40,6 +43,11 @@ export interface ConstructionStepInfo {
   activeLines: ConstructionLine[];
   activePoints: ConstructionPoint[];
   partialPolygon: Vec3[];
+}
+
+export interface ControlEdgePair {
+  start: Vec3;
+  end: Vec3;
 }
 
 /**
@@ -147,8 +155,75 @@ export function getPolyhedronEdgeEndpoints(
 }
 
 /**
+ * 获取当前截面情景下 P, Q, R 三动点所在棱的起点与终点（SSOT）
+ * 解决过去 P, Q, R 永远锁死在三条平行侧棱导致正六边形/正三角形/等腰梯形失真的缺陷。
+ */
+export function getControlEdgeEndpoints(
+  solidKind: SolidKindType,
+  a: number,
+  b: number,
+  c: number,
+  preset: SectionPresetKind = "free",
+): [ControlEdgePair, ControlEdgePair, ControlEdgePair] {
+  const { baseVertices, topVertices } = getPolyhedronEdgeEndpoints(
+    solidKind,
+    a,
+    b,
+    c,
+  );
+  const [A, B, C, D] = baseVertices;
+  const [A1, , C1, D1] = topVertices;
+
+  if (solidKind === "cuboid" && preset === "cubeHexagon") {
+    // 正方体正六边形截面：P ∈ AB, Q ∈ BC, R ∈ CC1
+    return [
+      { start: A, end: B },
+      { start: B, end: C },
+      { start: C, end: C1 },
+    ];
+  }
+
+  if (solidKind === "cuboid" && preset === "cubeTrapezoid") {
+    // 正方体等腰梯形截面：P ∈ D1A1 (从 D1 算起), Q ∈ D1C1 (从 D1 算起), R ∈ DA (从 D 算起)
+    return [
+      { start: D1, end: A1 },
+      { start: D1, end: C1 },
+      { start: D, end: A },
+    ];
+  }
+
+  if (solidKind === "cuboid" && preset === "cubeTriangle") {
+    // 正方体角截正三角形：共顶点 A 的三条邻棱 AA1, AB, AD
+    return [
+      { start: A, end: A1 },
+      { start: A, end: B },
+      { start: A, end: D },
+    ];
+  }
+
+  // 默认（free 与 tetraSection 等）：前三条侧棱
+  return [
+    { start: baseVertices[0], end: topVertices[0] },
+    { start: baseVertices[1], end: topVertices[1] },
+    { start: baseVertices[2], end: topVertices[2] },
+  ];
+}
+
+function pointOnEdge(edge: ControlEdgePair, t: number): Vec3 {
+  const clampT = Math.max(0.05, Math.min(0.95, t));
+  return add(edge.start, scale(sub(edge.end, edge.start), clampT));
+}
+
+function pointSegT(p: Vec3, a: Vec3, b: Vec3): number {
+  const ab = sub(b, a);
+  const lenSq = dot(ab, ab);
+  if (lenSq < 1e-9) return -1;
+  return dot(sub(p, a), ab) / lenSq;
+}
+
+/**
  * 通用多面体三点交轨作图推演算法
- * 核心：严格遵循高中作图规范，Step 2 作出的延长线与外点 K1, K2 在 Step 3、Step 4 必须持续累计保留！
+ * 核心：严格遵循高中作图规范，Step 2 作出的延长线与外点在后续步骤持续累计保留。
  */
 export function buildPolyhedronConstructionSteps(
   solidKind: SolidKindType,
@@ -159,6 +234,7 @@ export function buildPolyhedronConstructionSteps(
   posQ: number,
   posR: number,
   currentStep: number,
+  preset: SectionPresetKind = "free",
 ): ConstructionStepInfo {
   const { baseVertices, topVertices } = getPolyhedronEdgeEndpoints(
     solidKind,
@@ -166,44 +242,452 @@ export function buildPolyhedronConstructionSteps(
     b,
     c,
   );
+  const [edgeP, edgeQ, edgeR] = getControlEdgeEndpoints(
+    solidKind,
+    a,
+    b,
+    c,
+    preset,
+  );
 
-  // 侧棱1: base[0] -> top[0]; 侧棱2: base[1] -> top[1]; 侧棱3: base[2] -> top[2]
+  const P = pointOnEdge(edgeP, posP);
+  const Q = pointOnEdge(edgeQ, posQ);
+  const R = pointOnEdge(edgeR, posR);
+
+  // ================= 专型 1：正方体角截正三角形（直接连线法 2 步） =================
+  if (solidKind === "cuboid" && preset === "cubeTriangle") {
+    const stepOptions: ConstructionStepOption[] = [
+      { step: 1, label: "Step 1", description: "同面连线" },
+      { step: 2, label: "Step 2", description: "闭合正三角形" },
+    ];
+    const clampedStep = Math.max(1, Math.min(2, currentStep));
+    if (clampedStep === 1) {
+      return {
+        step: 1,
+        totalSteps: 2,
+        method: "direct",
+        methodName: "直接连线法",
+        stepOptions,
+        title: "Step 1: 相邻表面同面连线",
+        description:
+          "点 P ∈ AA₁、Q ∈ AB 同在前面 ABB₁A₁ 内，直接连结 PQ；点 Q ∈ AB、R ∈ AD 同在底面 ABCD 内，直接连结 QR。",
+        rationale:
+          "基本事实 1（两点确定直线在平面内）：三点两两处于相邻表面，截线可直接同面连出，无需任何交轨外点。",
+        activeLines: [
+          { from: P, to: Q, type: "solid", colorKey: "highlight", label: "PQ" },
+          { from: Q, to: R, type: "solid", colorKey: "highlight", label: "QR" },
+        ],
+        activePoints: [
+          { position: P, label: "P" },
+          { position: Q, label: "Q" },
+          { position: R, label: "R" },
+        ],
+        partialPolygon: [P, Q, R],
+      };
+    }
+
+    return {
+      step: 2,
+      totalSteps: 2,
+      method: "direct",
+      methodName: "直接连线法",
+      stepOptions,
+      title: "Step 2: 闭合生成正三角形截面",
+      description:
+        "点 R ∈ AD 与 P ∈ AA₁ 同在左侧面 ADD₁A₁ 内，连结 RP 即首尾封闭为 △PQR（等距时三边均为 √2·AP）。",
+      rationale:
+        "基本事实 1：RP ⊂ 左侧面 ADD₁A₁，三条截线两两共面，直接封闭为三角形截面。",
+      activeLines: [
+        { from: P, to: Q, type: "solid", colorKey: "accent", label: "PQ" },
+        { from: Q, to: R, type: "solid", colorKey: "accent", label: "QR" },
+        { from: R, to: P, type: "solid", colorKey: "accent", label: "RP" },
+      ],
+      activePoints: [
+        { position: P, label: "P" },
+        { position: Q, label: "Q" },
+        { position: R, label: "R" },
+      ],
+      partialPolygon: [P, Q, R],
+    };
+  }
+
+  // ================= 专型 2：正方体等腰梯形（面面平行线法 3 步） =================
+  if (solidKind === "cuboid" && preset === "cubeTrapezoid") {
+    const [A, , C, D] = baseVertices;
+    const [, , C1] = topVertices;
+    // 在底面过 R 沿 PQ 方向作平行线交 DC（或 BC）于点 S
+    const dirPQ = sub(Q, P);
+    const farPoint = add(R, scale(dirPQ, 5));
+    let S_pt: Vec3 = C;
+    const hitDC = intersectLines3D(R, farPoint, D, C);
+    const hitBC = intersectLines3D(R, farPoint, baseVertices[1], C);
+    if (hitDC.isValid) {
+      const tDC = pointSegT(hitDC.point, D, C);
+      if (tDC >= -0.02 && tDC <= 1.02) {
+        S_pt = hitDC.point;
+      } else if (hitBC.isValid) {
+        S_pt = hitBC.point;
+      }
+    } else if (hitBC.isValid) {
+      S_pt = hitBC.point;
+    }
+
+    // 检查是否额外穿过侧棱 AA1/CC1（仅当 posR < posP 时可能穿透侧面）
+    const isFourSided = Math.abs(pointSegT(S_pt, D, C) - 0.5) <= 0.52;
+    const stepOptions: ConstructionStepOption[] = [
+      { step: 1, label: "Step 1", description: "同面连线" },
+      { step: 2, label: "Step 2", description: "平行引线" },
+      { step: 3, label: "Step 3", description: "封闭梯形" },
+    ];
+    const clampedStep = Math.max(1, Math.min(3, currentStep));
+
+    if (clampedStep === 1) {
+      return {
+        step: 1,
+        totalSteps: 3,
+        method: "parallel",
+        methodName: "面面平行线法",
+        stepOptions,
+        title: "Step 1: 同面直接连结 PQ 与 PR",
+        description:
+          "点 P ∈ D₁A₁、Q ∈ D₁C₁ 同在顶面 A₁B₁C₁D₁ 内，连结 PQ；点 P ∈ D₁A₁、R ∈ DA 同在左侧面 ADD₁A₁ 内，连结 PR。",
+        rationale:
+          "基本事实 1：同面两点连线即为表面截线，分别得到顶面截线 PQ 与左侧面截线 PR。",
+        activeLines: [
+          { from: P, to: Q, type: "solid", colorKey: "highlight", label: "PQ" },
+          { from: P, to: R, type: "solid", colorKey: "highlight", label: "PR" },
+        ],
+        activePoints: [
+          { position: P, label: "P" },
+          { position: Q, label: "Q" },
+          { position: R, label: "R" },
+        ],
+        partialPolygon: [P, Q, R],
+      };
+    }
+
+    if (clampedStep === 2) {
+      return {
+        step: 2,
+        totalSteps: 3,
+        method: "parallel",
+        methodName: "面面平行线法",
+        stepOptions,
+        title: "Step 2: 利用面面平行性质作平行截线 RS",
+        description:
+          "由于底面 ABCD ∥ 顶面 A₁B₁C₁D₁，截面与两平行底面的交线必然平行！过 R 在底面内直接作 RS ∥ PQ，交底棱 DC 于点 S。",
+        rationale:
+          "面面平行性质定理：两平行平面同时与第三平面相交，所得交线互相平行（RS ∥ PQ），直接定位底面交点 S。",
+        activeLines: [
+          { from: P, to: Q, type: "solid", colorKey: "highlight", label: "PQ" },
+          { from: P, to: R, type: "solid", colorKey: "highlight", label: "PR" },
+          {
+            from: R,
+            to: S_pt,
+            type: "dashed",
+            colorKey: "warning",
+            label: "RS ∥ PQ",
+          },
+        ],
+        activePoints: [
+          { position: P, label: "P" },
+          { position: Q, label: "Q" },
+          { position: R, label: "R" },
+          { position: S_pt, label: "S" },
+        ],
+        partialPolygon: [P, Q, S_pt, R],
+      };
+    }
+
+    return {
+      step: 3,
+      totalSteps: 3,
+      method: "parallel",
+      methodName: "面面平行线法",
+      stepOptions,
+      title: "Step 3: 连结 QS 封闭等腰梯形截面",
+      description: isFourSided
+        ? "点 Q ∈ D₁C₁ 与 S ∈ DC 同在后侧面 CDD₁C₁ 内，连结 QS，四条截线首尾闭合生成等腰梯形 PQSR（当 D₁P = D₁Q 时 PR = QS）。"
+        : "连结后侧面截线 QS 并封闭截面轮廓，注意调节 R 至更靠近 A（即 posR > posP）可保持严格四边形等腰梯形。",
+      rationale:
+        "多面体各面截线依次封闭成梯形截面：上底 PQ ∥ 下底 RS，且由对称全等 Rt△ 证得两腰 PR = QS（D₁P = D₁Q 时）。",
+      activeLines: [
+        { from: P, to: Q, type: "solid", colorKey: "accent" },
+        { from: Q, to: S_pt, type: "solid", colorKey: "accent" },
+        { from: S_pt, to: R, type: "solid", colorKey: "accent" },
+        { from: R, to: P, type: "solid", colorKey: "accent" },
+      ],
+      activePoints: [
+        { position: P, label: "P" },
+        { position: Q, label: "Q" },
+        { position: R, label: "R" },
+        { position: S_pt, label: "S" },
+        ...(C1 && A ? [] : []),
+      ],
+      partialPolygon: [P, Q, S_pt, R],
+    };
+  }
+
+  // ================= 专型 3：正方体正六边形（标准交轨延长线法 4 步） =================
+  if (solidKind === "cuboid" && preset === "cubeHexagon") {
+    const [A, , C, D] = baseVertices;
+    const [A1, , C1, D1] = topVertices;
+
+    // 1. 底面交线 PQ 延长分别交 AD 于 K1、交 DC 于 K2
+    const k1Res = intersectLines3D(P, Q, A, D);
+    const k2Res = intersectLines3D(P, Q, D, C);
+    const hasK1 = k1Res.isValid;
+    const hasK2 = k2Res.isValid;
+    const K1 = k1Res.point;
+    const K2 = k2Res.point;
+
+    // 2. 在后面 CDD1C1 内，连结 K2 与 R，交 C1D1 于 M，并延长交 DD1 于 K3
+    let M: Vec3 = { x: a / 2, y: b, z: c };
+    let hasM = false;
+    let K3: Vec3 = { x: 0, y: b, z: 1.5 * c };
+    let hasK3 = false;
+    if (hasK2) {
+      const mRes = intersectLines3D(K2, R, D1, C1);
+      if (mRes.isValid) {
+        M = mRes.point;
+        hasM = true;
+      }
+      const k3Res = intersectLines3D(K2, R, D, D1);
+      if (k3Res.isValid) {
+        K3 = k3Res.point;
+        hasK3 = true;
+      }
+    }
+
+    // 3. 在左侧面 ADD1A1 内，连结 K1 与 K3，分别交 AA1 于 E、交 A1D1 于 N
+    let E: Vec3 = { x: 0, y: 0, z: c / 2 };
+    let N: Vec3 = { x: 0, y: b / 2, z: c };
+    if (hasK1 && hasK3) {
+      const eRes = intersectLines3D(K1, K3, A, A1);
+      if (eRes.isValid) E = eRes.point;
+      const nRes = intersectLines3D(K1, K3, A1, D1);
+      if (nRes.isValid) N = nRes.point;
+    }
+
+    const step2ExtLines: ConstructionLine[] = [];
+    const step2ExtPoints: ConstructionPoint[] = [];
+    if (hasK1) {
+      step2ExtLines.push(
+        {
+          from: P,
+          to: K1,
+          type: "extension",
+          colorKey: "warning",
+          label: "PQ延长线",
+        },
+        {
+          from: A,
+          to: K1,
+          type: "extension",
+          colorKey: "warning",
+          label: "AD延长线",
+        },
+      );
+      step2ExtPoints.push({ position: K1, label: "K₁", isExternal: true });
+    }
+    if (hasK2) {
+      step2ExtLines.push(
+        {
+          from: Q,
+          to: K2,
+          type: "extension",
+          colorKey: "warning",
+          label: "PQ延长线",
+        },
+        {
+          from: C,
+          to: K2,
+          type: "extension",
+          colorKey: "warning",
+          label: "DC延长线",
+        },
+      );
+      step2ExtPoints.push({ position: K2, label: "K₂", isExternal: true });
+    }
+
+    const stepOptions: ConstructionStepOption[] = [
+      { step: 1, label: "Step 1", description: "同面连线" },
+      { step: 2, label: "Step 2", description: "延长求交" },
+      { step: 3, label: "Step 3", description: "交轨定顶点" },
+      { step: 4, label: "Step 4", description: "封闭正六边形" },
+    ];
+    const step = Math.max(1, Math.min(4, currentStep));
+
+    if (step === 1) {
+      return {
+        step: 1,
+        totalSteps: 4,
+        method: "intersection",
+        methodName: "交轨延长线法",
+        stepOptions,
+        title: "Step 1: 同面直接连结 PQ 与 QR",
+        description:
+          "点 P ∈ AB、Q ∈ BC 同在底面 ABCD 内，连结 PQ；点 Q ∈ BC、R ∈ CC₁ 同在右侧面 BCC₁B₁ 内，连结 QR。",
+        rationale:
+          "基本事实 1：同面两点连线即为表面截线，分别确定底面与右侧面的截线段 PQ、QR。",
+        activeLines: [
+          { from: P, to: Q, type: "solid", colorKey: "highlight", label: "PQ" },
+          { from: Q, to: R, type: "solid", colorKey: "highlight", label: "QR" },
+        ],
+        activePoints: [
+          { position: P, label: "P" },
+          { position: Q, label: "Q" },
+          { position: R, label: "R" },
+        ],
+        partialPolygon: [P, Q, R],
+      };
+    }
+
+    if (step === 2) {
+      return {
+        step: 2,
+        totalSteps: 4,
+        method: "intersection",
+        methodName: "交轨延长线法",
+        stepOptions,
+        title: "Step 2: 延长底面截线 PQ 求交轨外点 K₁, K₂",
+        description:
+          "在底面内反向延长 PQ 交 AD 延长线于外点 K₁，正向延长交 DC 延长线于外点 K₂（K₁, K₂ 同时落在截面与侧面内）。",
+        rationale:
+          "基本事实 3（交线/交轨原理）：K₁ ∈ 面 ADD₁A₁ ∩ 截面，K₂ ∈ 面 CDD₁C₁ ∩ 截面，成为跨向背面与左侧面的关键桥梁。",
+        activeLines: [
+          { from: P, to: Q, type: "solid", colorKey: "highlight", label: "PQ" },
+          { from: Q, to: R, type: "solid", colorKey: "highlight", label: "QR" },
+          ...step2ExtLines,
+        ],
+        activePoints: [
+          { position: P, label: "P" },
+          { position: Q, label: "Q" },
+          { position: R, label: "R" },
+          ...step2ExtPoints,
+        ],
+        partialPolygon: [P, Q, R],
+      };
+    }
+
+    const step3ExtLines: ConstructionLine[] = [...step2ExtLines];
+    const step3Points: ConstructionPoint[] = [
+      { position: P, label: "P" },
+      { position: Q, label: "Q" },
+      { position: R, label: "R" },
+      ...step2ExtPoints,
+    ];
+    if (hasK2 && hasM) {
+      step3ExtLines.push({
+        from: K2,
+        to: hasK3 ? K3 : M,
+        type: "dashed",
+        colorKey: "secondary",
+        label: "K₂R 交轨线",
+      });
+      step3Points.push({ position: M, label: "M" });
+    }
+    if (hasK3) {
+      step3ExtLines.push({
+        from: D1,
+        to: K3,
+        type: "extension",
+        colorKey: "warning",
+        label: "DD₁延长线",
+      });
+      step3Points.push({ position: K3, label: "K₃", isExternal: true });
+    }
+    if (hasK1 && hasK3) {
+      step3ExtLines.push({
+        from: K1,
+        to: K3,
+        type: "dashed",
+        colorKey: "secondary",
+        label: "K₁K₃ 交轨线",
+      });
+      step3Points.push({ position: N, label: "N" });
+      step3Points.push({ position: E, label: "E" });
+    }
+
+    if (step === 3) {
+      return {
+        step: 3,
+        totalSteps: 4,
+        method: "intersection",
+        methodName: "交轨延长线法",
+        stepOptions,
+        title: "Step 3: 跨面交轨确定其余三顶点 M, N, E",
+        description:
+          "在后面 CDD₁C₁ 内连结 K₂R 交 C₁D₁ 于 M 并延交 DD₁ 延长线于 K₃；再在左侧面 ADD₁A₁ 内连结 K₁K₃ 交 A₁D₁ 于 N、交 AA₁ 于 E。",
+        rationale:
+          "基本事实 3：两点确定两平面唯一交线。由 K₂R 破出背面截线 RM，由 K₁K₃ 破出左侧面截线 NE。",
+        activeLines: [
+          { from: P, to: Q, type: "solid", colorKey: "highlight" },
+          { from: Q, to: R, type: "solid", colorKey: "highlight" },
+          { from: R, to: M, type: "solid", colorKey: "highlight" },
+          { from: M, to: N, type: "solid", colorKey: "highlight" },
+          { from: N, to: E, type: "solid", colorKey: "highlight" },
+          { from: E, to: P, type: "solid", colorKey: "highlight" },
+          ...step3ExtLines,
+        ],
+        activePoints: step3Points,
+        partialPolygon: [P, Q, R, M, N, E],
+      };
+    }
+
+    // Step 4: 闭合正六边形
+    const hexagonPts = [P, Q, R, M, N, E];
+    const finalLines: ConstructionLine[] = [
+      ...step3ExtLines.map((l) => ({ ...l, type: "dashed" as const })),
+    ];
+    for (let i = 0; i < hexagonPts.length; i++) {
+      finalLines.push({
+        from: hexagonPts[i],
+        to: hexagonPts[(i + 1) % hexagonPts.length],
+        type: "solid",
+        colorKey: "accent",
+      });
+    }
+
+    return {
+      step: 4,
+      totalSteps: 4,
+      method: "intersection",
+      methodName: "交轨延长线法",
+      stepOptions,
+      title: "Step 4: 闭合生成正六边形截面 P-Q-R-M-N-E",
+      description:
+        "六条表面截线顺次首尾相接，在正方体六个表面各留下一条对角半截线（全为棱中点时边长恒为 √2a/2），构成正六边形截面！",
+      rationale:
+        "各对边严格平行（PQ ∥ MN、QR ∥ EP、RM ∥ NE），且相邻边夹角 120°，同时验证面面平行与基本事实 3 闭环。",
+      activeLines: finalLines,
+      activePoints: step3Points,
+      partialPolygon: hexagonPts,
+    };
+  }
+
+  // ================= 通用自由探索模式（兼容三侧棱与多种凸多面体） =================
   const A0 = baseVertices[0];
   const B0 = baseVertices[1];
   const C0 = baseVertices[2];
 
-  const A1 = topVertices[0];
-  const B1 = topVertices[1];
-  const C1 = topVertices[2];
-
-  // 计算已知控制点 P, Q, R
-  const P = add(A0, scale(sub(A1, A0), posP));
-  const Q = add(B0, scale(sub(B1, B0), posQ));
-  const R = add(C0, scale(sub(C1, C0), posR));
-
   // 1. 求直线 PQ 与底棱 A0B0 延长线的交点 K1
-  // P 与 Q 在侧面 A0B0B1A1 内，PQ 与 A0B0 必共面
   const { point: K1, isValid: hasK1 } = intersectLines3D(P, Q, A0, B0);
 
   // 2. 求直线 QR 与底棱 B0C0 延长线的交点 K2
-  // Q 与 R 在侧面 B0C0C1B1 内，QR 与 B0C0 必共面
   const { point: K2, isValid: hasK2 } = intersectLines3D(Q, R, B0, C0);
 
-  // 3. 底面交线与底面多边形其余棱的交点（兼顾交轨法与面面平行性质定理）
+  // 3. 底面交线与底面多边形其余棱的交点
   const bottomPoints: { point: Vec3; label: string }[] = [];
   const N_edges = baseVertices.length;
 
   if (hasK1 && hasK2) {
-    // 两个交轨点均存在：连结 K1K2 求解底面各棱交点
     for (let i = 2; i < N_edges; i++) {
       const eStart = baseVertices[i];
       const eEnd = baseVertices[(i + 1) % N_edges];
       const { point: ip, isValid } = intersectLines3D(K1, K2, eStart, eEnd);
       if (isValid) {
-        const segVec = sub(eEnd, eStart);
-        const segLenSq = dot(segVec, segVec);
-        const pVec = sub(ip, eStart);
-        const t = dot(pVec, segVec) / segLenSq;
+        const t = pointSegT(ip, eStart, eEnd);
         if (t >= -0.02 && t <= 1.02) {
           const lbl = bottomPoints.length === 0 ? "N" : "M";
           bottomPoints.push({ point: ip, label: lbl });
@@ -211,7 +695,6 @@ export function buildPolyhedronConstructionSteps(
       }
     }
   } else if (!hasK1 && hasK2) {
-    // PQ 平行于底棱 A0B0：由线面平行性质，底面交线必过 K2 且平行于 PQ
     const dir = sub(Q, P);
     const virtualK1 = add(K2, scale(dir, 5));
     for (let i = 2; i < N_edges; i++) {
@@ -224,10 +707,7 @@ export function buildPolyhedronConstructionSteps(
         eEnd,
       );
       if (isValid) {
-        const segVec = sub(eEnd, eStart);
-        const segLenSq = dot(segVec, segVec);
-        const pVec = sub(ip, eStart);
-        const t = dot(pVec, segVec) / segLenSq;
+        const t = pointSegT(ip, eStart, eEnd);
         if (t >= -0.02 && t <= 1.02) {
           const lbl = bottomPoints.length === 0 ? "N" : "M";
           bottomPoints.push({ point: ip, label: lbl });
@@ -235,7 +715,6 @@ export function buildPolyhedronConstructionSteps(
       }
     }
   } else if (hasK1 && !hasK2) {
-    // QR 平行于底棱 B0C0：由线面平行性质，底面交线必过 K1 且平行于 QR
     const dir = sub(R, Q);
     const virtualK2 = add(K1, scale(dir, 5));
     for (let i = 2; i < N_edges; i++) {
@@ -248,10 +727,7 @@ export function buildPolyhedronConstructionSteps(
         eEnd,
       );
       if (isValid) {
-        const segVec = sub(eEnd, eStart);
-        const segLenSq = dot(segVec, segVec);
-        const pVec = sub(ip, eStart);
-        const t = dot(pVec, segVec) / segLenSq;
+        const t = pointSegT(ip, eStart, eEnd);
         if (t >= -0.02 && t <= 1.02) {
           const lbl = bottomPoints.length === 0 ? "N" : "M";
           bottomPoints.push({ point: ip, label: lbl });
@@ -260,7 +736,6 @@ export function buildPolyhedronConstructionSteps(
     }
   }
 
-  // 构造 Step 2 的延长线段（必须在 Step 2, Step 3, Step 4 中持续保留）
   const step2ExtensionLines: ConstructionLine[] = [];
   const step2ExternalPoints: ConstructionPoint[] = [];
 
@@ -304,26 +779,24 @@ export function buildPolyhedronConstructionSteps(
     step2ExternalPoints.push({ position: K2, label: "K₂", isExternal: true });
   }
 
-  // ================= 判定高中三大作图法 =================
-  // 1. 直接连线法 (direct, 2步)：三点两两同面，如正四面体截面、正方体角截三角形
-  const isDirectTriangle =
-    solidKind === "tetrahedron" ||
-    (posP <= 0.45 && posQ <= 0.45 && posR <= 0.15);
+  // 1. 直接连线法 (direct, 2步)：正四面体三侧棱点天然两两共面
+  const isDirectTriangle = solidKind === "tetrahedron";
 
-  // 2. 面面平行线法 (parallel, 3步)：截线段平行于底棱/底面，如正方体等腰梯形
-  const isParallelTrapezoid =
+  // 2. 面面平行线法 (parallel, 3步)：截线段严格平行于底棱/顶棱，无需交轨外点即可过 R 直接引平行截线
+  const fourthZRatio = posP + posR - posQ;
+  const isParallelFourthEdge =
     !isDirectTriangle &&
     solidKind === "cuboid" &&
-    Math.abs(posP - posQ) < 0.05 &&
-    posR > 0.4;
+    fourthZRatio >= 0.02 &&
+    fourthZRatio <= 0.98 &&
+    (Math.abs(posP - posQ) < 0.05 || (!hasK1 && !hasK2));
 
   const method: ConstructionMethodType = isDirectTriangle
     ? "direct"
-    : isParallelTrapezoid
+    : isParallelFourthEdge
       ? "parallel"
       : "intersection";
 
-  // ================= 分流 1：直接连线法 (2 步) =================
   if (method === "direct") {
     const stepOptions: ConstructionStepOption[] = [
       { step: 1, label: "Step 1", description: "同面连线" },
@@ -356,7 +829,6 @@ export function buildPolyhedronConstructionSteps(
       };
     }
 
-    // Step 2: 直接闭合
     return {
       step: 2,
       totalSteps: 2,
@@ -382,7 +854,6 @@ export function buildPolyhedronConstructionSteps(
     };
   }
 
-  // ================= 分流 2：面面平行线法 (3 步) =================
   if (method === "parallel") {
     const stepOptions: ConstructionStepOption[] = [
       { step: 1, label: "Step 1", description: "同面连线" },
@@ -391,7 +862,6 @@ export function buildPolyhedronConstructionSteps(
     ];
     const clampedStep = Math.max(1, Math.min(3, currentStep));
 
-    // 计算对面平行线段端点 S_pt
     const dirPQ = sub(Q, P);
     const S_pt = sub(R, dirPQ);
 
@@ -404,9 +874,9 @@ export function buildPolyhedronConstructionSteps(
         stepOptions,
         title: "Step 1: 同面直接连线",
         description:
-          "点 P, Q 同在多面体前侧面内且 PQ ∥ 底面，连结线段 PQ；点 Q, R 在相邻侧面内，连结线段 QR。",
+          "点 P, Q 同在多面体前侧面内，连结线段 PQ；点 Q, R 同在右侧表面内，连结线段 QR。",
         rationale:
-          "基本事实 1：已知点 P、Q 同面前截面上，线段 PQ 为已知截线段；同理 QR 为侧表面截线段。",
+          "基本事实 1：已知点 P、Q 同在前面，线段 PQ 为已知截线段；同理 QR 为右侧面截线段。",
         activeLines: [
           { from: P, to: Q, type: "solid", colorKey: "highlight", label: "PQ" },
           { from: Q, to: R, type: "solid", colorKey: "highlight", label: "QR" },
@@ -429,9 +899,9 @@ export function buildPolyhedronConstructionSteps(
         stepOptions,
         title: "Step 2: 利用面面平行性质定理作平行截线",
         description:
-          "由于长方体相对表面互相平行，切面与两个平行平面相交时交线互相平行！故过点 R 在相对表面内直接引线段 RS ∥ PQ，交第四侧棱于点 S。",
+          "由于长方体相对侧面互相平行，切面与两个平行平面相交时交线互相平行！过点 R 在后侧面内直接引线段 RS ∥ PQ，交第四侧棱 DD₁ 于点 S。",
         rationale:
-          "面面平行性质定理：两平行平面被第三平面所截，交线互相平行。由面面平行直接得出截线平行，无需作外点延长线！",
+          "面面平行性质定理：两平行平面被第三平面所截，交线互相平行（RS ∥ PQ），无需作外点延长线！",
         activeLines: [
           { from: P, to: Q, type: "solid", colorKey: "highlight", label: "PQ" },
           { from: Q, to: R, type: "solid", colorKey: "highlight", label: "QR" },
@@ -453,18 +923,17 @@ export function buildPolyhedronConstructionSteps(
       };
     }
 
-    // Step 3: 封闭截面
     return {
       step: 3,
       totalSteps: 3,
       method: "parallel",
       methodName: "面面平行线法",
       stepOptions,
-      title: "Step 3: 连结闭合等腰梯形截面",
+      title: "Step 3: 连结闭合平行四边形截面",
       description:
-        "连结点 S 与点 P，截面四段截线顺次首尾相接，封闭生成等腰梯形截面！",
+        "连结点 S 与点 P，四段截线顺次首尾相接，封闭生成四边形截面（当侧棱均被严格截断时为平行四边形）。",
       rationale:
-        "多面体表面截线首尾相接封闭成多边形，对边 RS ∥ PQ 满足平行约束，生成梯形截面。",
+        "多面体相对表面交线分别平行（PQ ∥ RS 且 QR ∥ SP），满足两组对边平行闭环。",
       activeLines: [
         { from: P, to: Q, type: "solid", colorKey: "accent" },
         { from: Q, to: R, type: "solid", colorKey: "accent" },
@@ -481,7 +950,7 @@ export function buildPolyhedronConstructionSteps(
     };
   }
 
-  // ================= 分流 3：交轨延长线法 (4 步) =================
+  // 分流 3：交轨延长线法 (4 步)
   const stepOptions: ConstructionStepOption[] = [
     { step: 1, label: "Step 1", description: "同面连线" },
     { step: 2, label: "Step 2", description: "延长求交" },
@@ -490,7 +959,6 @@ export function buildPolyhedronConstructionSteps(
   ];
   const step = Math.max(1, Math.min(4, currentStep));
 
-  // Step 1: 同面直接连线
   if (step === 1) {
     return {
       step: 1,
@@ -516,7 +984,6 @@ export function buildPolyhedronConstructionSteps(
     };
   }
 
-  // Step 2: 延长求交确定底面外点
   if (step === 2) {
     return {
       step: 2,
@@ -544,7 +1011,6 @@ export function buildPolyhedronConstructionSteps(
     };
   }
 
-  // Step 3: 确定底面交线与棱交点
   if (step === 3) {
     const lines: ConstructionLine[] = [
       { from: P, to: Q, type: "solid", colorKey: "highlight", label: "PQ" },
@@ -621,7 +1087,20 @@ export function buildPolyhedronConstructionSteps(
   }
 
   // Step 4: 封闭生成完整截面多边形
-  const finalPolygon = [P, Q, R, ...bottomPoints.map((b) => b.point)];
+  const extraFourthPoint =
+    bottomPoints.length === 0 &&
+    solidKind === "cuboid" &&
+    fourthZRatio >= 0 &&
+    fourthZRatio <= 1
+      ? [sub(R, sub(Q, P))]
+      : [];
+  const finalPolygon = [
+    P,
+    Q,
+    R,
+    ...bottomPoints.map((b) => b.point),
+    ...extraFourthPoint,
+  ];
   const lines: ConstructionLine[] = [
     ...step2ExtensionLines.map((l) => ({ ...l, type: "dashed" as const })),
   ];

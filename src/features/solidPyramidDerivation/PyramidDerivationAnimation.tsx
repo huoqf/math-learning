@@ -5,6 +5,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   ParamControl,
+  ParamPlayBar,
   MathPanel,
   TabSwitcher,
   TipCard,
@@ -13,6 +14,7 @@ import {
 import type { ParamConfig } from "@/components/UI";
 import { Legend3D } from "@/components/Math3D/Legend3D";
 import { CameraFit } from "@/components/Math3D";
+import { useParamPlay } from "@/hooks/useParamPlay";
 import { getPyramidDerivationBounds } from "@/math3d/legacy3dBounds";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import {
@@ -40,7 +42,29 @@ export function PyramidDerivationAnimation() {
     explode: 0,
   });
 
+  const explodePlay = useParamPlay({
+    min: 0,
+    max: 1,
+    ratePerSecond: 0.35,
+    step: 0.02,
+    mode: "bounce",
+    getValue: () => params.explode ?? 0,
+    onChange: (nextVal) => setParams((p) => ({ ...p, explode: nextVal })),
+  });
+
+  const cutPlay = useParamPlay({
+    min: 0.1,
+    max: Math.max(1.0, params.h - 0.1),
+    ratePerSecond: 1.0,
+    step: 0.05,
+    mode: "bounce",
+    getValue: () => params.heightCut ?? 1.6,
+    onChange: (nextVal) => setParams((p) => ({ ...p, heightCut: nextVal })),
+  });
+
   const handleParamChange = (key: string, value: number) => {
+    if (key === "explode" && explodePlay.isPlaying) explodePlay.pause();
+    if (key === "heightCut" && cutPlay.isPlaying) cutPlay.pause();
     setParams((prev) => ({
       ...prev,
       [key]: value,
@@ -312,6 +336,8 @@ export function PyramidDerivationAnimation() {
               ]}
               value={mode}
               onChange={(tab) => {
+                explodePlay.pause();
+                cutPlay.pause();
                 setMode(tab as "tripartition" | "yangma" | "coneEquivalence");
                 setActivePartId(null);
               }}
@@ -323,6 +349,27 @@ export function PyramidDerivationAnimation() {
               params={paramConfigs}
               onParamChange={handleParamChange}
             />
+            {mode !== "coneEquivalence" ? (
+              <div className="mt-2.5">
+                <ParamPlayBar
+                  isPlaying={explodePlay.isPlaying}
+                  onToggle={explodePlay.toggle}
+                  speed={explodePlay.speed}
+                  onSpeedChange={explodePlay.setSpeed}
+                  label="演示子体拆分过程"
+                />
+              </div>
+            ) : (
+              <div className="mt-2.5">
+                <ParamPlayBar
+                  isPlaying={cutPlay.isPlaying}
+                  onToggle={cutPlay.toggle}
+                  speed={cutPlay.speed}
+                  onSpeedChange={cutPlay.setSpeed}
+                  label="扫描水平等高截面"
+                />
+              </div>
+            )}
           </LeftPanelSection>
 
           <LeftPanelSection title="子体聚焦">
@@ -349,6 +396,9 @@ export function PyramidDerivationAnimation() {
         <ThreeDCanvas
           cameraPosition={[6.5, 5.5, 7.5]}
           fov={42}
+          frameloop={
+            explodePlay.isPlaying || cutPlay.isPlaying ? "always" : "demand"
+          }
           legend={<Legend3D items={legendItems} />}
         >
           <CameraFit bounds={sceneBounds} fov={42} />

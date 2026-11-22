@@ -5,6 +5,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   ParamControl,
+  StepNavigator,
   MathPanel,
   TabSwitcher,
   SelectGrid,
@@ -12,15 +13,18 @@ import {
   TipCard,
   renderMixedLatex,
 } from "@/components/UI";
-import type { ParamConfig } from "@/components/UI";
+import type { ParamConfig, AnswerStepItem } from "@/components/UI";
 import {
   Legend3D,
   CameraRig,
   CameraFit,
   ThreeViewsPanel,
   ModeSwitchOverlay3D,
+  AnswerStepOverlay3D,
+  ParamCurveOverlay2D,
 } from "@/components/Math3D";
 import { getSolidDistanceBounds } from "@/math3d/legacy3dBounds";
+import { sampleSpatialDistanceCurve } from "@/math3d/overlaySamplers";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
 import { solidDistanceMeta } from "@/data/registries/solidGeometry";
@@ -32,11 +36,13 @@ import { solvePointToPlaneDistance } from "@/math3d/spatialAngle";
 import {
   solveSkewLinesDistance,
   solveSideEdgeAndFaceDiagonalDistance,
+  solveCuboidPointLineDistance,
 } from "@/math3d/spatialDistance";
 import { MATH_COLORS } from "@/theme";
 import CuboidBaseScene from "./CuboidBaseScene";
 import SkewPerpendicularModeScene from "./modes/SkewPerpendicularModeScene";
 import DistanceModeScene from "./modes/DistanceModeScene";
+import PointLineDistanceModeScene from "./modes/PointLineDistanceModeScene";
 
 import {
   getSpatialDistancePresets,
@@ -86,7 +92,10 @@ export default function SpatialDistanceAnimation() {
 
   // 纯数学模型解算
   const isSideEdgeModel = modelPreset === "sideEdge";
-  const isCubeModel = modelPreset === "cube" || modelPreset === "cubeThird";
+  const isCubeModel =
+    modelPreset === "cube" ||
+    modelPreset === "cubeThird" ||
+    modelPreset === "cubeMid";
   const skewData = useMemo(() => {
     return isSideEdgeModel
       ? solveSideEdgeAndFaceDiagonalDistance(a, b, c, lambda, mu)
@@ -95,6 +104,10 @@ export default function SpatialDistanceAnimation() {
 
   const pointPlaneData = useMemo(() => {
     return solvePointToPlaneDistance(a, b, c, lambda);
+  }, [a, b, c, lambda]);
+
+  const pointLineData = useMemo(() => {
+    return solveCuboidPointLineDistance(a, b, c, lambda);
   }, [a, b, c, lambda]);
 
   // 几何顶点与动点 (SSOT 绑定纯数学层 pointPlaneData.E，消除 lambda=0 退化不同源)
@@ -125,6 +138,19 @@ export default function SpatialDistanceAnimation() {
     [params, activeMode, modelPreset, isCube],
   );
 
+  const [activeAnswerStep, setActiveAnswerStep] = useState(1);
+  const answerSteps = useMemo<AnswerStepItem[]>(
+    () =>
+      (mathData.reasoningSteps ?? []).map((rs) => ({
+        step: rs.step,
+        title: rs.title,
+        sceneHint: rs.rubric,
+      })),
+    [mathData.reasoningSteps],
+  );
+  const effectiveAnswerStep =
+    answerSteps.length > 0 ? Math.min(activeAnswerStep, answerSteps.length) : 1;
+
   // 典型情景配置 (纯净加粗中文标题，严禁堆砌公式)
   const currentPresets = useMemo(
     () =>
@@ -137,6 +163,7 @@ export default function SpatialDistanceAnimation() {
 
   const handleModelPresetChange = (pKey: string) => {
     setModelPreset(pKey);
+    setActiveAnswerStep(1);
     const target = currentPresets.find((p) => p.key === pKey);
     if (target) {
       setParams(target.params);
@@ -172,6 +199,14 @@ export default function SpatialDistanceAnimation() {
     });
   }, []);
 
+  const handlePointLineDrag = useCallback((next: Vec3) => {
+    setModelPreset("free");
+    setParams((prev) => {
+      const curC = prev.c ?? 2;
+      return { ...prev, lambda: Math.min(1, Math.max(0, next.z / curC)) };
+    });
+  }, []);
+
   // 三视图正投影数据
   const viewsData = useMemo(() => {
     return buildSolidViews("cuboid", {
@@ -185,9 +220,10 @@ export default function SpatialDistanceAnimation() {
   const paramConfigs = useMemo<ParamConfig[]>(() => {
     return solidDistanceMeta
       .filter((meta) => {
-        // 模式二三无第二个动点 mu
+        // 模式二/三/四无第二个动点 mu
         if (
-          (activeMode === "pointPlaneDistance" ||
+          (activeMode === "pointLineDistance" ||
+            activeMode === "pointPlaneDistance" ||
             activeMode === "volumeExtrema") &&
           meta.key === "mu"
         ) {
@@ -233,6 +269,7 @@ export default function SpatialDistanceAnimation() {
             <TabSwitcher
               tabs={[
                 { key: "skewDistance", label: "异面公垂线与极值" },
+                { key: "pointLineDistance", label: "点线距离" },
                 { key: "pointPlaneDistance", label: "点面距离" },
                 { key: "volumeExtrema", label: "体积极值与轨迹" },
               ]}
@@ -240,6 +277,7 @@ export default function SpatialDistanceAnimation() {
               onChange={(key) => {
                 setActiveMode(key as DistanceMode);
                 setModelPreset("free");
+                setActiveAnswerStep(1);
               }}
             />
           </LeftPanelSection>
@@ -264,6 +302,17 @@ export default function SpatialDistanceAnimation() {
               onParamChange={handleParamChange}
             />
           </LeftPanelSection>
+
+          {answerSteps.length > 0 && (
+            <LeftPanelSection title="分步作答导航">
+              <StepNavigator
+                steps={answerSteps}
+                active={effectiveAnswerStep}
+                onChange={setActiveAnswerStep}
+                hint="右屏已同步高亮对应采分步卡片"
+              />
+            </LeftPanelSection>
+          )}
 
           {/* 4. 辅助图层开关 */}
           {viewMode === "3d" && (
@@ -313,7 +362,11 @@ export default function SpatialDistanceAnimation() {
                 ) : (
                   <div className="col-span-2">
                     <Toggle
-                      label="三棱锥双高线 (EA 与 AH)"
+                      label={
+                        activeMode === "pointLineDistance"
+                          ? "辅助直角三角形 △PHB 与射影段"
+                          : "三棱锥双高线 (EA 与 AH)"
+                      }
                       checked={showAuxiliary}
                       onChange={setShowAuxiliary}
                       size="compact"
@@ -364,7 +417,31 @@ export default function SpatialDistanceAnimation() {
         <div className="w-full h-full relative flex flex-col bg-white">
           {viewMode === "3d" ? (
             <div className="flex-1 relative">
-              <ThreeDCanvas cameraPosition={cameraPosition}>
+              <ThreeDCanvas
+                cameraPosition={cameraPosition}
+                overlay={
+                  <>
+                    <AnswerStepOverlay3D
+                      steps={answerSteps}
+                      activeStep={
+                        answerSteps.length > 0 ? effectiveAnswerStep : undefined
+                      }
+                    />
+                    <ParamCurveOverlay2D
+                      {...sampleSpatialDistanceCurve(
+                        activeMode,
+                        a,
+                        b,
+                        c,
+                        lambda,
+                        mu,
+                        isSideEdgeModel,
+                      )}
+                      position="bottom-right"
+                    />
+                  </>
+                }
+              >
                 <CameraRig
                   ref={controlsRef}
                   enabled={interactionMode === "orbit"}
@@ -397,12 +474,34 @@ export default function SpatialDistanceAnimation() {
                     showRightAngles={showRightAngles}
                     showCoordinates={showCoordinates}
                     interactionMode={interactionMode}
+                    activeStep={
+                      answerSteps.length > 0 ? effectiveAnswerStep : undefined
+                    }
                     onPDrag={handlePDrag}
                     onQDrag={handleQDrag}
                   />
                 )}
 
-                {/* 模式二/三：点面距离与体积极值 */}
+                {/* 模式二：点到直线的距离 */}
+                {activeMode === "pointLineDistance" && (
+                  <PointLineDistanceModeScene
+                    c={c}
+                    vertices={vertices}
+                    pointLineData={pointLineData}
+                    showAxes={showAxes}
+                    showCoordinates={showCoordinates}
+                    showAuxiliary={showAuxiliary}
+                    showRightAngles={showRightAngles}
+                    showNormals={showNormals}
+                    interactionMode={interactionMode}
+                    activeStep={
+                      answerSteps.length > 0 ? effectiveAnswerStep : undefined
+                    }
+                    onPDrag={handlePointLineDrag}
+                  />
+                )}
+
+                {/* 模式三/四：点面距离与体积极值 */}
                 {(activeMode === "pointPlaneDistance" ||
                   activeMode === "volumeExtrema") && (
                   <DistanceModeScene
@@ -415,6 +514,9 @@ export default function SpatialDistanceAnimation() {
                     showRightAngles={showRightAngles}
                     showNormals={showNormals}
                     interactionMode={interactionMode}
+                    activeStep={
+                      answerSteps.length > 0 ? effectiveAnswerStep : undefined
+                    }
                     onEPointDrag={handleEDrag}
                   />
                 )}
@@ -446,15 +548,28 @@ export default function SpatialDistanceAnimation() {
                           },
                           { label: "平行转化平面", colorKey: "accent" },
                         ]
-                      : [
-                          { label: "动点 E", colorKey: "highlight" },
-                          {
-                            label: "垂线段 AH / 距离 d",
-                            colorKey: "paramPrimary",
-                          },
-                          { label: "底面 △ABD", colorKey: "secondary" },
-                          { label: "截面 △BDE", colorKey: "paramTertiary" },
-                        ]
+                      : activeMode === "pointLineDistance"
+                        ? [
+                            { label: "动点 P(λ)", colorKey: "paramPrimary" },
+                            {
+                              label: "定直线 l (BD₁) / 投影段",
+                              colorKey: "paramSecondary",
+                            },
+                            {
+                              label: "垂线段 PH / 距离 d",
+                              colorKey: "paramTertiary",
+                            },
+                            { label: "辅助面 △PBD₁", colorKey: "accent" },
+                          ]
+                        : [
+                            { label: "动点 E", colorKey: "highlight" },
+                            {
+                              label: "垂线段 AH / 距离 d",
+                              colorKey: "paramPrimary",
+                            },
+                            { label: "底面 △ABD", colorKey: "secondary" },
+                            { label: "截面 △BDE", colorKey: "paramTertiary" },
+                          ]
                   }
                 />
               </div>
@@ -467,7 +582,13 @@ export default function SpatialDistanceAnimation() {
           )}
         </div>
       }
-      right={<MathPanel {...mathData} />}
+      right={
+        <MathPanel
+          {...mathData}
+          focusStep={answerSteps.length > 0 ? effectiveAnswerStep : undefined}
+          focusTarget="reasoning"
+        />
+      }
     />
   );
 }

@@ -58,7 +58,7 @@ export const styleTokensRules = [
     check(ctx) {
       const issues = [];
       ctx.cleanLines.forEach((line, idx) => {
-        if (/formula="[^"]*\\\\/.test(line)) {
+        if (/(?:formula|tex)="[^"]*\\\\/.test(line)) {
           issues.push({
             lineNum: idx + 1,
             message: 'JSX 属性字符串中的 \\\\ 会被直接传给 KaTeX 导致换行/排版断裂，请改为单斜杠 \\',

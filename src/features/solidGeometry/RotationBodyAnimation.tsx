@@ -1,14 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { ThreePanel } from "@/components/Layout/ThreePanel";
 import { ThreeDCanvas } from "@/components/Layout/ThreeDCanvas";
 import {
   LeftPanel,
   LeftPanelSection,
   ParamControl,
+  ParamPlayBar,
   MathPanel,
   SelectGrid,
   TabSwitcher,
-  Button,
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
@@ -23,6 +23,7 @@ import { getRotationBodyBounds } from "@/math3d/legacy3dBounds";
 import type { LegendItem, InteractionMode3D } from "@/components/Math3D";
 import { RotationSweep, SphereCutSection } from "@/components/Math3D/solids";
 import { use3DViewport, type CameraPreset } from "@/hooks/use3DViewport";
+import { useParamPlay } from "@/hooks/useParamPlay";
 import { rotationBodyMeta } from "@/data/registries/solidGeometry";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { MATH_COLORS } from "@/theme";
@@ -34,11 +35,12 @@ import {
 } from "@/math3d/rotationProfiles";
 import { buildSolidViews } from "./threeViews/buildSolidViews";
 import type { SolidKind } from "./threeViews/buildSolidViews";
+import RotationUnfoldModeScene from "./modes/RotationUnfoldModeScene";
 
 type ShapeType =
   "rectangle" | "rightTriangle" | "rightTrapezoid" | "semicircle";
 
-type FeatureMode = "generation" | "section" | "sphereCut";
+type FeatureMode = "generation" | "section" | "sphereCut" | "unfoldPath";
 
 export default function RotationBodyAnimation() {
   const [shape, setShape] = useState<ShapeType>("rectangle");
@@ -51,72 +53,78 @@ export default function RotationBodyAnimation() {
     height: 3,
     sweepAngleDeg: 360,
     cutDistance: 0.8,
+    unfoldProgress: 1,
   });
-  const [autoPlay, setAutoPlay] = useState(false);
   const [displayMode, setDisplayMode] = useState<"3d" | "orthographic">("3d");
   const { preset, viewToken, cameraPosition, setCameraPreset, controlsRef } =
     use3DViewport("iso");
 
-  const sceneBounds = useMemo(
-    () =>
-      getRotationBodyBounds({
-        r1: params.r1,
-        r2: params.r2,
-        height: params.height,
-      }),
-    [params.r1, params.r2, params.height],
-  );
-  const timerRef = useRef<number | null>(null);
-
-  // 自动播放：定时递增扫描角度，模拟"旋转生成"动画
-  useEffect(() => {
-    if (autoPlay) {
-      timerRef.current = window.setInterval(() => {
-        setParams((p) => {
-          const next = p.sweepAngleDeg + 4;
-          if (next > 360) {
-            // 完成一整圈扫掠后定格在 360° 并自动完成演示
-            setAutoPlay(false);
-            return { ...p, sweepAngleDeg: 360 };
-          }
-          return { ...p, sweepAngleDeg: next };
-        });
-      }, 30);
-    }
-    return () => {
-      if (timerRef.current) window.clearInterval(timerRef.current);
-    };
-  }, [autoPlay]);
-
-  const toggleAutoPlay = () => {
-    setAutoPlay((prev) => {
-      if (!prev) {
-        // 开始播放：如果已经在 360°，从 0° 重新开始流畅扫掠
-        setParams((p) => ({
-          ...p,
-          sweepAngleDeg: p.sweepAngleDeg >= 359 ? 0 : p.sweepAngleDeg,
-        }));
-      }
-      return !prev;
+  const sceneBounds = useMemo(() => {
+    const base = getRotationBodyBounds({
+      r1: params.r1,
+      r2: params.r2,
+      height: params.height,
     });
-  };
+    if (featureMode === "unfoldPath" && shape !== "semicircle") {
+      const unfoldHalfWidth = Math.PI * (params.r1 ?? 1.5) + 0.8;
+      return {
+        min: {
+          x: Math.min(base.min.x, -unfoldHalfWidth),
+          y: base.min.y,
+          z: base.min.z,
+        },
+        max: {
+          x: Math.max(base.max.x, unfoldHalfWidth),
+          y: base.max.y,
+          z: Math.max(base.max.z, unfoldHalfWidth * 0.8),
+        },
+      };
+    }
+    return base;
+  }, [params.r1, params.r2, params.height, featureMode, shape]);
+
+  const sweepPlay = useParamPlay({
+    min: 0,
+    max: 360,
+    ratePerSecond: 72,
+    step: 1,
+    mode: "loop",
+    getValue: () => params.sweepAngleDeg ?? 360,
+    onChange: (nextVal) => setParams((p) => ({ ...p, sweepAngleDeg: nextVal })),
+  });
+
+  const unfoldPlay = useParamPlay({
+    min: 0,
+    max: 1,
+    ratePerSecond: 0.35,
+    step: 0.02,
+    mode: "bounce",
+    getValue: () => params.unfoldProgress ?? 1,
+    onChange: (nextVal) =>
+      setParams((p) => ({ ...p, unfoldProgress: nextVal })),
+  });
 
   const handleParamChange = (key: string, value: number) => {
-    if (key === "sweepAngleDeg" && autoPlay) {
-      setAutoPlay(false);
+    if (key === "sweepAngleDeg" && sweepPlay.isPlaying) {
+      sweepPlay.pause();
+    }
+    if (key === "unfoldProgress" && unfoldPlay.isPlaying) {
+      unfoldPlay.pause();
     }
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleReset = () => {
+    sweepPlay.pause();
+    unfoldPlay.pause();
     setParams({
       r1: 1.5,
       r2: 0.8,
       height: 3,
       sweepAngleDeg: 360,
       cutDistance: 0.8,
+      unfoldProgress: 1,
     });
-    setAutoPlay(false);
   };
 
   const profile = useMemo(() => {
@@ -190,6 +198,10 @@ export default function RotationBodyAnimation() {
         if (meta.key === "cutDistance") {
           return isSphere && featureMode === "sphereCut";
         }
+        // 侧面展开度 p 仅在非球体的 unfoldPath 模式展示
+        if (meta.key === "unfoldProgress") {
+          return !isSphere && featureMode === "unfoldPath";
+        }
         return true;
       })
       .map((meta) => {
@@ -223,6 +235,7 @@ export default function RotationBodyAnimation() {
           min,
           max,
           step: meta.step ?? 0.1,
+          group: meta.group,
           description: meta.description,
           descriptionFormula: meta.descriptionFormula,
           importance: meta.importance,
@@ -239,12 +252,34 @@ export default function RotationBodyAnimation() {
     ];
     if (shape === "semicircle") {
       base.push({ key: "sphereCut", label: "球截面小圆模型" });
+    } else {
+      base.push({ key: "unfoldPath", label: "侧面展开路径" });
     }
     return base;
   }, [shape]);
 
   // 图例配置
   const legendItems = useMemo<LegendItem[]>(() => {
+    if (featureMode === "unfoldPath" && shape !== "semicircle") {
+      return [
+        {
+          colorKey: "primary",
+          swatch: "area",
+          label: "可展侧面网格",
+        },
+        {
+          colorKey: "paramSecondary",
+          swatch: "line",
+          label: "剪开剖缝母线",
+        },
+        {
+          colorKey: "paramPrimary",
+          swatch: "line",
+          label: "表面最短路径",
+        },
+      ];
+    }
+
     if (featureMode === "sphereCut") {
       return [
         {
@@ -297,7 +332,7 @@ export default function RotationBodyAnimation() {
     }
 
     return items;
-  }, [featureMode]);
+  }, [featureMode, shape]);
 
   // 左屏教学提示与题设导引（说明初始条件与探究设问）
   const tipConfig = useMemo(() => {
@@ -308,6 +343,25 @@ export default function RotationBodyAnimation() {
       semicircle: "球体 (由半圆绕直径旋转生成)",
     };
     const currentName = shapeNames[shape];
+
+    if (featureMode === "unfoldPath" && shape !== "semicircle") {
+      return {
+        variant: "success" as const,
+        badge: `新高考压轴 · ${currentName}侧面展开最短路`,
+        condition:
+          shape === "rectangle"
+            ? "沿过底部顶点 $A$ 与顶部对应点 $A_1$ 的母线将圆柱侧面剪开展平，展开矩形宽为 $2\\pi r$、高为 $h$。"
+            : shape === "rightTriangle"
+              ? "沿母线剪开圆锥侧面，扇形圆心角 $\\alpha = \\frac{r}{l}\\times 360^\\circ$，考察底面圆周上一点 $A$ 绕侧面一周回到自身的最短路。"
+              : "补台成锥展开圆台侧面为扇环，大圆半径 $R_1$、小圆半径 $R_2$、展开角 $\\alpha$，考察由下底 $A$ 绕侧一周至上底对应点 $B$ 的最短路径。",
+        question:
+          shape === "rectangle"
+            ? "求展开图中 $A$ 到 $A_1$ 的最短路线长 $L_{\\min}$，并播放连续展开动画验证表面螺旋轨线等距变直的过程。"
+            : shape === "rightTriangle"
+              ? "讨论 $\\alpha \\le 180^\\circ$ 时余弦弦长 $2l\\sin\\frac{\\alpha}{2}$ 与 $\\alpha > 180^\\circ$ 退化为两倍母线 $2l$ 的几何临界分界条件。"
+              : "由有效弦角与余弦定理求展开弦长，并检验当圆心角增大时路径是否受上底小圆遮挡沿切线贴合。",
+      };
+    }
 
     if (featureMode === "sphereCut") {
       return {
@@ -350,9 +404,14 @@ export default function RotationBodyAnimation() {
               value={featureMode}
               onChange={(k) => {
                 const nextMode = k as FeatureMode;
+                sweepPlay.pause();
+                unfoldPlay.pause();
                 setFeatureMode(nextMode);
                 if (nextMode === "sphereCut" && shape !== "semicircle") {
                   setShape("semicircle");
+                }
+                if (nextMode === "unfoldPath" && shape === "semicircle") {
+                  setShape("rectangle");
                 }
               }}
             />
@@ -371,8 +430,16 @@ export default function RotationBodyAnimation() {
               value={shape}
               onChange={(k) => {
                 const nextShape = k as ShapeType;
+                sweepPlay.pause();
+                unfoldPlay.pause();
                 setShape(nextShape);
                 if (nextShape !== "semicircle" && featureMode === "sphereCut") {
+                  setFeatureMode("generation");
+                }
+                if (
+                  nextShape === "semicircle" &&
+                  featureMode === "unfoldPath"
+                ) {
                   setFeatureMode("generation");
                 }
                 setParams((p) => ({ ...p, sweepAngleDeg: 360 }));
@@ -389,14 +456,26 @@ export default function RotationBodyAnimation() {
               onReset={handleReset}
             />
             {featureMode === "generation" && (
-              <Button
-                variant={autoPlay ? "primary" : "secondary"}
-                size="sm"
-                className="w-full mt-2.5"
-                onClick={toggleAutoPlay}
-              >
-                {autoPlay ? "停止自动演示" : "自动演示旋转生成"}
-              </Button>
+              <div className="mt-2.5">
+                <ParamPlayBar
+                  isPlaying={sweepPlay.isPlaying}
+                  onToggle={sweepPlay.toggle}
+                  speed={sweepPlay.speed}
+                  onSpeedChange={sweepPlay.setSpeed}
+                  label="旋转生成演示"
+                />
+              </div>
+            )}
+            {featureMode === "unfoldPath" && shape !== "semicircle" && (
+              <div className="mt-2.5">
+                <ParamPlayBar
+                  isPlaying={unfoldPlay.isPlaying}
+                  onToggle={unfoldPlay.toggle}
+                  speed={unfoldPlay.speed}
+                  onSpeedChange={unfoldPlay.setSpeed}
+                  label="连续展平曲面"
+                />
+              </div>
             )}
           </LeftPanelSection>
 
@@ -456,7 +535,9 @@ export default function RotationBodyAnimation() {
         displayMode === "3d" ? (
           <ThreeDCanvas
             cameraPosition={cameraPosition}
-            frameloop={autoPlay ? "always" : "demand"}
+            frameloop={
+              sweepPlay.isPlaying || unfoldPlay.isPlaying ? "always" : "demand"
+            }
             legend={<Legend3D title="图例" items={legendItems} />}
             overlay={
               shape === "semicircle" && featureMode === "sphereCut" ? (
@@ -484,6 +565,14 @@ export default function RotationBodyAnimation() {
                 cutDistance={params.cutDistance}
                 draggable={interactionMode === "drag"}
                 onDragCutDistance={(d) => handleParamChange("cutDistance", d)}
+              />
+            ) : featureMode === "unfoldPath" && shape !== "semicircle" ? (
+              <RotationUnfoldModeScene
+                shape={shape}
+                r1={params.r1}
+                r2={params.r2}
+                height={params.height}
+                unfoldProgress={params.unfoldProgress ?? 1}
               />
             ) : (
               <RotationSweep

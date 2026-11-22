@@ -30,7 +30,7 @@ export function colorize(text: string, color: string): string {
  * 页面严禁再使用 "distance" 之类的自有别名，否则会落入 builder 的末位分支而错显内容。
  */
 export type SpatialDistanceMode =
-  "skewDistance" | "pointPlaneDistance" | "volumeExtrema";
+  "skewDistance" | "pointLineDistance" | "pointPlaneDistance" | "volumeExtrema";
 
 export type GaokaoTopicKey =
   | "func_derivative"

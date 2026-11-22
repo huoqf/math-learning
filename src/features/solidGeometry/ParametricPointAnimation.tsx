@@ -5,20 +5,24 @@ import {
   LeftPanel,
   LeftPanelSection,
   ParamControl,
+  StepNavigator,
   MathPanel,
   TabSwitcher,
   SelectGrid,
   TipCard,
 } from "@/components/UI";
-import type { ParamConfig } from "@/components/UI";
+import type { ParamConfig, AnswerStepItem } from "@/components/UI";
 import {
   Legend3D,
   CameraRig,
   CameraFit,
   ThreeViewsPanel,
   ModeSwitchOverlay3D,
+  AnswerStepOverlay3D,
+  ParamCurveOverlay2D,
 } from "@/components/Math3D";
 import { getParametricPointBounds } from "@/math3d/legacy3dBounds";
+import { sampleParametricPointCurve } from "@/math3d/overlaySamplers";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
 import { solidParametricMeta } from "@/data/registries/solidGeometry";
@@ -118,19 +122,43 @@ export default function ParametricPointAnimation() {
     [params, activeMode],
   );
 
+  const [activeAnswerStep, setActiveAnswerStep] = useState(1);
+  const answerSteps = useMemo<AnswerStepItem[]>(
+    () =>
+      (mathData.reasoningSteps ?? []).map((rs) => ({
+        step: rs.step,
+        title: rs.title,
+        sceneHint: rs.rubric,
+      })),
+    [mathData.reasoningSteps],
+  );
+  const effectiveAnswerStep =
+    answerSteps.length > 0 ? Math.min(activeAnswerStep, answerSteps.length) : 1;
+
   // 4. 典型预设切换处理 (严格遵照铁律 3：预设切换仅修改参数，不跨模式)
   const handlePresetChange = (pKey: string) => {
     setPresetKey(pKey);
+    setActiveAnswerStep(1);
     if (pKey === "free") return;
 
     if (activeMode === "singlePointAngle") {
       if (pKey === "perp") {
         const rawPerp = (b * b - a * a) / (c * c);
-        const perpLambda = Math.max(0, Math.min(1, rawPerp));
-        setParams((prev) => ({
-          ...prev,
-          lambda: Number(perpLambda.toFixed(2)),
-        }));
+        if (rawPerp >= 0 && rawPerp <= 1) {
+          setParams((prev) => ({
+            ...prev,
+            lambda: Number(rawPerp.toFixed(2)),
+          }));
+        } else {
+          // 当前长方体尺寸下 b ≤ a 或越界无垂直解时，切换至使 DP ⊥ AC1 严格成立的合法构型 (3, 4, 3)
+          setParams((prev) => ({
+            ...prev,
+            a: 3,
+            b: 4,
+            c: 3,
+            lambda: Number(((16 - 9) / 9).toFixed(2)),
+          }));
+        }
       } else if (pKey === "midpoint") {
         setParams((prev) => ({ ...prev, lambda: 0.5 }));
       } else if (pKey === "targetAngle") {
@@ -189,6 +217,7 @@ export default function ParametricPointAnimation() {
   const handleModeChange = (mode: ParametricMode) => {
     setActiveMode(mode);
     setPresetKey("free");
+    setActiveAnswerStep(1);
   };
 
   // 6. 参数调节回调 (手动拖动滑块时切回 free 模式)
@@ -485,6 +514,17 @@ export default function ParametricPointAnimation() {
             />
           </LeftPanelSection>
 
+          {answerSteps.length > 0 && (
+            <LeftPanelSection title="分步作答导航">
+              <StepNavigator
+                steps={answerSteps}
+                active={effectiveAnswerStep}
+                onChange={setActiveAnswerStep}
+                hint="右屏已同步高亮对应采分步卡片"
+              />
+            </LeftPanelSection>
+          )}
+
           {/* Step 4: 视图与视角 */}
           <LeftPanelSection title="空间视角">
             <div className="space-y-2">
@@ -529,6 +569,28 @@ export default function ParametricPointAnimation() {
           <div className="w-full h-full relative">
             <ThreeDCanvas
               cameraPosition={cameraPosition}
+              overlay={
+                <>
+                  <AnswerStepOverlay3D
+                    steps={answerSteps}
+                    activeStep={
+                      answerSteps.length > 0 ? effectiveAnswerStep : undefined
+                    }
+                  />
+                  <ParamCurveOverlay2D
+                    {...sampleParametricPointCurve(
+                      activeMode,
+                      a,
+                      b,
+                      c,
+                      lambda,
+                      mu,
+                      targetThetaDeg,
+                    )}
+                    position="bottom-left"
+                  />
+                </>
+              }
               legend={
                 <Legend3D
                   title="图例标注"
@@ -639,6 +701,9 @@ export default function ParametricPointAnimation() {
                   C1={C1}
                   B1={B1}
                   resSingle={resSingle}
+                  activeStep={
+                    answerSteps.length > 0 ? effectiveAnswerStep : undefined
+                  }
                 />
               )}
 
@@ -655,6 +720,9 @@ export default function ParametricPointAnimation() {
                   C={C}
                   resDouble={resDouble}
                   interactionMode={interactionMode}
+                  activeStep={
+                    answerSteps.length > 0 ? effectiveAnswerStep : undefined
+                  }
                   onQDrag={handleQDrag}
                 />
               )}
@@ -669,12 +737,23 @@ export default function ParametricPointAnimation() {
                   C={C}
                   D={D}
                   resVolume={resVolume}
+                  activeStep={
+                    answerSteps.length > 0 ? effectiveAnswerStep : undefined
+                  }
                 />
               )}
 
               {/* ═════════ 模式四：表面展开最短路径 ═════════ */}
               {activeMode === "surfaceShortestPath" && (
-                <SurfacePathModeScene A={A} P={P} C1={C1} resPath={resPath} />
+                <SurfacePathModeScene
+                  A={A}
+                  P={P}
+                  C1={C1}
+                  resPath={resPath}
+                  activeStep={
+                    answerSteps.length > 0 ? effectiveAnswerStep : undefined
+                  }
+                />
               )}
             </ThreeDCanvas>
 
@@ -686,7 +765,14 @@ export default function ParametricPointAnimation() {
           </div>
         )
       }
-      right={<MathPanel {...mathData} title="空间向量与动点存在性、最值看板" />}
+      right={
+        <MathPanel
+          {...mathData}
+          focusStep={answerSteps.length > 0 ? effectiveAnswerStep : undefined}
+          focusTarget="reasoning"
+          title="空间向量与动点存在性、最值看板"
+        />
+      }
     />
   );
 }

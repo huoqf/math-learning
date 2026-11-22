@@ -11,11 +11,12 @@ interface SurfaceParallelJudgeSceneProps {
   isIntersect: boolean;
   tiltDeg: number;
   zHeight: number;
+  showNormals?: boolean;
 }
 
 export const SurfaceParallelJudgeScene: React.FC<
   SurfaceParallelJudgeSceneProps
-> = ({ isIntersect, tiltDeg, zHeight }) => {
+> = ({ isIntersect, tiltDeg, zHeight, showNormals = false }) => {
   const state = calculateParallelJudgeState(isIntersect, tiltDeg, zHeight);
   const rad = (tiltDeg * Math.PI) / 180;
 
@@ -111,38 +112,43 @@ export const SurfaceParallelJudgeScene: React.FC<
         </>
       )}
 
-      {/* 法向量 n1 (alpha) 与 n2 (beta) */}
-      <Vector3DArrow
-        from={{ x: -1.8, y: -1.8, z: 0 }}
-        to={{ x: -1.8, y: -1.8, z: 1.5 }}
-        colorKey="secondary"
-      />
-      <FormulaLabel3D
-        position={{ x: -1.6, y: -1.8, z: 1.6 }}
-        tex="\\vec{n}_2"
-      />
+      {/* 法向量 n1 (alpha) 与 n2 (beta)（选必一对照开关开启时展示） */}
+      {showNormals && (
+        <>
+          <Vector3DArrow
+            from={{ x: -1.8, y: -1.8, z: 0 }}
+            to={{ x: -1.8, y: -1.8, z: 1.5 }}
+            colorKey="secondary"
+          />
+          <FormulaLabel3D
+            position={{ x: -1.6, y: -1.8, z: 1.6 }}
+            tex="\vec{n}_2"
+          />
 
-      <Vector3DArrow
-        from={{
-          x: alphaOrigin.x + 1.2,
-          y: alphaOrigin.y + 1.2 * vAxis.y,
-          z: alphaOrigin.z + 1.2 * vAxis.z,
-        }}
-        to={{
-          x: alphaOrigin.x + 1.2 + state.alphaNormal.x * 1.5,
-          y: alphaOrigin.y + 1.2 * vAxis.y + state.alphaNormal.y * 1.5,
-          z: alphaOrigin.z + 1.2 * vAxis.z + state.alphaNormal.z * 1.5,
-        }}
-        colorKey="paramPrimary"
-      />
-      <FormulaLabel3D
-        position={{
-          x: alphaOrigin.x + 1.4 + state.alphaNormal.x * 1.5,
-          y: alphaOrigin.y + 1.2 * vAxis.y + state.alphaNormal.y * 1.5,
-          z: alphaOrigin.z + 1.2 * vAxis.z + state.alphaNormal.z * 1.5 + 0.1,
-        }}
-        tex="\\vec{n}_1"
-      />
+          <Vector3DArrow
+            from={{
+              x: alphaOrigin.x + 1.2,
+              y: alphaOrigin.y + 1.2 * vAxis.y,
+              z: alphaOrigin.z + 1.2 * vAxis.z,
+            }}
+            to={{
+              x: alphaOrigin.x + 1.2 + state.alphaNormal.x * 1.5,
+              y: alphaOrigin.y + 1.2 * vAxis.y + state.alphaNormal.y * 1.5,
+              z: alphaOrigin.z + 1.2 * vAxis.z + state.alphaNormal.z * 1.5,
+            }}
+            colorKey="paramPrimary"
+          />
+          <FormulaLabel3D
+            position={{
+              x: alphaOrigin.x + 1.4 + state.alphaNormal.x * 1.5,
+              y: alphaOrigin.y + 1.2 * vAxis.y + state.alphaNormal.y * 1.5,
+              z:
+                alphaOrigin.z + 1.2 * vAxis.z + state.alphaNormal.z * 1.5 + 0.1,
+            }}
+            tex="\vec{n}_1"
+          />
+        </>
+      )}
     </>
   );
 };

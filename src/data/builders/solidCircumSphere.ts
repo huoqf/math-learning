@@ -495,6 +495,11 @@ export function buildCircumSpherePanel(
         note: "一般长方体 (a ≠ b 或 b ≠ h) 不存在同时切 6 个面的内切球",
       });
 
+      gaokaoPoints.push({
+        text: "【正方体 vs 长方体内切球辨析】长方体仅当 $a = b = h$ 为正方体时才存在与六个面均相切的内切球（$2r_{\\text{in}} = a$）；一般长方体内部最多容纳半径 $r = \\frac{1}{2}\\min(a,b,h)$ 的最大内切球。",
+        importance: "gaokao",
+      });
+
       if (!isCube) {
         warnings.push({
           text: "当前长方体长宽高不全相等，不存在同时与 6 个面相切的内切球！图中展示为最大内部相切球。",
@@ -665,6 +670,11 @@ export function buildCircumSpherePanel(
         note: "只有当柱体高度等于底面内切圆直径时才存在与 5 个面均相切的内切球",
       });
 
+      gaokaoPoints.push({
+        text: "【直棱柱内切球双约束】直三棱柱存在全相切内切球必须同时满足高 $h = 2r_{\\text{底}}$（切上下底）与 $r = r_{\\text{底}}$（切三侧面），最大容纳球半径为 $\\min(r_{\\text{底}}, \\frac{h}{2})$。",
+        importance: "gaokao",
+      });
+
       if (Math.abs(c - 2 * rBaseIn) > 0.1) {
         warnings.push({
           text: `当前高 h=${c} 不等于底面内切圆直径 2r=${(2 * rBaseIn).toFixed(2)}，三棱柱无法同时切上下底面与侧面！`,
@@ -800,6 +810,11 @@ export function buildCircumSpherePanel(
         latex: `\\color{${MATH_COLORS.paramTertiary}}{h} = 2\\color{${MATH_COLORS.paramPrimary}}{r}`,
         level: "core",
         note: "当且仅当圆柱的高等于底面直径 (h = 2r) 时，才存在与上下底面和侧面均相切的内切球",
+      });
+
+      gaokaoPoints.push({
+        text: "【等高圆柱降维模型】圆柱内切球在轴截面内退化为正方形内切圆：存在内切球的充要条件是高 $h = 2r$，一般情形下最大相切球半径为 $\\min(r, \\frac{h}{2})$。",
+        importance: "gaokao",
       });
 
       if (Math.abs(c - 2 * a) > 0.1) {

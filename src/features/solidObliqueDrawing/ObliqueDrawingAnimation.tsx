@@ -4,6 +4,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   ParamControl,
+  ParamPlayBar,
   MathPanel,
   TabSwitcher,
   SelectGrid,
@@ -11,7 +12,7 @@ import {
   type ParamConfig,
   type SelectGridItem,
 } from "@/components/UI";
-import { useAnimationViewport } from "@/hooks";
+import { useAnimationViewport, useParamPlay } from "@/hooks";
 import { CANVAS_PRESETS } from "@/theme";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { ObliqueDrawingScene } from "./components/ObliqueDrawingScene";
@@ -30,6 +31,17 @@ export default function ObliqueDrawingAnimation() {
     alphaDeg: 45,
     ratioY: 0.5,
     prismH: 3.5,
+    morphT: 1,
+  });
+
+  const morphPlay = useParamPlay({
+    min: 0,
+    max: 1,
+    ratePerSecond: 0.35,
+    step: 0.02,
+    mode: "bounce",
+    getValue: () => params.morphT ?? 1,
+    onChange: (nextVal) => setParams((p) => ({ ...p, morphT: nextVal })),
   });
 
   const { containerRef, canvasSize, vp } = useAnimationViewport({
@@ -159,7 +171,10 @@ export default function ObliqueDrawingAnimation() {
                 { key: "solidPrism", label: "空间几何体" },
               ]}
               value={viewMode}
-              onChange={(key) => setViewMode(key as ViewMode)}
+              onChange={(key) => {
+                morphPlay.pause();
+                setViewMode(key as ViewMode);
+              }}
             />
           </LeftPanelSection>
 
@@ -168,7 +183,10 @@ export default function ObliqueDrawingAnimation() {
               <SelectGrid
                 items={polygonItems}
                 value={polygonType}
-                onChange={(val) => setPolygonType(val as PolygonPresetKey)}
+                onChange={(val) => {
+                  morphPlay.pause();
+                  setPolygonType(val as PolygonPresetKey);
+                }}
               />
             </LeftPanelSection>
           )}
@@ -176,10 +194,24 @@ export default function ObliqueDrawingAnimation() {
           <LeftPanelSection title="几何尺寸与投影参数">
             <ParamControl
               params={paramConfigs}
-              onParamChange={(k: string, v: number) =>
-                setParams((prev) => ({ ...prev, [k]: v }))
-              }
+              onParamChange={(k: string, v: number) => {
+                if (morphPlay.isPlaying) morphPlay.pause();
+                setParams((prev) => ({ ...prev, [k]: v }));
+              }}
             />
+            <div className="mt-2.5">
+              <ParamPlayBar
+                isPlaying={morphPlay.isPlaying}
+                onToggle={morphPlay.toggle}
+                speed={morphPlay.speed}
+                onSpeedChange={morphPlay.setSpeed}
+                label={
+                  viewMode === "polygon"
+                    ? "演示斜轴斜切演化"
+                    : "演示直观图立体拉伸"
+                }
+              />
+            </div>
           </LeftPanelSection>
 
           <TipCard {...tipConfig} />

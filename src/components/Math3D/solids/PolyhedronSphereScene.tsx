@@ -25,6 +25,7 @@ interface PolyhedronSphereSceneProps {
   showComplementFrame?: boolean;
   showSphere?: boolean;
   showRadiusLines?: boolean;
+  activeStep?: number;
 }
 
 /**
@@ -95,6 +96,7 @@ export function PolyhedronSphereScene({
   showComplementFrame = true,
   showSphere = true,
   showRadiusLines = true,
+  activeStep,
 }: PolyhedronSphereSceneProps) {
   const a = params.a ?? 3;
   const b = params.b ?? 4;
@@ -153,7 +155,7 @@ export function PolyhedronSphereScene({
             from={from}
             to={to}
             colorKey="paramPrimary"
-            lineWidth={3}
+            lineWidth={activeStep === 1 ? 4.2 : 3}
           />
         ))}
 
@@ -170,13 +172,19 @@ export function PolyhedronSphereScene({
         {/* 补形长方体框架 */}
         {showComplementFrame && (
           <group>
-            <Cuboid a={a} b={b} c={c} colorKey="secondary" opacity={0.12} />
+            <Cuboid
+              a={a}
+              b={b}
+              c={c}
+              colorKey="secondary"
+              opacity={activeStep === 1 ? 0.22 : 0.12}
+            />
             {/* 长方体体对角线 P-P' */}
             <Segment3D
               from={P}
               to={oppositeP}
               colorKey="paramSecondary"
-              lineWidth={2.5}
+              lineWidth={activeStep === 2 ? 4 : 2.5}
               dashed
             />
             <Point3D position={oppositeP} colorKey="secondary" />
@@ -191,11 +199,15 @@ export function PolyhedronSphereScene({
           from={center}
           to={oppositeP}
           colorKey="highlight"
-          lineWidth={3}
+          lineWidth={activeStep === 3 ? 4.5 : 3}
         />
 
         {showSphere && (
-          <CircumSphere center={center} radius={radius} opacity={0.18} />
+          <CircumSphere
+            center={center}
+            radius={radius}
+            opacity={activeStep === 3 ? 0.28 : 0.18}
+          />
         )}
       </group>
     );
@@ -262,19 +274,19 @@ export function PolyhedronSphereScene({
               from={bottomCenter}
               to={A}
               colorKey="paramSecondary"
-              lineWidth={2.5}
+              lineWidth={activeStep === 1 ? 3.8 : 2.5}
             />
             <Segment3D
               from={center}
               to={bottomCenter}
               colorKey="paramTertiary"
-              lineWidth={2.5}
+              lineWidth={activeStep === 2 ? 3.8 : 2.5}
             />
             <Segment3D
               from={center}
               to={A}
               colorKey="highlight"
-              lineWidth={3}
+              lineWidth={activeStep === 3 ? 4.5 : 3}
             />
           </group>
         )}
@@ -284,7 +296,11 @@ export function PolyhedronSphereScene({
         <PointLabel3D position={center} text="O" />
 
         {showSphere && (
-          <CircumSphere center={center} radius={radius} opacity={0.18} />
+          <CircumSphere
+            center={center}
+            radius={radius}
+            opacity={activeStep === 3 ? 0.28 : 0.18}
+          />
         )}
       </group>
     );
@@ -324,7 +340,7 @@ export function PolyhedronSphereScene({
             from={from}
             to={to}
             colorKey={colorKey}
-            lineWidth={3.5}
+            lineWidth={activeStep === 1 ? 4.6 : 3.5}
           />
         ))}
 
@@ -336,14 +352,14 @@ export function PolyhedronSphereScene({
               b={boxDimensions.y}
               c={boxDimensions.z}
               colorKey="secondary"
-              opacity={0.12}
+              opacity={activeStep === 2 ? 0.24 : 0.12}
             />
             {/* 长方体面对角线 A-B */}
             <Segment3D
               from={A}
               to={B}
               colorKey="paramSecondary"
-              lineWidth={2}
+              lineWidth={activeStep === 2 ? 3.4 : 2}
               dashed
             />
           </group>
@@ -352,10 +368,19 @@ export function PolyhedronSphereScene({
         {/* 球心 O 与外接球 */}
         <Point3D position={center} colorKey="highlight" />
         <PointLabel3D position={center} text="O" />
-        <Segment3D from={center} to={B} colorKey="highlight" lineWidth={3} />
+        <Segment3D
+          from={center}
+          to={B}
+          colorKey="highlight"
+          lineWidth={activeStep === 3 ? 4.5 : 3}
+        />
 
         {showSphere && (
-          <CircumSphere center={center} radius={radius} opacity={0.18} />
+          <CircumSphere
+            center={center}
+            radius={radius}
+            opacity={activeStep === 3 ? 0.28 : 0.18}
+          />
         )}
       </group>
     );
@@ -395,7 +420,7 @@ export function PolyhedronSphereScene({
             from={from}
             to={to}
             colorKey="paramPrimary"
-            lineWidth={3}
+            lineWidth={activeStep === 1 ? 4.2 : 3}
           />
         ))}
 
@@ -418,7 +443,7 @@ export function PolyhedronSphereScene({
               legB={b}
               height={h}
               colorKey="secondary"
-              opacity={0.08}
+              opacity={activeStep === 1 ? 0.16 : 0.08}
             />
 
             {/* 轴线 O1-O */}
@@ -426,7 +451,7 @@ export function PolyhedronSphereScene({
               from={bottomCenter}
               to={center}
               colorKey="paramTertiary"
-              lineWidth={2.5}
+              lineWidth={activeStep === 2 ? 4 : 2.5}
               dashed
             />
             <Point3D position={bottomCenter} colorKey="secondary" />
@@ -437,14 +462,14 @@ export function PolyhedronSphereScene({
               from={bottomCenter}
               to={B}
               colorKey="paramSecondary"
-              lineWidth={2.5}
+              lineWidth={activeStep === 2 ? 4 : 2.5}
             />
             {/* 勾股外接球半径线段 O-B */}
             <Segment3D
               from={center}
               to={B}
               colorKey="highlight"
-              lineWidth={3}
+              lineWidth={activeStep === 3 ? 4.5 : 3}
             />
           </group>
         )}
@@ -454,7 +479,11 @@ export function PolyhedronSphereScene({
         <PointLabel3D position={center} text="O" />
 
         {showSphere && (
-          <CircumSphere center={center} radius={radius} opacity={0.18} />
+          <CircumSphere
+            center={center}
+            radius={radius}
+            opacity={activeStep === 3 ? 0.28 : 0.18}
+          />
         )}
       </group>
     );
@@ -501,7 +530,7 @@ export function PolyhedronSphereScene({
         B={B}
         C={C}
         colorKey="primary"
-        opacity={0.22}
+        opacity={activeStep === 1 ? 0.34 : 0.22}
       />
 
       {/* 三棱锥棱 */}
@@ -511,7 +540,7 @@ export function PolyhedronSphereScene({
           from={from}
           to={to}
           colorKey="primary"
-          lineWidth={3.5}
+          lineWidth={activeStep === 1 ? 4.5 : 3.5}
         />
       ))}
 
@@ -539,7 +568,7 @@ export function PolyhedronSphereScene({
             from={center}
             to={T1}
             colorKey="paramPrimary"
-            lineWidth={2.5}
+            lineWidth={activeStep === 2 || activeStep === 3 ? 4 : 2.5}
           />
 
           {/* 切点 T2 (侧面 PAC) */}
@@ -549,7 +578,7 @@ export function PolyhedronSphereScene({
             from={center}
             to={T2}
             colorKey="paramPrimary"
-            lineWidth={2.5}
+            lineWidth={activeStep === 2 || activeStep === 3 ? 4 : 2.5}
           />
 
           {/* 切点 T3 (侧面 PBC) */}
@@ -559,7 +588,7 @@ export function PolyhedronSphereScene({
             from={center}
             to={T3}
             colorKey="paramPrimary"
-            lineWidth={2.5}
+            lineWidth={activeStep === 2 || activeStep === 3 ? 4 : 2.5}
           />
 
           {/* 切点 T4 (斜面 PAB) */}
@@ -569,13 +598,17 @@ export function PolyhedronSphereScene({
             from={center}
             to={T4}
             colorKey="paramPrimary"
-            lineWidth={2.5}
+            lineWidth={activeStep === 2 || activeStep === 3 ? 4 : 2.5}
           />
         </group>
       )}
 
       {showSphere && (
-        <InSphere center={center} radius={inRadius} opacity={0.35} />
+        <InSphere
+          center={center}
+          radius={inRadius}
+          opacity={activeStep === 3 ? 0.45 : 0.35}
+        />
       )}
     </group>
   );

@@ -8,6 +8,11 @@ import {
   FormulaLabel3D,
   AngleArc3D,
 } from "@/components/Math3D";
+import {
+  buildFoldArcSegments,
+  constrainFoldDragPoint,
+  resolveFoldAlphaFromDrag,
+} from "@/math3d/folding";
 import type { FoldingSceneCommonProps } from "./types";
 
 /** 直角梯形沿腰线 CE 翻折模型场景 */
@@ -18,6 +23,7 @@ export function FoldingTrapezoidScene({
   alphaDeg,
   a,
   b,
+  activeStep,
   interactionMode,
   onPointDrag,
   foldingData,
@@ -25,16 +31,30 @@ export function FoldingTrapezoidScene({
   const { A, B, C, E, "D'": D_prime } = foldingData.points;
   const D_0 = foldingData.unfoldedPoints.D_0;
   const showUnfolded = foldState === "both" || foldState === "unfolded";
+  const safeA = foldingData.safeParams?.a ?? a;
+  const safeB = foldingData.safeParams?.b ?? b;
+  const lenED = Math.max(0.1, safeA - safeB);
+  const arcSegments = buildFoldArcSegments(E, { x: 1, y: 0, z: 0 }, lenED, 20);
+  const projD = { x: D_prime.x, y: 0, z: 0 };
 
   return (
     <>
       {/* (A) 静态底面矩形 ABCE 实体填充面与无箭头几何棱 */}
-      <Polygon3DFace points={[A, B, C, E]} colorKey="primary" opacity={0.25} />
+      <Polygon3DFace
+        points={[A, B, C, E]}
+        colorKey="primary"
+        opacity={activeStep === 1 ? 0.36 : 0.25}
+      />
       <Segment3D from={A} to={B} colorKey="primary" />
       <Segment3D from={B} to={C} colorKey="primary" />
       <Segment3D from={A} to={E} colorKey="primary" />
       {/* 折痕轴 CE */}
-      <Segment3D from={E} to={C} colorKey="secondary" lineWidth={3} />
+      <Segment3D
+        from={E}
+        to={C}
+        colorKey="secondary"
+        lineWidth={activeStep === 1 ? 4.5 : 3}
+      />
 
       {/* (B) 展平状态下的直角梯形 ABCD_0 柔和半透明参考轮廓 */}
       {showUnfolded && (
@@ -73,21 +93,26 @@ export function FoldingTrapezoidScene({
           <Polygon3DFace
             points={[E, C, D_prime]}
             colorKey="highlight"
-            opacity={0.35}
+            opacity={activeStep === 2 ? 0.48 : 0.35}
           />
           <Segment3D
             from={E}
             to={D_prime}
             colorKey="highlight"
-            lineWidth={2.5}
+            lineWidth={activeStep === 2 ? 3.8 : 2.5}
           />
           <Segment3D
             from={C}
             to={D_prime}
             colorKey="highlight"
-            lineWidth={2.5}
+            lineWidth={activeStep === 2 ? 3.8 : 2.5}
           />
-          <Segment3D from={D_prime} to={A} colorKey="accent" lineWidth={2} />
+          <Segment3D
+            from={D_prime}
+            to={A}
+            colorKey="accent"
+            lineWidth={activeStep === 3 ? 3.8 : 2}
+          />
 
           {/* 二面角平面角构造垂线对：ED' ⊥ EC 与 EA ⊥ EC */}
           {showDihedralArc && alphaDeg > 0 && alphaDeg < 180 && (
@@ -96,13 +121,13 @@ export function FoldingTrapezoidScene({
                 from={E}
                 to={A}
                 colorKey="paramPrimary"
-                lineWidth={2.5}
+                lineWidth={activeStep === 3 ? 3.8 : 2.5}
               />
               <Segment3D
                 from={E}
                 to={D_prime}
                 colorKey="paramPrimary"
-                lineWidth={2.5}
+                lineWidth={activeStep === 3 ? 3.8 : 2.5}
               />
               <AngleArc3D
                 vertex={E}
@@ -118,18 +143,40 @@ export function FoldingTrapezoidScene({
             </>
           )}
 
+          {/* 翻折半圆弧轨迹与底面垂足射影 */}
+          {arcSegments.map((seg, i) => (
+            <Segment3D
+              key={`trapezoid-arc-${i}`}
+              from={seg.from}
+              to={seg.to}
+              colorKey="trace"
+              dashed
+              opacity={0.45}
+              lineWidth={1.2}
+            />
+          ))}
+          {alphaDeg > 2 && alphaDeg < 178 && (
+            <>
+              <Segment3D
+                from={D_prime}
+                to={projD}
+                colorKey="secondary"
+                dashed
+                lineWidth={1.6}
+              />
+              <Point3D position={projD} colorKey="secondary" />
+            </>
+          )}
+
           <Point3D
             position={D_prime}
             draggable={interactionMode === "drag"}
-            constrain={(raw) => {
-              const lenED = a - b;
-              return {
-                x: b + lenED * Math.cos((alphaDeg * Math.PI) / 180),
-                y: 0,
-                z: Math.max(0, Math.min(lenED, raw.z)),
-              };
-            }}
-            onDrag={(next) => onPointDrag(next.z, a - b)}
+            constrain={(raw) =>
+              constrainFoldDragPoint(raw, E, { x: 1, y: 0, z: 0 }, lenED)
+            }
+            onDrag={(next) =>
+              onPointDrag(resolveFoldAlphaFromDrag(next.x - safeB, next.z))
+            }
             colorKey="highlight"
           />
           <FormulaLabel3D

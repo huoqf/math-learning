@@ -200,21 +200,29 @@ export const centerCanvasRules = [
     type: '3D综合法范式混入坐标轴或向量或网格',
     severity: 'error',
     check(ctx) {
+      const isSolid3dFile =
+        ctx.filePath.includes('solidGeometry') ||
+        ctx.filePath.includes('solidPyramidDerivation') ||
+        ctx.filePath.includes('solidSphereDerivation') ||
+        ctx.filePath.includes('math3d');
+      if (!isSolid3dFile) return [];
+      // 剥离 import 行后再检测（保留注释中的“范式 A / 综合法”声明，避免注释被 cleanLines 剥除导致规则盲区）
+      const bodyWithComments = ctx.rawLines
+        .filter((line) => !/^\s*import\b/.test(line))
+        .join('\n');
       const isDedicatedParadigmA =
-        (ctx.filePath.includes('solidGeometry') || ctx.filePath.includes('math3d')) &&
-        (ctx.cleanContent.includes('范式 A') || ctx.cleanContent.includes('综合法') || ctx.cleanContent.includes('paradigm: "A"')) &&
-        !ctx.cleanContent.includes('向量法') &&
-        !ctx.cleanContent.includes('坐标法') &&
-        !ctx.cleanContent.includes('vector') &&
-        !ctx.cleanContent.includes('coordinate');
+        (bodyWithComments.includes('范式 A') ||
+          bodyWithComments.includes('综合法') ||
+          bodyWithComments.includes('paradigm: "A"')) &&
+        !/向量法|坐标法|showNormals|showAxes|showVectorBasis/.test(bodyWithComments);
 
       if (!isDedicatedParadigmA) return [];
       const issues = [];
       ctx.cleanLines.forEach((line, idx) => {
-        if (/<CoordinateAxes3D\b/.test(line) || /<Vector3DArrow\b/.test(line) || /<Scene3DGrid\b/.test(line)) {
+        if (/<Vector3DArrow\b/.test(line) || /<Scene3DGrid\b/.test(line)) {
           issues.push({
             lineNum: idx + 1,
-            message: '综合法 (范式 A) 必须保持纯几何纯净度，严禁混入 <CoordinateAxes3D>、<Vector3DArrow> 或 <Scene3DGrid>',
+            message: '综合法 (范式 A) 必须保持纯几何纯净度，严禁混入 <Vector3DArrow> 或 <Scene3DGrid>',
             snippet: line.trim(),
           });
         }

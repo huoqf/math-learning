@@ -220,7 +220,7 @@ export function SectionPlane3D({
       {quadData.outline.length > 0 && (
         <Line
           points={quadData.outline}
-          color="#818CF8"
+          color={MATH3D_COLORS.sectionPlane}
           lineWidth={1.5}
           dashed
           dashSize={0.2}

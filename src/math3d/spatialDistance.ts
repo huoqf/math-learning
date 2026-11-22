@@ -399,3 +399,42 @@ export function solvePointLineDistance(
     projectionLength: t,
   };
 }
+
+export interface CuboidPointLineDistanceResult extends PointLineDistanceResult {
+  lenBP: number;
+  lenU: number;
+  bpSq: number;
+  dotAbs: number;
+}
+
+/**
+ * 长方体 ABCD-A₁B₁C₁D₁ 标准建系下：动点 P(0,0,λc) 到体对角线 BD₁ 的点到直线距离（SSOT 纯函数）
+ */
+export function solveCuboidPointLineDistance(
+  a: number,
+  b: number,
+  c: number,
+  lambda: number,
+): CuboidPointLineDistanceResult {
+  const clampedLambda = Math.min(1, Math.max(0, lambda));
+  const P: Vec3 = { x: 0, y: 0, z: clampedLambda * c };
+  const B: Vec3 = { x: a, y: 0, z: 0 };
+  const u: Vec3 = { x: -a, y: b, z: c };
+  const base = solvePointLineDistance(P, B, u);
+  const lenBP = norm(base.vecAP);
+  const lenU = norm(base.u);
+  const bpSq =
+    base.vecAP.x * base.vecAP.x +
+    base.vecAP.y * base.vecAP.y +
+    base.vecAP.z * base.vecAP.z;
+  const dotAbs = Math.abs(
+    base.vecAP.x * base.u.x + base.vecAP.y * base.u.y + base.vecAP.z * base.u.z,
+  );
+  return {
+    ...base,
+    lenBP,
+    lenU,
+    bpSq,
+    dotAbs,
+  };
+}

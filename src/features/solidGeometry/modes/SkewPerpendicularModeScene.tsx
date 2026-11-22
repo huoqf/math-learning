@@ -35,6 +35,7 @@ interface SkewPerpendicularModeSceneProps {
   showRightAngles: boolean;
   showCoordinates: boolean;
   interactionMode: InteractionMode3D;
+  activeStep?: number;
   onPDrag: (lambda: number) => void;
   onQDrag: (mu: number) => void;
 }
@@ -51,6 +52,7 @@ export default function SkewPerpendicularModeScene({
   showRightAngles,
   showCoordinates,
   interactionMode,
+  activeStep,
   onPDrag,
   onQDrag,
 }: SkewPerpendicularModeSceneProps) {
@@ -116,7 +118,7 @@ export default function SkewPerpendicularModeScene({
         from={line1Start}
         to={line1End}
         colorKey="paramPrimary"
-        lineWidth={3}
+        lineWidth={activeStep === 1 ? 4.5 : 3}
       />
 
       {/* 异面直线 2 轨道 */}
@@ -124,7 +126,7 @@ export default function SkewPerpendicularModeScene({
         from={line2Start}
         to={line2End}
         colorKey="paramSecondary"
-        lineWidth={3}
+        lineWidth={activeStep === 1 ? 4.5 : 3}
       />
 
       {/* 动点 P：在直线 1 上正交拖拽 */}
@@ -191,7 +193,9 @@ export default function SkewPerpendicularModeScene({
         from={P}
         to={Q}
         colorKey={isAtPerpendicular ? "paramTertiary" : "highlight"}
-        lineWidth={isAtPerpendicular ? 3.5 : 2.5}
+        lineWidth={
+          (isAtPerpendicular ? 3.5 : 2.5) + (activeStep === 3 ? 1.3 : 0)
+        }
       />
 
       {/* 始终展示公垂线段参考 (若开启开关或命中极值) */}
@@ -218,7 +222,7 @@ export default function SkewPerpendicularModeScene({
             from={footH1}
             to={footH2}
             colorKey="paramTertiary"
-            lineWidth={3.5}
+            lineWidth={activeStep === 3 ? 4.8 : 3.5}
           />
 
           {/* 双垂直直角方框 */}
@@ -264,7 +268,7 @@ export default function SkewPerpendicularModeScene({
           <Polygon3DFace
             points={parallelPlaneVertices}
             colorKey="accent"
-            opacity={0.22}
+            opacity={activeStep === 2 ? 0.36 : 0.22}
           />
           {/* 平行面边界棱线 */}
           <Segment3D
@@ -272,21 +276,21 @@ export default function SkewPerpendicularModeScene({
             to={parallelPlaneVertices[1]}
             dashed
             colorKey="accent"
-            lineWidth={1.8}
+            lineWidth={activeStep === 2 ? 3 : 1.8}
           />
           <Segment3D
             from={parallelPlaneVertices[1]}
             to={parallelPlaneVertices[2]}
             dashed
             colorKey="accent"
-            lineWidth={1.8}
+            lineWidth={activeStep === 2 ? 3 : 1.8}
           />
           <Segment3D
             from={parallelPlaneVertices[2]}
             to={parallelPlaneVertices[0]}
             dashed
             colorKey="accent"
-            lineWidth={1.8}
+            lineWidth={activeStep === 2 ? 3 : 1.8}
           />
           <CompoundLabel3D
             position={parallelPlaneVertices[2]}

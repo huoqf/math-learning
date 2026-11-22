@@ -581,7 +581,7 @@ export default function Vector3DBasisAnimation() {
               <PointLabel3D position={P} text="P" offset={[0, 0, 0.18]} />
               <FormulaLabel3D
                 position={{ x: P.x * 0.5, y: P.y * 0.5, z: P.z * 0.5 + 0.22 }}
-                tex="\\overrightarrow{OP}"
+                tex="\overrightarrow{OP}"
               />
             </>
           )}

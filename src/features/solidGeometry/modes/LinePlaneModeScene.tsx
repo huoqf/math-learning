@@ -29,6 +29,7 @@ interface LinePlaneModeSceneProps {
   showAngles: boolean;
   showNormals: boolean;
   interactionMode: "orbit" | "drag";
+  activeStep?: number;
   onEPointDrag: (next: Vec3) => void;
 }
 
@@ -45,6 +46,7 @@ export default function LinePlaneModeScene({
   showAngles,
   showNormals,
   interactionMode,
+  activeStep,
   onEPointDrag,
 }: LinePlaneModeSceneProps) {
   const { E } = vertices;
@@ -55,7 +57,7 @@ export default function LinePlaneModeScene({
       <Polygon3DFace
         points={[vertices.A, vertices.B, vertices.C, vertices.D]}
         colorKey="secondary"
-        opacity={0.18}
+        opacity={activeStep === 2 ? 0.3 : 0.18}
       />
 
       {/* 动点 E 在侧棱 AA1 上 */}
@@ -85,7 +87,7 @@ export default function LinePlaneModeScene({
         from={linePlaneData.E}
         to={linePlaneData.C}
         colorKey="primary"
-        lineWidth={3}
+        lineWidth={activeStep === 1 ? 4.5 : 3}
       />
 
       {/* 几何辅助线：垂线段 EA 与底面射影 AC */}
@@ -96,14 +98,14 @@ export default function LinePlaneModeScene({
             to={linePlaneData.A}
             dashed
             colorKey="accent"
-            lineWidth={2.5}
+            lineWidth={activeStep === 3 ? 4 : 2.5}
           />
           <Segment3D
             from={linePlaneData.A}
             to={linePlaneData.C}
             dashed
             colorKey="secondary"
-            lineWidth={2}
+            lineWidth={activeStep === 2 || activeStep === 3 ? 3.4 : 2}
           />
         </>
       )}
@@ -167,7 +169,7 @@ export default function LinePlaneModeScene({
           />
           <FormulaLabel3D
             position={{ x: a / 2, y: b / 2, z: 1.8 }}
-            tex="\\vec{n}_0"
+            tex="\vec{n}_0"
             offset={[0.1, 0.1, 0.1]}
           />
         </>

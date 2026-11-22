@@ -7,6 +7,7 @@ import type {
   ReasoningStep,
 } from "../types";
 import { MATH_COLORS } from "@/theme";
+import { formatMathNumber } from "@/utils/mathFormat";
 import {
   calculatePerpPlanesSphere,
   calculateConcentricSpheres,
@@ -272,6 +273,39 @@ export function buildAdvancedSpherePanel(
         level: "info",
       });
     }
+
+    const r1Str = formatMathNumber(res.r1);
+    const r2Str = formatMathNumber(res.r2);
+    const hStr = formatMathNumber(res.height);
+    const dStr = formatMathNumber(res.centerOffsetBottom, 3);
+    const rCircStr = formatMathNumber(res.circumRadius, 3);
+    const idealHStr = formatMathNumber(res.idealHForInSphere, 3);
+
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "轴截面降维并设外接球心距下底距离 $d$",
+        detail:
+          "沿圆台对称轴作轴截面得等腰梯形，设外接球心 $O$ 到下底面圆心的有向高度差为 $d$，由上下底圆周到球心距离相等列勾股方程：",
+        latex: `R^2 = r_2^2 + d^2 = r_1^2 + (h - d)^2`,
+        rubric: "【高考采分点】正确利用轴截面勾股关系列出等式 (+4分)",
+      },
+      {
+        step: 2,
+        title: "代数消去 $d^2$ 求解偏心距 $d$ 与外接球半径 $R$",
+        detail: "展开平方项消去 $d^2$ 后解出 $d$，再代回勾股式求得 $R$：",
+        latex: `\\begin{aligned} d &= \\frac{h^2 + r_1^2 - r_2^2}{2h} = \\frac{${hStr}^2 + ${r1Str}^2 - ${r2Str}^2}{2\\times ${hStr}} = ${dStr} \\\\[1ex] R &= \\sqrt{r_2^2 + d^2} = \\sqrt{${r2Str}^2 + (${dStr})^2} = ${rCircStr} \\end{aligned}`,
+        rubric: "【高考采分点】精准求解球心距与外接球半径 (+4分)",
+      },
+      {
+        step: 3,
+        title: "检验轴截面等腰梯形内切圆充要条件",
+        detail:
+          "当轴截面腰长等于上下底半径和（即母线长 $l = r_1 + r_2$，等价于高 $h = 2\\sqrt{r_1 r_2}$）时存在内切球：",
+        latex: `h_{\\text{理想}} = 2\\sqrt{r_1 r_2} = 2\\sqrt{${r1Str}\\times ${r2Str}} = ${idealHStr}, \\quad \\text{当前 } h = ${hStr}`,
+        rubric: "【高考采分点】判定内切球存在性并给出内切半径 (+4分)",
+      },
+    );
   } else if (modelType === "extrema") {
     const R = params.R ?? 3;
     const shapeType = params.shapeType ?? 0;
@@ -338,6 +372,52 @@ export function buildAdvancedSpherePanel(
         level: "info",
       });
     }
+
+    const rCapStr = formatMathNumber(res.R);
+    const hValStr = formatMathNumber(res.h);
+    const rBaseStr = formatMathNumber(res.r, 3);
+    const volStr = formatMathNumber(res.volume, 3);
+    const optHStr = formatMathNumber(res.optimalH, 3);
+    const maxVolStr = formatMathNumber(res.maxVolume, 3);
+
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "利用球轴截面勾股关系将底半径 $r$ 化为高 $h$ 的函数",
+        detail:
+          shapeType === 0
+            ? "由内接圆柱轴截面勾股定理 $r^2 + (h/2)^2 = R^2$，得底面半径平方表达式："
+            : "在球内接圆锥轴截面内，利用垂径勾股或射影关系得 $r^2 = h(2R - h)$：",
+        latex:
+          shapeType === 0
+            ? `r^2 = R^2 - \\frac{h^2}{4} = ${rCapStr}^2 - \\frac{${hValStr}^2}{4} = (${rBaseStr})^2`
+            : `r^2 = h(2R - h) = ${hValStr}(2\\times ${rCapStr} - ${hValStr}) = (${rBaseStr})^2`,
+        rubric: "【高考采分点】建立单变量半径关系消除多余未知数 (+4分)",
+      },
+      {
+        step: 2,
+        title: "构建体积单变量函数 $V(h)$ 并计算当前体积",
+        detail:
+          shapeType === 0
+            ? "代入圆柱体积公式 $V(h) = \\pi r^2 h$ 建立关于高 $h \\in (0, 2R)$ 的三次函数："
+            : "代入圆锥体积公式 $V(h) = \\frac{1}{3}\\pi r^2 h$ 建立关于高 $h \\in (0, 2R)$ 的三次函数：",
+        latex:
+          shapeType === 0
+            ? `V(h) = \\pi\\left(R^2 h - \\frac{h^3}{4}\\right), \\quad V(${hValStr}) = ${volStr}`
+            : `V(h) = \\frac{\\pi}{3}(2R h^2 - h^3), \\quad V(${hValStr}) = ${volStr}`,
+        rubric: "【高考采分点】正确列出三次体积函数表达式 (+4分)",
+      },
+      {
+        step: 3,
+        title: "求导 $V'(h) = 0$ 解出全局极大值点与最大体积",
+        detail: "令一阶导数为零判断单调区间，求得理论极值高与最大容积：",
+        latex:
+          shapeType === 0
+            ? `V'(h) = \\pi\\left(R^2 - \\frac{3}{4}h^2\\right) = 0 \\implies h_{\\text{opt}} = \\frac{2\\sqrt{3}}{3}R = ${optHStr}, \\; V_{\\max} = ${maxVolStr}`
+            : `V'(h) = \\frac{\\pi}{3}(4Rh - 3h^2) = 0 \\implies h_{\\text{opt}} = \\frac{4}{3}R = ${optHStr}, \\; V_{\\max} = ${maxVolStr}`,
+        rubric: "【高考采分点】导数求极值确定最优高与最大体积 (+4分)",
+      },
+    );
   }
 
   return {

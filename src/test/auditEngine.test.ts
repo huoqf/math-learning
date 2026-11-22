@@ -1195,5 +1195,71 @@ export function DemoAnimation() {
       );
       expect(goodIssues.length).toBe(0);
     });
+
+    it("3D 范式纯净度门禁：导入 vector3 工具后仍能拦截范式 A 混入 Scene3DGrid / Vector3DArrow，带对照开关时放行", () => {
+      const rule = (centerCanvasRules as AuditRule[]).find(
+        (r) => r.id === "center/paradigm-a-pure",
+      )!;
+
+      const badScene = `
+import { sub } from "@/math3d/vector3";
+import { Vector3DArrow, Scene3DGrid } from "@/components/Math3D";
+// 范式 A：纯几何综合法
+export function PureDemoScene() {
+  void sub;
+  return (
+    <>
+      <Scene3DGrid />
+      <Vector3DArrow from={{ x: 0, y: 0, z: 0 }} to={{ x: 1, y: 0, z: 0 }} />
+    </>
+  );
+}
+`;
+      const badIssues = rule.check(
+        new FileContext(
+          "src/features/solidGeometry/PureDemoScene.tsx",
+          badScene,
+          process.cwd(),
+        ),
+      );
+      expect(badIssues.length).toBe(2);
+
+      const dualParadigmScene = `
+import { sub } from "@/math3d/vector3";
+import { Vector3DArrow } from "@/components/Math3D";
+// 综合法主视图，按需开启 showNormals
+export function DualDemoScene({ showNormals }: { showNormals: boolean }) {
+  void sub;
+  return showNormals ? <Vector3DArrow from={{ x: 0, y: 0, z: 0 }} to={{ x: 0, y: 0, z: 1 }} /> : null;
+}
+`;
+      const dualIssues = rule.check(
+        new FileContext(
+          "src/features/solidGeometry/DualDemoScene.tsx",
+          dualParadigmScene,
+          process.cwd(),
+        ),
+      );
+      expect(dualIssues.length).toBe(0);
+    });
+
+    it('JSX 双斜杠门禁：同时拦截 formula="\\\\..." 与 3D <FormulaLabel3D tex="\\\\..." />', () => {
+      const rule = (styleTokensRules as AuditRule[]).find(
+        (r) => r.id === "style/no-jsx-double-backslash",
+      )!;
+      const bad3d = `
+export function DemoLabel() {
+  return <FormulaLabel3D position={{ x: 0, y: 0, z: 0 }} tex="\\\\vec{n}" />;
+}
+`;
+      const issues = rule.check(
+        new FileContext(
+          "src/features/solidGeometry/DemoLabel.tsx",
+          bad3d,
+          process.cwd(),
+        ),
+      );
+      expect(issues.length).toBe(1);
+    });
   });
 });

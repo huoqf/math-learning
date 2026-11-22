@@ -20,6 +20,7 @@ interface SkewLinesModeSceneProps {
   showRightAngles: boolean;
   showAngles: boolean;
   showNormals: boolean;
+  activeStep?: number;
 }
 
 export default function SkewLinesModeScene({
@@ -32,16 +33,27 @@ export default function SkewLinesModeScene({
   showRightAngles,
   showAngles,
   showNormals,
+  activeStep,
 }: SkewLinesModeSceneProps) {
   const { A, B, C, A1, D1 } = vertices;
 
   return (
     <>
       {/* 异面直线 1: A1B (几何线段，无箭头) */}
-      <Segment3D from={A1} to={B} colorKey="primary" lineWidth={3} />
+      <Segment3D
+        from={A1}
+        to={B}
+        colorKey="primary"
+        lineWidth={activeStep === 1 ? 4.5 : 3}
+      />
 
       {/* 异面直线 2: AC (几何线段，无箭头) */}
-      <Segment3D from={A} to={C} colorKey="accent" lineWidth={3} />
+      <Segment3D
+        from={A}
+        to={C}
+        colorKey="accent"
+        lineWidth={activeStep === 1 ? 4.5 : 3}
+      />
 
       {/* 平移法辅助线与公垂线段 */}
       {showAuxiliary && (
@@ -52,7 +64,7 @@ export default function SkewLinesModeScene({
             to={C}
             dashed
             colorKey="secondary"
-            lineWidth={2.5}
+            lineWidth={activeStep === 3 ? 4 : 2.5}
           />
 
           {/* 公垂线段 P1P2 (几何线段，无箭头) */}
@@ -60,7 +72,7 @@ export default function SkewLinesModeScene({
             from={skewData.P1}
             to={skewData.P2}
             colorKey="paramPrimary"
-            lineWidth={2.5}
+            lineWidth={activeStep === 2 ? 4 : 2.5}
           />
           <CompoundLabel3D
             position={skewData.P1}
@@ -148,7 +160,7 @@ export default function SkewLinesModeScene({
               y: 0,
               z: (A1.z + B.z) / 2 + 0.15,
             }}
-            tex="\\vec{u}"
+            tex="\vec{u}"
           />
           <Vector3DArrow from={A} to={C} colorKey="accent" />
           <FormulaLabel3D
@@ -157,7 +169,7 @@ export default function SkewLinesModeScene({
               y: (A.y + C.y) / 2 + 0.15,
               z: 0.15,
             }}
-            tex="\\vec{v}"
+            tex="\vec{v}"
           />
         </>
       )}

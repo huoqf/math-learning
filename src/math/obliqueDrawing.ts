@@ -174,6 +174,29 @@ export function buildPresetPolygon(
 }
 
 /**
+ * 斜二测画法动画连续形变插值（morphT ∈ [0, 1]）：
+ * 0 对应原平面未倾斜坐标系状态，1 对应完成折半与斜倾变换后的直观图顶点。
+ */
+export function interpolateObliquePoints(
+  originalPoints: Point2D[],
+  obliquePoints: Point2D[],
+  morphT = 1,
+): Point2D[] {
+  const t = Math.min(1, Math.max(0, morphT));
+  const len = Math.min(originalPoints.length, obliquePoints.length);
+  const result: Point2D[] = [];
+  for (let i = 0; i < len; i++) {
+    const o = originalPoints[i];
+    const q = obliquePoints[i];
+    result.push({
+      x: o.x + (q.x - o.x) * t,
+      y: o.y + (q.y - o.y) * t,
+    });
+  }
+  return result;
+}
+
+/**
  * 高考典型真题逆向还原计算（已知直观图为等腰梯形/三角形，求原图形面积与周长）
  */
 export interface GaokaoInverseProblem {

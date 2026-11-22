@@ -12,8 +12,14 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { Legend3D, CameraRig, CameraFit } from "@/components/Math3D";
+import {
+  Legend3D,
+  CameraRig,
+  CameraFit,
+  SphereCrossSectionOverlay2D,
+} from "@/components/Math3D";
 import { getCircumInSphereBounds } from "@/math3d/legacy3dBounds";
+import { getCircumInSphereOverlayData } from "@/math3d/overlaySamplers";
 import { CircumInSphereScene } from "@/components/Math3D/solids";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
@@ -712,6 +718,12 @@ export default function CircumInSphereAnimation() {
       center={
         <ThreeDCanvas
           cameraPosition={cameraPosition}
+          overlay={
+            <SphereCrossSectionOverlay2D
+              {...getCircumInSphereOverlayData(sphereType, shape, params)}
+              position="bottom-left"
+            />
+          }
           legend={
             <Legend3D
               title="切接球图例"

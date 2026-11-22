@@ -5,6 +5,7 @@ import {
   LeftPanel,
   LeftPanelSection,
   ParamControl,
+  ParamPlayBar,
   MathPanel,
   TabSwitcher,
   SelectGrid,
@@ -22,6 +23,7 @@ import { getLinePlaneRelationBounds } from "@/math3d/legacy3dBounds";
 import type { LegendItem, InteractionMode3D } from "@/components/Math3D";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
+import { useParamPlay } from "@/hooks/useParamPlay";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import { linePlaneRelationMeta } from "@/data/registries/solidGeometry";
 import { LinePlaneRelationScene } from "./LinePlaneRelationScene";
@@ -87,13 +89,33 @@ export default function LinePlaneRelationAnimation() {
     [params, activeMode, subTheorem],
   );
 
+  const counterPlay = useParamPlay({
+    min: 45,
+    max: 135,
+    ratePerSecond: 36,
+    step: 1,
+    mode: "bounce",
+    getValue: () => params.thetaDeg ?? 60,
+    onChange: (nextVal) =>
+      setParams((p) => ({
+        ...p,
+        phiDeg: 90,
+        intersectType: 0,
+        thetaDeg: nextVal,
+      })),
+  });
+
   const handleParamChange = (key: string, value: number) => {
+    if (counterPlay.isPlaying) {
+      counterPlay.pause();
+    }
     setActivePreset("free");
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
   // 模式切换统一调度
   const handleModeChange = (mode: LinePlaneTeachingMode) => {
+    counterPlay.pause();
     setActiveMode(mode);
     setActivePreset("free");
     setSubTheorem("judge");
@@ -137,6 +159,9 @@ export default function LinePlaneRelationAnimation() {
   // 典型预设切换（黄金 2×2 规范）
   const handlePresetSelect = (key: string) => {
     setActivePreset(key);
+    if (key !== "counterParallel") {
+      counterPlay.pause();
+    }
     if (key === "free") return;
 
     if (activeMode === "parallel") {
@@ -185,11 +210,12 @@ export default function LinePlaneRelationAnimation() {
         setSubTheorem("judge");
         setParams((p) => ({
           ...p,
-          thetaDeg: 90,
-          phiDeg: 0,
+          thetaDeg: 60,
+          phiDeg: 90,
           zHeight: 0,
           intersectType: 0,
         }));
+        counterPlay.play();
       } else if (key === "propAll") {
         setSubTheorem("prop");
         setParams((p) => ({
@@ -255,6 +281,7 @@ export default function LinePlaneRelationAnimation() {
 
   // 智能重置
   const handleReset = () => {
+    counterPlay.pause();
     setActivePreset("free");
     switch (activeMode) {
       case "parallel":
@@ -436,17 +463,17 @@ export default function LinePlaneRelationAnimation() {
               variant: "primary" as const,
               badge: "必修二 · 线面平行判定定理",
               condition:
-                "平面 α 外一条直线 l，平面 α 内一条直线 m，且满足 l ∥ m。",
+                "平面 $\\alpha$ 外一条直线 $l$，平面 $\\alpha$ 内一条直线 $m$，且满足 $l \\parallel m$。",
               question:
-                "求证 l ∥ α。探究证明链“线线平行 ⇒ 线面平行”，观察若 l ⊂ α（面内直线）则定理失效的退化反例。",
+                "求证 $l \\parallel \\alpha$。探究证明链“线线平行 $\\implies$ 线面平行”，判定若 $l \\subset \\alpha$（面内直线）则定理失效的退化反例。",
             }
           : {
               variant: "success" as const,
               badge: "必修二 · 线面平行性质定理",
               condition:
-                "已知直线 l ∥ 平面 α，过直线 l 作辅助截面 β 与平面 α 相交于交线 m。",
+                "已知直线 $l \\parallel \\alpha$，过直线 $l$ 作辅助截面 $\\beta$ 与平面 $\\alpha$ 相交于交线 $m$。",
               question:
-                "求证 l ∥ m。探究证明链“线面平行 ⇒ 线线平行”，在立体几何截面与辅助线作图中作为关键依据。",
+                "求证 $l \\parallel m$。探究证明链“线面平行 $\\implies$ 线线平行”，在立体几何截面与辅助线作图中作为关键依据。",
             };
       case "perpendicular":
         return subTheorem === "judge"
@@ -454,35 +481,35 @@ export default function LinePlaneRelationAnimation() {
               variant: "warning" as const,
               badge: "必修二 · 线面垂直判定定理",
               condition:
-                "直线 l 与平面 α 内的两条相交直线 a, b 均垂直 (l ⊥ a, l ⊥ b, a ∩ b = P)。",
+                "直线 $l$ 与平面 $\\alpha$ 内的两条相交直线 $a, b$ 均垂直（$l \\perp a,\\; l \\perp b,\\; a \\cap b = P$）。",
               question:
-                "求证 l ⊥ α。探究两条直线必须“相交”的关键防错条件（若 a ∥ b 平行则直线 l 可绕其转动，不能保证垂直于平面）。",
+                "求证 $l \\perp \\alpha$。探究两条直线必须“相交”的关键防错条件（若 $a \\parallel b$ 则直线 $l$ 可绕其转动，不能保证垂直于平面）。",
             }
           : {
               variant: "danger" as const,
               badge: "必修二 · 线面垂直性质定理",
               condition:
-                "已知直线 l ⊥ 平面 α，直线 m ⊂ 平面 α 为面内任意直线。",
+                "已知直线 $l \\perp \\alpha$，直线 $m \\subset \\alpha$ 为面内任意直线。",
               question:
-                "求证 l ⊥ m。理解“线面垂直定义为垂直于面内所有直线”，探究空间直角标记与正投影性质。",
+                "求证 $l \\perp m$。理解“线面垂直定义为垂直于面内所有直线”，求解空间直角关系与正投影性质。",
             };
       case "gaokaoPyramid":
         return {
           variant: "primary" as const,
           badge: "高考大题母题 · 四棱锥动点线面平行",
           condition:
-            "四棱锥 P-ABCD 底面为矩形 ABCD，侧面 PAD ⊥ 底面 ABCD。动点 E ∈ PB (分比 λ_E)，动点 F ∈ PC (分比 λ_F)。",
+            "四棱锥 $P\\text{-}ABCD$ 底面为矩形 $ABCD$，侧面 $PAD \\perp \\text{底面 } ABCD$。动点 $E \\in PB$（分比 $\\lambda_E$），动点 $F \\in PC$（分比 $\\lambda_F$）。",
           question:
-            "当 λ_E = λ_F（如同为中点）时，求证 EF ∥ 面 PAD；探究动点在线段上滑动时满足 EF ∥ 面 PAD 的充要几何条件。",
+            "当 $\\lambda_E = \\lambda_F$（如同为中点）时，求证 $EF \\parallel \\text{面 } PAD$；探究动点在线段上滑动时满足 $EF \\parallel \\text{面 } PAD$ 的充要几何条件。",
         };
       case "vector":
         return {
           variant: "accent" as const,
           badge: "选修一 · 空间向量法求解线面角",
           condition:
-            "直线 l 的方向向量为 l⃗=(x, y, z)，基准平面 α 的法向量为 n⃗=(0, 0, 1)。",
+            "直线 $l$ 的方向向量为 $\\vec{l}=(x, y, z)$，基准平面 $\\alpha$ 的法向量为 $\\vec{n}=(0, 0, 1)$。",
           question:
-            "探究直线与法向量夹角 〈l⃗, n⃗〉 与线面角 θ 的互余关系：sinθ = |cos〈l⃗, n⃗〉| = |l⃗·n⃗| / (|l⃗||n⃗|)。",
+            "求解直线与法向量夹角 $\\langle\\vec{l}, \\vec{n}\\rangle$ 与线面角 $\\theta$ 的互余关系：$\\sin\\theta = |\\cos\\langle\\vec{l}, \\vec{n}\\rangle| = \\frac{|\\vec{l}\\cdot\\vec{n}|}{|\\vec{l}||\\vec{n}|}$。",
         };
     }
     // 依赖中保留二级选项变量：TipCard 教学提示须随二级选项切换同步特化（项目纪律 left/tipcard-secondary-sync）
@@ -532,7 +559,22 @@ export default function LinePlaneRelationAnimation() {
 
           {/* Step 3: 参数调节 */}
           <LeftPanelSection title="参数调节">
-            {paramConfigs.length > 0 ? (
+            {activeMode === "perpendicular" &&
+            activePreset === "counterParallel" ? (
+              <div className="space-y-2">
+                <ParamPlayBar
+                  isPlaying={counterPlay.isPlaying}
+                  onToggle={counterPlay.toggle}
+                  speed={counterPlay.speed}
+                  onSpeedChange={counterPlay.setSpeed}
+                  label="反例摆动演示"
+                />
+                <div className="rounded-lg bg-amber-50/70 border border-amber-200/70 px-2.5 py-2 text-[11px] text-amber-800">
+                  两条平行线无法固定垂线方向：直线 l 在 45°～135° 间摆动（始终 l
+                  ⊥ a, b 却不垂直平面 α）。
+                </div>
+              </div>
+            ) : paramConfigs.length > 0 ? (
               <ParamControl
                 params={paramConfigs}
                 onParamChange={handleParamChange}
@@ -546,7 +588,10 @@ export default function LinePlaneRelationAnimation() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => setActivePreset("free")}
+                  onClick={() => {
+                    counterPlay.pause();
+                    setActivePreset("free");
+                  }}
                   className="text-blue-600 font-medium hover:underline text-[11px] cursor-pointer"
                 >
                   切为自由探索
@@ -623,6 +668,7 @@ export default function LinePlaneRelationAnimation() {
       center={
         <ThreeDCanvas
           cameraPosition={cameraPosition}
+          frameloop={counterPlay.isPlaying ? "always" : "demand"}
           legend={<Legend3D title="图例" items={legendItems} />}
           overlay={
             activeMode === "gaokaoPyramid" ? (

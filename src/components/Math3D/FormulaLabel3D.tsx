@@ -30,8 +30,8 @@ function sanitizeLatex(input: string): string {
   // eslint-disable-next-line no-control-regex
   clean = clean.replace(/[\x00-\x1f]/g, "");
 
-  // 2. 将连续的反斜杠（\\）归一化为单个反斜杠（\）
-  clean = clean.replace(/\\+/g, "\\");
+  // 2. 仅将 LaTeX 命令前的连续误写双反斜杠归一化为单斜杠（保留矩阵/方程组中的 \\ 换行符）
+  clean = clean.replace(/\\{2,}(?=[a-zA-Z]{2,})/g, "\\");
 
   // 3. 修复带下标的向量 (如 vecn_1, vecn_2, ecn_1, \vec{n_1}, \vec{n}_1, \\vec{n}_2 等)
   clean = clean.replace(
@@ -64,9 +64,9 @@ export const FormulaLabel3D = ({
   const cleanTex = sanitizeLatex(tex);
   // KaTeX 输出只在 \color 处写死色值，其余字符一律继承 CSS color，故落到容器样式即可。
   const colorStyle = colorKey ? { color: MATH_COLORS[colorKey] } : null;
+  const halo = MATH_COLORS.white;
   const textShadow = {
-    textShadow:
-      "0 0 3px #FFFFFF, 0 0 3px #FFFFFF, 0 0 5px #FFFFFF, 0 0 8px #FFFFFF",
+    textShadow: `0 0 3px ${halo}, 0 0 3px ${halo}, 0 0 5px ${halo}, 0 0 8px ${halo}`,
   };
 
   return (
@@ -95,8 +95,8 @@ export const FormulaLabel3D = ({
                   backdropFilter: "blur(4px)",
                   padding: "2px 6px",
                   borderRadius: "4px",
-                  boxShadow: "0 1px 4px rgba(15, 23, 42, 0.15)",
-                  border: "1px solid rgba(226, 232, 240, 0.8)",
+                  boxShadow: `0 1px 4px ${withAlpha(MATH_COLORS.labelText, 0.15)}`,
+                  border: `1px solid ${withAlpha(MATH_COLORS.grid, 0.8)}`,
                   whiteSpace: "nowrap",
                   fontSize: "13px",
                   lineHeight: 1.2,

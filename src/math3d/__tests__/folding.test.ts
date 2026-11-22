@@ -5,6 +5,10 @@ import {
   calculateTriangleAltitudeFolding,
   calculateRhombusFolding,
   buildFoldingPolyhedron,
+  resolveFoldAlpha,
+  resolveFoldAlphaFromDrag,
+  constrainFoldDragPoint,
+  buildFoldArcSegments,
 } from "../folding";
 
 describe("平面图形折叠与翻折二面角 3D 数学解算法库测试", () => {
@@ -87,5 +91,51 @@ describe("平面图形折叠与翻折二面角 3D 数学解算法库测试", () 
     const poly4 = buildFoldingPolyhedron(r4);
     expect(poly4.vertices.length).toBe(4);
     expect(poly4.faces.length).toBe(4);
+  });
+
+  it("全角域拖拽反演与圆弧轨迹约束：精确还原锐角/直角/钝角且保持半径不变", () => {
+    expect(resolveFoldAlpha("unfolded", 90)).toBe(0);
+    expect(resolveFoldAlpha("folded", 120)).toBe(120);
+
+    for (const deg of [30, 90, 135]) {
+      const rad = (deg * Math.PI) / 180;
+      expect(resolveFoldAlphaFromDrag(Math.cos(rad), Math.sin(rad))).toBe(deg);
+    }
+
+    const center = { x: 1, y: 2, z: 0 };
+    const radialDir = { x: 3, y: 4, z: 0 };
+    const radius = 2.5;
+    const constrained = constrainFoldDragPoint(
+      { x: 4, y: 6, z: 3 },
+      center,
+      radialDir,
+      radius,
+    );
+    const actualR = Math.hypot(
+      constrained.x - center.x,
+      constrained.y - center.y,
+      constrained.z - center.z,
+    );
+    expect(actualR).toBeCloseTo(radius, 5);
+    expect(constrained.z).toBeGreaterThanOrEqual(0);
+
+    const segs = buildFoldArcSegments(center, radialDir, radius, 24);
+    expect(segs.length).toBe(24);
+    for (const seg of segs) {
+      expect(
+        Math.hypot(seg.from.x - center.x, seg.from.y - center.y, seg.from.z),
+      ).toBeCloseTo(radius, 5);
+      expect(
+        Math.hypot(seg.to.x - center.x, seg.to.y - center.y, seg.to.z),
+      ).toBeCloseTo(radius, 5);
+    }
+  });
+
+  it("矩形对角线翻折双面法向量归一且点积夹角匹配翻折角", () => {
+    const res = calculateRectangleDiagonalFolding(4, 3, 60);
+    expect(res.normals?.n1).toEqual({ x: 0, y: 0, z: 1 });
+    const n2 = res.normals!.n2;
+    expect(Math.hypot(n2.x, n2.y, n2.z)).toBeCloseTo(1, 5);
+    expect(n2.z).toBeCloseTo(Math.cos((60 * Math.PI) / 180), 4);
   });
 });

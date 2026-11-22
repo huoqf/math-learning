@@ -10,6 +10,7 @@ import { projectPolyhedron } from "@/math3d/orthographicProjection";
 import {
   buildCuboidPolyhedron,
   buildRegularPyramidPolyhedron,
+  buildRegularPrismPolyhedron,
 } from "@/math3d/sectionIntersection";
 import {
   cylinderViews,
@@ -19,7 +20,7 @@ import {
 } from "@/math3d/curvedSolidViews";
 
 export type SolidKind =
-  "cuboid" | "pyramid" | "cylinder" | "cone" | "frustum" | "sphere";
+  "cuboid" | "pyramid" | "prism" | "cylinder" | "cone" | "frustum" | "sphere";
 
 export interface SolidViewParams {
   width?: number;
@@ -61,6 +62,21 @@ export function buildSolidViews(
           top: projectPolyhedron(poly, "top"),
         },
         extent: Math.max(p.baseRadius! * 2, p.height!),
+      };
+    }
+    case "prism": {
+      const poly = buildRegularPrismPolyhedron(
+        p.sides ?? 3,
+        p.baseRadius ?? 2.0,
+        p.height!,
+      );
+      return {
+        views: {
+          front: projectPolyhedron(poly, "front"),
+          side: projectPolyhedron(poly, "side"),
+          top: projectPolyhedron(poly, "top"),
+        },
+        extent: Math.max((p.baseRadius ?? 2.0) * 2, p.height!),
       };
     }
     case "cylinder":

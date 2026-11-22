@@ -6,23 +6,27 @@ import {
   LeftPanel,
   LeftPanelSection,
   ParamControl,
+  ParamPlayBar,
+  StepNavigator,
   MathPanel,
   TabSwitcher,
   SelectGrid,
   Toggle,
   TipCard,
 } from "@/components/UI";
-import type { ParamConfig } from "@/components/UI";
+import type { ParamConfig, AnswerStepItem } from "@/components/UI";
 import {
   Legend3D,
   CameraRig,
   CameraFit,
   ModeSwitchOverlay3D,
+  AnswerStepOverlay3D,
 } from "@/components/Math3D";
 import { getFoldingBounds } from "@/math3d/legacy3dBounds";
 import type { InteractionMode3D } from "@/components/Math3D";
 import { use3DViewport } from "@/hooks/use3DViewport";
 import type { CameraPreset } from "@/hooks/use3DViewport";
+import { useParamPlay } from "@/hooks/useParamPlay";
 import { solidFoldingMeta } from "@/data/registries/solidGeometry";
 import { MATH_COLORS } from "@/theme";
 import { buildMathQuantities } from "@/data/mathQuantities";
@@ -84,11 +88,29 @@ export default function FoldingAnimation() {
     }
   }, [model, a, b, h, alphaDeg]);
 
-  // 2. 右屏 MathPanel 看板数据组装
+  // 2. 右屏 MathPanel 看板数据组装（使用 resolveFoldAlpha 后的真实生效角 alphaDeg，保证展平态三屏同步归零）
   const mathData = useMemo(
-    () => buildMathQuantities("anim-solid-folding", params, { model }),
-    [params, model],
+    () =>
+      buildMathQuantities(
+        "anim-solid-folding",
+        { ...params, alphaDeg },
+        { model },
+      ),
+    [params, alphaDeg, model],
   );
+
+  const [activeAnswerStep, setActiveAnswerStep] = useState(1);
+  const answerSteps = useMemo<AnswerStepItem[]>(
+    () =>
+      (mathData.reasoningSteps ?? []).map((rs) => ({
+        step: rs.step,
+        title: rs.title,
+        sceneHint: rs.rubric,
+      })),
+    [mathData.reasoningSteps],
+  );
+  const effectiveAnswerStep =
+    answerSteps.length > 0 ? Math.min(activeAnswerStep, answerSteps.length) : 1;
 
   // 3. 真实折叠体正投影/三视图组装
   const solidViews = useMemo(() => {
@@ -195,20 +217,38 @@ export default function FoldingAnimation() {
     });
   }, [params, model]);
 
+  const foldPlay = useParamPlay({
+    min: 1,
+    max: 179,
+    ratePerSecond: 40,
+    step: 1,
+    mode: "bounce",
+    getValue: () => params.alphaDeg ?? 90,
+    onChange: (nextVal) =>
+      setParams((prev) => ({ ...prev, alphaDeg: nextVal })),
+  });
+
+  const handleToggleFoldPlay = () => {
+    if (!foldPlay.isPlaying) {
+      setFoldState("folded");
+    }
+    foldPlay.toggle();
+  };
+
   const handleParamChange = (key: string, value: number) => {
+    if (key === "alphaDeg" && foldPlay.isPlaying) foldPlay.pause();
     setParams((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleReset = () => {
+    foldPlay.pause();
     setParams({ a: 4, b: 3, h: 3, alphaDeg: 90 });
   };
 
-  // 拖拽 3D 点时反向解算翻折旋转角 α
-  const handlePointDrag = (newZ: number, maxRadius: number) => {
-    const clampedZ = Math.max(0, Math.min(maxRadius, newZ));
-    const sinA = clampedZ / maxRadius;
-    const newAlphaDeg = Math.round((Math.asin(sinA) * 180) / Math.PI);
-    setParams((prev) => ({ ...prev, alphaDeg: newAlphaDeg }));
+  // 拖拽 3D 点时直接更新全角域翻折角 α ∈ [0, 180]
+  const handlePointDrag = (nextAlphaDeg: number) => {
+    if (foldPlay.isPlaying) foldPlay.pause();
+    setParams((prev) => ({ ...prev, alphaDeg: nextAlphaDeg }));
   };
 
   // 左屏教学提示与题设导引（说明初始条件与探究设问）
@@ -219,36 +259,36 @@ export default function FoldingAnimation() {
           variant: "primary" as const,
           badge: "高考母题 · 直角梯形翻折",
           condition:
-            "直角梯形 ABCD 中 AB ⊥ AD, BC ∥ AD, AD=a, BC=b, AB=h。E 在 AD 上且 AE=BC，沿折痕 EC 将 △CDE 翻折至 △CD'E，记翻折旋转角为 α（对应二面角 D'-EC-A 为 180°−α）。",
+            "直角梯形 $ABCD$ 中 $AB \\perp AD,\\; BC \\parallel AD,\\; AD=a,\\; BC=b,\\; AB=h$。$E$ 在 $AD$ 上且 $AE=BC$，沿折痕 $EC$ 将 $\\triangle CDE$ 翻折至 $\\triangle CD'E$，记翻折旋转角为 α（对应二面角 $D'-EC-A$ 为 $180^\\circ-\\alpha$）。",
           question:
-            "探究翻折过程中面内垂直性（EC ⊥ D'E, EC ⊥ AE）的不变性，当 α=90° 时求证 D'E ⊥ 底面 ABCE 并求解空间线面角与异面直线角。",
+            "探究翻折过程中面内垂直性（$EC \\perp D'E,\\; EC \\perp AE$）的不变性，当 $\\alpha=90^\\circ$ 时求证 $D'E \\perp \\text{底面 } ABCE$ 并求解空间线面角与异面直线角。",
         };
       case "rectangleDiagonal":
         return {
           variant: "warning" as const,
           badge: "高考经典 · 矩形对角线翻折",
           condition:
-            "矩形 ABCD 长 AB=a、宽 AD=b，沿对角线 BD 翻折 △ABD 至 △A'BD，记翻折旋转角为 α（对应二面角 A'-BD-C 为 180°−α）。",
+            "矩形 $ABCD$ 长 $AB=a$、宽 $AD=b$，沿对角线 $BD$ 翻折 $\\triangle ABD$ 至 $\\triangle A'BD$，记翻折旋转角为 α（对应二面角 $A'-BD-C$ 为 $180^\\circ-\\alpha$）。",
           question:
-            "探究翻折过程中 A'B ⊥ A'D 的不变性，求解二面角 α 变化时空间两动点间距 A'C 与三棱锥 A'-BCD 体积的极值规律。",
+            "探究翻折过程中 $A'B \\perp A'D$ 的不变性，求解二面角变化时空间两动点间距 $|A'C|$ 与三棱锥 $A'-BCD$ 体积的极值规律。",
         };
       case "triangleAltitude":
         return {
           variant: "success" as const,
           badge: "高考母题 · 等腰三角形高线翻折",
           condition:
-            "等腰三角形 ABC 底边 BC=a，高 AD=h。沿高线 AD 将 △ACD 翻折至 △AC'D，记翻折旋转角为 α（对应二面角 B-AD-C' 为 180°−α）。",
+            "等腰三角形 $ABC$ 底边 $BC=a$，高 $AD=h$。沿高线 $AD$ 将 $\\triangle ACD$ 翻折至 $\\triangle AC'D$，记翻折旋转角为 α（对应二面角 $B-AD-C'$ 为 $180^\\circ-\\alpha$）。",
           question:
-            "探究折痕 AD ⊥ 底面 BDC' 的垂直不变性，当 α=90° 时求证 C'D ⊥ BD 并计算三棱锥 A-BC'D 外接球半径。",
+            "探究折痕 $AD \\perp \\text{底面 } BDC'$ 的垂直不变性，当 $\\alpha=90^\\circ$ 时求证 $C'D \\perp BD$ 并计算三棱锥 $A-BC'D$ 外接球半径。",
         };
       case "rhombus":
         return {
           variant: "accent" as const,
           badge: "高考压轴 · 菱形短对角线翻折",
           condition:
-            "菱形 ABCD 边长为 a，∠BAD=60°。沿短对角线 BD 翻折 △ABD 至 △A'BD，记翻折旋转角为 α（对应二面角 A'-BD-C 为 180°−α）。",
+            "菱形 $ABCD$ 边长为 $a$，$\\angle BAD=60^\\circ$。沿短对角线 $BD$ 翻折 $\\triangle ABD$ 至 $\\triangle A'BD$，记翻折旋转角为 α（对应二面角 $A'-BD-C$ 为 $180^\\circ-\\alpha$）。",
           question:
-            "探究翻折旋转角 α 与二面角 A'-BD-C 的互补关系 β = 180°−α，当面 A'BD ⊥ 面 CBD（即 β = 90°）时求解点 A' 到底面距离与体对角线长。",
+            "探究翻折旋转角与二面角 $A'-BD-C$ 的互补关系 β = 180°−α，当 $\\text{面 } A'BD \\perp \\text{面 } CBD$（即 $\\beta = 90^\\circ$）时求解点 $A'$ 到底面距离与体对角线长。",
         };
     }
   }, [model]);
@@ -280,7 +320,11 @@ export default function FoldingAnimation() {
                 },
               ]}
               value={model}
-              onChange={(m) => setModel(m as FoldingModelKind)}
+              onChange={(m) => {
+                foldPlay.pause();
+                setModel(m as FoldingModelKind);
+                setActiveAnswerStep(1);
+              }}
             />
           </LeftPanelSection>
 
@@ -294,7 +338,10 @@ export default function FoldingAnimation() {
                 { key: "unfolded", label: "2D展平原图" },
               ]}
               value={foldState}
-              onChange={(s) => setFoldState(s as typeof foldState)}
+              onChange={(s) => {
+                foldPlay.pause();
+                setFoldState(s as typeof foldState);
+              }}
             />
           </LeftPanelSection>
 
@@ -305,7 +352,27 @@ export default function FoldingAnimation() {
               onParamChange={handleParamChange}
               onReset={handleReset}
             />
+            <div className="mt-2.5">
+              <ParamPlayBar
+                isPlaying={foldPlay.isPlaying}
+                onToggle={handleToggleFoldPlay}
+                speed={foldPlay.speed}
+                onSpeedChange={foldPlay.setSpeed}
+                label="连续翻折演示 (α: 1°~179°)"
+              />
+            </div>
           </LeftPanelSection>
+
+          {answerSteps.length > 0 && (
+            <LeftPanelSection title="分步作答导航">
+              <StepNavigator
+                steps={answerSteps}
+                active={effectiveAnswerStep}
+                onChange={setActiveAnswerStep}
+                hint="右屏已同步高亮对应采分步卡片"
+              />
+            </LeftPanelSection>
+          )}
 
           {/* 第 4 步：视图与图层控制（开关并排 + 视角预设） */}
           <LeftPanelSection title="视图与图层控制" compact>
@@ -371,12 +438,21 @@ export default function FoldingAnimation() {
         viewMode === "3d" ? (
           <ThreeDCanvas
             cameraPosition={cameraPosition}
+            frameloop={foldPlay.isPlaying ? "always" : "demand"}
             overlay={
-              <ModeSwitchOverlay3D
-                mode={interactionMode}
-                onModeChange={setInteractionMode}
-                pointCount={1}
-              />
+              <>
+                <ModeSwitchOverlay3D
+                  mode={interactionMode}
+                  onModeChange={setInteractionMode}
+                  pointCount={1}
+                />
+                <AnswerStepOverlay3D
+                  steps={answerSteps}
+                  activeStep={
+                    answerSteps.length > 0 ? effectiveAnswerStep : undefined
+                  }
+                />
+              </>
             }
             legend={
               <Legend3D
@@ -431,6 +507,9 @@ export default function FoldingAnimation() {
               alphaDeg={alphaDeg}
               a={a}
               b={b}
+              activeStep={
+                answerSteps.length > 0 ? effectiveAnswerStep : undefined
+              }
               onPointDrag={handlePointDrag}
             />
           </ThreeDCanvas>
@@ -441,7 +520,14 @@ export default function FoldingAnimation() {
           />
         )
       }
-      right={<MathPanel {...mathData} title="翻折二面角看板" />}
+      right={
+        <MathPanel
+          {...mathData}
+          focusStep={answerSteps.length > 0 ? effectiveAnswerStep : undefined}
+          focusTarget="reasoning"
+          title="翻折二面角看板"
+        />
+      }
     />
   );
 }

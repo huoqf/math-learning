@@ -59,7 +59,7 @@ export function CoordDotProductModeScene({
       />
       <FormulaLabel3D
         position={vecA}
-        tex="\\vec{a}"
+        tex="\vec{a}"
         offset={[0.15, 0.1, 0.15]}
       />
 
@@ -73,7 +73,7 @@ export function CoordDotProductModeScene({
       />
       <FormulaLabel3D
         position={vecB}
-        tex="\\vec{b}"
+        tex="\vec{b}"
         offset={[0.15, 0.1, 0.15]}
       />
 
@@ -83,7 +83,7 @@ export function CoordDotProductModeScene({
           <Vector3DArrow from={origin} to={sum} colorKey="highlight" />
           <FormulaLabel3D
             position={sum}
-            tex="\\vec{a}+\\vec{b}"
+            tex="\vec{a}+\vec{b}"
             offset={[0.15, 0.1, 0.15]}
           />
           {/* 平行四边形虚线边 */}
@@ -114,7 +114,7 @@ export function CoordDotProductModeScene({
               y: (vecA.y + vecB.y) / 2,
               z: (vecA.z + vecB.z) / 2 + 0.15,
             }}
-            tex="\\vec{a}-\\vec{b}"
+            tex="\vec{a}-\vec{b}"
           />
         </>
       )}
@@ -126,7 +126,7 @@ export function CoordDotProductModeScene({
           <Vector3DArrow from={origin} to={projBOnA} colorKey="paramTertiary" />
           <FormulaLabel3D
             position={projBOnA}
-            tex="\\vec{b}_{\\vec{a}}"
+            tex="\vec{b}_{\vec{a}}"
             offset={[0.1, -0.15, -0.1]}
           />
           {/* 垂足虚线 (B -> projBOnA) */}
@@ -179,7 +179,7 @@ export function CoordDotProductModeScene({
               y: (vecA.y / normA + vecB.y / normB) * 0.45,
               z: (vecA.z / normA + vecB.z / normB) * 0.45 + 0.1,
             }}
-            tex="\\theta"
+            tex="\theta"
           />
         </>
       )}

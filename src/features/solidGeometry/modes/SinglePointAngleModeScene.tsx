@@ -23,6 +23,7 @@ interface SinglePointAngleModeSceneProps {
   C1: Vec3;
   B1: Vec3;
   resSingle: SinglePointAngleResult;
+  activeStep?: number;
 }
 
 export default function SinglePointAngleModeScene({
@@ -35,6 +36,7 @@ export default function SinglePointAngleModeScene({
   C1,
   B1,
   resSingle,
+  activeStep,
 }: SinglePointAngleModeSceneProps) {
   // 截面中心与法向量缩放
   const centerPAC: Vec3 = {
@@ -52,12 +54,31 @@ export default function SinglePointAngleModeScene({
   return (
     <>
       {/* 截面 PAC 半透明面片 */}
-      <Polygon3DFace points={[P, A, C]} colorKey="secondary" opacity={0.25} />
+      <Polygon3DFace
+        points={[P, A, C]}
+        colorKey="secondary"
+        opacity={activeStep === 1 || activeStep === 2 ? 0.36 : 0.25}
+      />
 
       {/* 截面三条边 (纯几何线段，绝无箭头) */}
-      <Segment3D from={A} to={P} colorKey="highlight" lineWidth={2.5} />
-      <Segment3D from={P} to={C} colorKey="highlight" lineWidth={2.5} />
-      <Segment3D from={C} to={A} colorKey="highlight" lineWidth={2.5} />
+      <Segment3D
+        from={A}
+        to={P}
+        colorKey="highlight"
+        lineWidth={activeStep === 1 ? 3.8 : 2.5}
+      />
+      <Segment3D
+        from={P}
+        to={C}
+        colorKey="highlight"
+        lineWidth={activeStep === 1 ? 3.8 : 2.5}
+      />
+      <Segment3D
+        from={C}
+        to={A}
+        colorKey="highlight"
+        lineWidth={activeStep === 1 ? 3.8 : 2.5}
+      />
 
       {/* 截面法向量 (唯一代数向量箭头) */}
       {resSingle.lenN > 1e-4 && (
@@ -67,14 +88,25 @@ export default function SinglePointAngleModeScene({
             to={vecNormalScaled}
             colorKey="secondary"
           />
-          <FormulaLabel3D position={vecNormalScaled} tex="\\vec{n}" />
+          <FormulaLabel3D position={vecNormalScaled} tex="\vec{n}" />
         </>
       )}
 
       {/* 动连线 DP (纯几何线段) */}
-      <Segment3D from={D} to={P} colorKey="accent" lineWidth={2.5} />
+      <Segment3D
+        from={D}
+        to={P}
+        colorKey="accent"
+        lineWidth={activeStep === 3 ? 4 : 2.5}
+      />
       {/* 探究线 AC1 (纯几何线段) */}
-      <Segment3D from={A} to={C1} colorKey="secondary" dashed lineWidth={2} />
+      <Segment3D
+        from={A}
+        to={C1}
+        colorKey="secondary"
+        dashed
+        lineWidth={activeStep === 2 || activeStep === 3 ? 3.2 : 2}
+      />
 
       {/* 存在性目标点指示：当未与当前动点 P 重叠时才显示 P_0 辅助点 */}
       {resSingle.isTargetDihedralExist &&

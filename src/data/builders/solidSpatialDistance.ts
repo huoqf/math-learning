@@ -8,12 +8,13 @@ import type {
   SpatialDistanceMode,
 } from "../types";
 import { MATH_COLORS } from "@/theme";
-import { formatCoefTerm } from "@/utils/mathFormat";
+import { formatCoefTerm, formatMathNumber } from "@/utils/mathFormat";
 import {
   solveSkewLinesDistance,
   solveSideEdgeAndFaceDiagonalDistance,
   solvePointPlaneDistance,
   solvePointLineDistance,
+  solveCuboidPointLineDistance,
 } from "@/math3d/spatialDistance";
 
 // ── know-solid-distance: 异面直线公垂线与空间距离动态极值 ──
@@ -372,6 +373,125 @@ export function buildSpatialDistancePanel(
           "等体积法换底 $V_{A-BDE} = V_{E-ABD}$ 反求高线 $d$，结果严格自洽：",
         latex: `\\begin{aligned} d &= \\frac{3 V_{E-ABD}}{S_{\\Delta BDE}} \\\\[1.5ex] &= \\frac{3 \\times ${distRes.volume.toFixed(4)}}{${distRes.areaSection.toFixed(4)}} = ${distRes.distance.toFixed(4)} \\end{aligned}`,
         rubric: "【高考采分点】等体积反解与结论验证 (+4分)",
+      },
+    );
+  } else if (mode === "pointLineDistance") {
+    // 点到直线距离（选必一空间向量投影公式核心母题：P(0,0,λc) 到体对角线 BD₁）
+    const lineRes = solveCuboidPointLineDistance(a, b, c, lambda);
+    const { lenU, dotAbs, bpSq } = lineRes;
+    const projLen = Math.abs(lineRes.projectionLength);
+
+    const aStr = formatMathNumber(a);
+    const bStr = formatMathNumber(b);
+    const cStr = formatMathNumber(c);
+    const zPStr = formatMathNumber(lineRes.P.z);
+    const dotStr = formatMathNumber(dotAbs);
+    const uLenStr = formatMathNumber(lenU, 3);
+    const bpSqStr = formatMathNumber(bpSq);
+    const projStr = formatMathNumber(projLen, 3);
+    const distStr = formatMathNumber(lineRes.distance, 4);
+
+    examAnchor = "新高考选必一必考 · 空间向量投影公式求点到直线的距离";
+    mnemonic = "点线距记射影法：斜向模方减投方，开方稳拿满分账。";
+
+    quantities.push(
+      {
+        label: "动点 $P$ 坐标",
+        symbol: "P(\\lambda)",
+        value: `(0, 0, ${zPStr})`,
+        color: MATH_COLORS.paramPrimary,
+      },
+      {
+        label: "方向向量 $\\vec{u} = \\overrightarrow{BD_1}$",
+        symbol: "\\vec{u}",
+        value: `(-${aStr}, ${bStr}, ${cStr})`,
+        color: MATH_COLORS.secondary,
+      },
+      {
+        label: "垂足 $H$ 坐标",
+        symbol: "H",
+        value: `(${formatMathNumber(lineRes.footH.x)}, ${formatMathNumber(lineRes.footH.y)}, ${formatMathNumber(lineRes.footH.z)})`,
+        color: MATH_COLORS.paramTertiary,
+      },
+      {
+        label: "投影长 $|\\overrightarrow{BP} \\cdot \\vec{u}_0|$",
+        symbol: "s = |BH|",
+        value: Number(projLen.toFixed(4)),
+        color: MATH_COLORS.paramSecondary,
+      },
+      {
+        label: "点线距离 $d = |PH|$",
+        symbol: "d",
+        value: Number(lineRes.distance.toFixed(4)),
+        color: MATH_COLORS.paramTertiary,
+      },
+    );
+
+    warnings.push({
+      text: "【易错警示】点到直线距离中 $\\vec{u}_0 = \\frac{\\vec{u}}{|\\vec{u}|}$ 必须是单位方向向量，切忌漏除方向向量模长 $|\\vec{u}|$ 而误算为 $\\sqrt{|\\overrightarrow{BP}|^2 - |\\overrightarrow{BP}\\cdot\\vec{u}|^2}$。",
+      level: "warning",
+    });
+
+    theorems.push(
+      {
+        name: "点到直线的距离公式（空间向量投影法）",
+        latex: `d = \\sqrt{|\\overrightarrow{BP}|^2 - |\\overrightarrow{BP} \\cdot \\vec{u}_0|^2} = \\sqrt{|\\overrightarrow{BP}|^2 - \\left(\\frac{\\overrightarrow{BP} \\cdot \\vec{u}}{|\\vec{u}|}\\right)^2}`,
+        level: "core",
+        condition:
+          "点 $B$ 为直线 $l$ 上任一已知定点，$\\vec{u}_0 = \\frac{\\vec{u}}{|\\vec{u}|}$ 为直线 $l$ 的单位方向向量",
+      },
+      {
+        name: "几何对照：直角三角形斜高勾股定理",
+        latex: `|PH|^2 + |BH|^2 = |PB|^2 \\iff d = |PB|\\sin\\langle\\overrightarrow{BP}, \\vec{u}\\rangle`,
+        level: "important",
+        condition:
+          "在点 $P$ 与直线 $l$ 确定的平面 $\\triangle PBD_1$ 内过 $P$ 作 $PH \\perp BD_1$，构造 $\\text{Rt}\\triangle PHB$",
+      },
+    );
+
+    gaokaoPoints.push(
+      {
+        text: "选必一高考核心套路：求点 $P$ 到直线 $l$ 距离首选向量投影勾股公式 $d = \\sqrt{|\\vec{a}|^2 - (\\vec{a}\\cdot\\vec{u}_0)^2}$，避免硬求正弦或联立反解垂足 $H$ 坐标，计算极少出错。",
+        importance: "gaokao",
+      },
+      {
+        text: "几何验证技巧：对于长方体/正方体内的特殊位置（如 $P$ 为棱中点或底面顶点），可用 $\\triangle PBD_1$ 等面积法或对称性交叉口算核对。",
+        importance: "core",
+      },
+    );
+
+    const isCubeNow = Math.abs(a - b) < 1e-4 && Math.abs(b - c) < 1e-4;
+    if (isCubeNow && preset === "cubeMid") {
+      warnings.push({
+        text: "【正方体中点对称捷径】当 $P$ 为棱 $AA_1$ 中点时，$PB = PD_1$ 构成等腰三角形 $\\triangle PBD_1$，垂足 $H$ 恰好为体对角线 $BD_1$ 的中点，中位线几何口算即可秒杀。",
+        level: "info",
+      });
+    }
+
+    reasoningSteps.push(
+      {
+        step: 1,
+        title: "确定直线定点基向量与方向向量",
+        detail:
+          "以 $A$ 为原点建系，取直线 $BD_1$ 上定点 $B(a, 0, 0)$，构造斜向量 $\\overrightarrow{BP}$ 与直线方向向量 $\\vec{u} = \\overrightarrow{BD_1}$：",
+        latex: `\\begin{aligned} \\overrightarrow{BP} &= (-a,\\, 0,\\, \\lambda c) = (-${aStr},\\, 0,\\, ${zPStr}) \\\\[1ex] \\vec{u} &= (-a,\\, b,\\, c) = (-${aStr},\\, ${bStr},\\, ${cStr}) \\end{aligned}`,
+        rubric: "【高考采分点】建系坐标与向量表达式正确 (+4分)",
+      },
+      {
+        step: 2,
+        title: "单位化方向向量并计算向量射影长",
+        detail:
+          "分别求方向向量模长 $|\\vec{u}|$、斜向量模方 $|\\overrightarrow{BP}|^2$ 及点乘投影长度 $s = |\\overrightarrow{BP} \\cdot \\vec{u}_0|$：",
+        latex: `\\begin{aligned} |\\overrightarrow{BP}|^2 &= ${bpSqStr}, \\quad |\\vec{u}| = ${uLenStr} \\\\[1ex] s &= \\frac{|\\overrightarrow{BP} \\cdot \\vec{u}|}{|\\vec{u}|} \\\\[1ex] &= \\frac{${dotStr}}{${uLenStr}} = ${projStr} \\end{aligned}`,
+        rubric: "【高考采分点】单位化方向向量与内积投影运算 (+4分)",
+      },
+      {
+        step: 3,
+        title: "利用投影勾股公式求点到直线距离",
+        detail:
+          "在投影直角三角形 $\\triangle PHB$ 中，由 $d = \\sqrt{|\\overrightarrow{BP}|^2 - s^2}$ 得垂距 $d$：",
+        latex: `\\begin{aligned} d &= \\sqrt{|\\overrightarrow{BP}|^2 - s^2} \\\\[1.5ex] &= \\sqrt{${bpSqStr} - (${projStr})^2} = ${distStr} \\end{aligned}`,
+        rubric: "【高考采分点】勾股投影公式代入及精确结果 (+4分)",
       },
     );
   } else {

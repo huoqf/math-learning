@@ -35,7 +35,7 @@ export function walkDirectory(currentPath, fileList = []) {
   return fileList;
 }
 
-export function runAudit({ targetDir, workspaceRoot, isStrict = false, group = null, rule = null, rules = allRules }) {
+export function runAudit({ targetDir, targetDirs, workspaceRoot, isStrict = false, group = null, rule = null, rules = allRules }) {
   const startTime = Date.now();
   let activeRules = rules;
   if (rule) {
@@ -44,14 +44,19 @@ export function runAudit({ targetDir, workspaceRoot, isStrict = false, group = n
     activeRules = activeRules.filter((r) => r.group === group || r.id.startsWith(group));
   }
 
-  const files = walkDirectory(targetDir);
-
-  // 如果扫描的是整个 src/features，补充扫描 src/math 与 src/math3d
-  const targetRel = path.relative(workspaceRoot, targetDir).replace(/\\/g, '/');
-  if (targetRel === 'src/features' || targetRel === '') {
-    walkDirectory(path.resolve(workspaceRoot, 'src/math'), files);
-    walkDirectory(path.resolve(workspaceRoot, 'src/math3d'), files);
+  const dirs = targetDirs && targetDirs.length > 0 ? targetDirs : [targetDir];
+  const fileSet = new Set();
+  for (const dir of dirs) {
+    const walked = walkDirectory(dir);
+    for (const f of walked) fileSet.add(f);
+    // 如果扫描的是整个 src/features，补充扫描 src/math 与 src/math3d
+    const targetRel = path.relative(workspaceRoot, dir).replace(/\\/g, '/');
+    if (targetRel === 'src/features' || targetRel === '') {
+      for (const f of walkDirectory(path.resolve(workspaceRoot, 'src/math'))) fileSet.add(f);
+      for (const f of walkDirectory(path.resolve(workspaceRoot, 'src/math3d'))) fileSet.add(f);
+    }
   }
+  const files = [...fileSet];
 
   let totalFiles = 0;
   let totalErrors = 0;

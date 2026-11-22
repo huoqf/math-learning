@@ -56,7 +56,7 @@ description: >
 5. **交互互斥**：画布右上角接入 `ModeSwitchOverlay3D` 支持视角漫游与动点交互互斥。
 
 ### 阶段 4：左屏控制台与右屏看板组装（系统链路）
-1. **左屏**：遵循 `references/left-panel-spec.md` 渲染层级，滑块必须标清几何线段代号（如 $\text{侧棱 } PA=\color{red}{a}$），底部 `TipCard` 呈现题设与设问。
+1. **左屏**：遵循 `references/left-panel-spec.md` 渲染层级，滑块必须标清几何线段代号（如 $\text{侧棱 } PA=\color{red}{a}$），底部 `TipCard` 呈现题设与设问；涉及过程演进的页面挂载 `ParamPlayBar`（`useParamPlay` 驱动），高考大题核心页面挂载同源 `StepNavigator` 与右屏 `MathPanel` 的 `focusStep` 联动。
 2. **右屏架构组装**（按课型精准分层，位于 `src/data/builders/<topic>.ts`）：
    - **基础概念课**：组装核心定理 `theorems`（显式前提）、临界警示 `warnings`、几何特征量 `quantities`；
 3. **四步注册与 `guarded3D: true` WebGL 门禁机制**：

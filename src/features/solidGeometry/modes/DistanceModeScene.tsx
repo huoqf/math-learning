@@ -26,6 +26,7 @@ interface DistanceModeSceneProps {
   showRightAngles: boolean;
   showNormals: boolean;
   interactionMode: "orbit" | "drag";
+  activeStep?: number;
   onEPointDrag: (next: Vec3) => void;
 }
 
@@ -39,6 +40,7 @@ export default function DistanceModeScene({
   showRightAngles,
   showNormals,
   interactionMode,
+  activeStep,
   onEPointDrag,
 }: DistanceModeSceneProps) {
   const { E, A, B, D } = vertices;
@@ -68,17 +70,36 @@ export default function DistanceModeScene({
       />
 
       {/* 底面 ABD 与 截面 BDE */}
-      <Polygon3DFace points={[A, B, D]} colorKey="secondary" opacity={0.15} />
+      <Polygon3DFace
+        points={[A, B, D]}
+        colorKey="secondary"
+        opacity={activeStep === 3 ? 0.3 : 0.15}
+      />
       <Polygon3DFace
         points={[B, D, E]}
         colorKey="paramTertiary"
-        opacity={0.28}
+        opacity={activeStep === 1 ? 0.4 : 0.28}
       />
 
       {/* 三棱锥 E-ABD 棱线 (几何线段，绝无箭头) */}
-      <Segment3D from={E} to={B} colorKey="accent" lineWidth={2} />
-      <Segment3D from={E} to={D} colorKey="accent" lineWidth={2} />
-      <Segment3D from={B} to={D} colorKey="accent" lineWidth={2} />
+      <Segment3D
+        from={E}
+        to={B}
+        colorKey="accent"
+        lineWidth={activeStep === 1 ? 3.5 : 2}
+      />
+      <Segment3D
+        from={E}
+        to={D}
+        colorKey="accent"
+        lineWidth={activeStep === 1 ? 3.5 : 2}
+      />
+      <Segment3D
+        from={B}
+        to={D}
+        colorKey="accent"
+        lineWidth={activeStep === 1 ? 3.5 : 2}
+      />
 
       {/* 几何辅助线：双高线 EA 与 AH */}
       {showAuxiliary && (
@@ -89,7 +110,7 @@ export default function DistanceModeScene({
             to={E}
             dashed
             colorKey="paramPrimary"
-            lineWidth={2.5}
+            lineWidth={activeStep === 3 ? 4 : 2.5}
           />
 
           {/* 原点 A 到截面 BDE 的垂线段 AH (截面 BDE 对应的高 d) */}
@@ -97,7 +118,7 @@ export default function DistanceModeScene({
             from={A}
             to={distanceData.footH}
             colorKey="highlight"
-            lineWidth={3}
+            lineWidth={activeStep === 2 ? 4.8 : 3}
           />
           <Point3D position={distanceData.footH} colorKey="highlight" />
           <PointLabel3D
@@ -169,7 +190,7 @@ export default function DistanceModeScene({
                 <Vector3DArrow from={G2} to={nTarget} colorKey="primary" />
                 <FormulaLabel3D
                   position={nTarget}
-                  tex="\\vec{n}"
+                  tex="\vec{n}"
                   offset={[0.1, 0.1, 0.1]}
                 />
               </>

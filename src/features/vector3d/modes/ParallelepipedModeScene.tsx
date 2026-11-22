@@ -47,7 +47,7 @@ export function ParallelepipedModeScene({
           <Vector3DArrow from={O} to={vecA} colorKey="paramPrimary" />
           <FormulaLabel3D
             position={{ x: vecA.x * 0.5, y: -0.28, z: 0 }}
-            tex="\\vec{a}"
+            tex="\vec{a}"
           />
 
           <Vector3DArrow from={O} to={vecB} colorKey="paramSecondary" />
@@ -57,7 +57,7 @@ export function ParallelepipedModeScene({
               y: vecB.y * 0.5 + 0.15,
               z: 0,
             }}
-            tex="\\vec{b}"
+            tex="\vec{b}"
           />
 
           <Vector3DArrow from={O} to={vecC} colorKey="paramTertiary" />
@@ -67,7 +67,7 @@ export function ParallelepipedModeScene({
               y: pointC.y * 0.5,
               z: pointC.z * 0.5 + 0.18,
             }}
-            tex="\\vec{c}"
+            tex="\vec{c}"
           />
         </>
       )}

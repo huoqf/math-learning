@@ -5,18 +5,20 @@ import {
   LeftPanel,
   LeftPanelSection,
   ParamControl,
+  StepNavigator,
   MathPanel,
   TabSwitcher,
   SelectGrid,
   Toggle,
   TipCard,
 } from "@/components/UI";
-import type { ParamConfig } from "@/components/UI";
+import type { ParamConfig, AnswerStepItem } from "@/components/UI";
 import {
   Legend3D,
   CameraRig,
   CameraFit,
   ModeSwitchOverlay3D,
+  AnswerStepOverlay3D,
 } from "@/components/Math3D";
 import { getSolidAngleBounds } from "@/math3d/legacy3dBounds";
 import type { LegendItem } from "@/components/Math3D";
@@ -32,6 +34,7 @@ import {
   solveLinePlaneAngle,
   solveDihedralAngle,
   solvePointToPlaneDistance,
+  solveTriangularPrismDihedral,
 } from "@/math3d/spatialAngle";
 import type { Vec3 } from "@/math3d/vector3";
 import CuboidBaseScene from "./CuboidBaseScene";
@@ -88,9 +91,12 @@ export default function SpatialAngleAnimation({
     [a, b, c, lambda],
   );
 
-  // 动点 E 沿侧棱 AA1 拖拽反向求参回调 (同步切回自由探究预设)
+  // 动点 E 沿侧棱 AA1 拖拽反向求参回调 (非三棱柱时切回自由探究)
+  const isTriPrism = activeMode === "dihedral" && modelPreset === "triPrism";
   const handleEPointDrag = (next: Vec3) => {
-    setModelPreset("free");
+    if (!isTriPrism) {
+      setModelPreset("free");
+    }
     setParams((prev) => ({
       ...prev,
       lambda: Number(Math.min(1.0, Math.max(0.1, next.z / c)).toFixed(2)),
@@ -106,10 +112,24 @@ export default function SpatialAngleAnimation({
     [a, b, c, lambda],
   );
 
-  // 二面角模型计算
+  // 二面角模型计算（长方体 + 正三棱柱建系母题）
   const dihedralData = useMemo(
     () => solveDihedralAngle(a, b, c, lambda),
     [a, b, c, lambda],
+  );
+  const triPrismData = useMemo(
+    () => solveTriangularPrismDihedral(a, c, lambda),
+    [a, c, lambda],
+  );
+  const effectiveBounds = useMemo(
+    () =>
+      isTriPrism
+        ? {
+            min: { x: -a / 2, y: 0, z: 0 },
+            max: { x: a / 2, y: triPrismData.triHeight, z: c },
+          }
+        : sceneBounds,
+    [isTriPrism, a, c, triPrismData.triHeight, sceneBounds],
   );
 
   // 距离与极值模型计算
@@ -135,6 +155,19 @@ export default function SpatialAngleAnimation({
       }),
     [params, panelMode, modelPreset, animId],
   );
+
+  const [activeAnswerStep, setActiveAnswerStep] = useState(1);
+  const answerSteps = useMemo<AnswerStepItem[]>(
+    () =>
+      (mathData.reasoningSteps ?? []).map((rs) => ({
+        step: rs.step,
+        title: rs.title,
+        sceneHint: rs.rubric,
+      })),
+    [mathData.reasoningSteps],
+  );
+  const effectiveAnswerStep =
+    answerSteps.length > 0 ? Math.min(activeAnswerStep, answerSteps.length) : 1;
 
   // 探究模式对应的典型模型预设 (纯净单行加粗学术标题，纯粹自解释，等高对称，杜绝折行与冗余描述)
   const currentPresets = useMemo(() => {
@@ -211,6 +244,11 @@ export default function SpatialAngleAnimation({
           label: "正棱柱截面",
           params: { a: 2.5, b: 2.5, c: 3.5, lambda: 1.0 },
         },
+        {
+          key: "triPrism",
+          label: "正三棱柱建系",
+          params: { a: 2, b: 2, c: 3, lambda: 0.6 },
+        },
       ],
       distance: [
         {
@@ -241,6 +279,7 @@ export default function SpatialAngleAnimation({
   // 高考模型预设切换 (铁律：仅调参数，严禁篡改 activeMode)
   const handleModelPresetChange = (pKey: string) => {
     setModelPreset(pKey);
+    setActiveAnswerStep(1);
     const target = currentPresets.find((p) => p.key === pKey);
     if (target) {
       setParams(target.params);
@@ -283,6 +322,15 @@ export default function SpatialAngleAnimation({
   const handleAlignAlongEdge = () => {
     const controls = controlsRef.current;
     if (controls) {
+      if (isTriPrism) {
+        const eyeX = a * 2.4;
+        const eyeY = triPrismData.triHeight * 0.4;
+        const eyeZ = c * 0.45;
+        controls.object.position.set(eyeX, eyeY, eyeZ);
+        controls.target.set(0, triPrismData.triHeight * 0.35, c * 0.25);
+        controls.update();
+        return;
+      }
       const eyeX = a + a * 1.8;
       const eyeY = -b * 1.8;
       const eyeZ = c * 0.8;
@@ -304,6 +352,9 @@ export default function SpatialAngleAnimation({
       modelPreset === "tallPrism" ||
       modelPreset === "tallPrismMid" ||
       modelPreset === "tallPrismSection";
+
+    const isTriPrismPreset =
+      activeMode === "dihedral" && modelPreset === "triPrism";
 
     const isFixedLambdaPreset =
       modelPreset === "midpoint" ||
@@ -332,7 +383,9 @@ export default function SpatialAngleAnimation({
       }
     } else {
       // linePlane / dihedral / distance 模式
-      if (modelPreset === "free") {
+      if (isTriPrismPreset) {
+        activeKeys = ["a", "c", "lambda"];
+      } else if (modelPreset === "free") {
         // 自由探究：全部参数开放可调
         activeKeys = ["a", "b", "c", "lambda"];
       } else if (isCubePreset) {
@@ -352,19 +405,27 @@ export default function SpatialAngleAnimation({
     return spatialAngleMeta
       .filter((meta) => activeKeys.includes(meta.key))
       .map((meta) => {
-        // 在正方体预设下，将 label 描述提升为“正方体棱长 a”
+        // 在正方体或正三棱柱预设下，精准特化 a 的描述
         const label =
-          isCubePreset && meta.key === "a" ? "正方体棱长 a" : meta.label;
+          isCubePreset && meta.key === "a"
+            ? "正方体棱长 a"
+            : isTriPrismPreset && meta.key === "a"
+              ? "底面正三角形边长 a"
+              : meta.label;
         const labelFormula =
           isCubePreset && meta.key === "a"
             ? `\\text{正方体棱长 } \\color{${MATH_COLORS.paramPrimary}}{a}`
-            : meta.labelFormula;
+            : isTriPrismPreset && meta.key === "a"
+              ? `\\text{底面边长 } \\color{${MATH_COLORS.paramPrimary}}{a}`
+              : meta.labelFormula;
         const description =
           isCubePreset && meta.key === "a"
             ? "长宽高同步 a=b=c"
             : isPrismPreset && meta.key === "a"
               ? "底面正方形 a=b"
-              : meta.description;
+              : isTriPrismPreset && meta.key === "a"
+                ? "正三棱柱取 BC 中点 O 建系"
+                : meta.description;
 
         return {
           key: meta.key,
@@ -427,6 +488,40 @@ export default function SpatialAngleAnimation({
             : []),
         ];
       case "dihedral":
+        if (isTriPrism) {
+          return [
+            { colorKey: "highlight", swatch: "line", label: "二面角棱 BC" },
+            {
+              colorKey: "paramTertiary",
+              swatch: "line",
+              label: "中垂线 OA⊥BC 与 OE⊥BC",
+            },
+            {
+              colorKey: "secondary",
+              swatch: "area",
+              label: "截面 △EBC 与底面 △ABC",
+            },
+            {
+              colorKey: "highlight",
+              swatch: "line",
+              label: "二面角平面角 θ (∠EOA)",
+            },
+            ...(showNormals
+              ? [
+                  {
+                    colorKey: "secondary" as const,
+                    swatch: "line" as const,
+                    label: "底面法向量 n⃗₁",
+                  },
+                  {
+                    colorKey: "primary" as const,
+                    swatch: "line" as const,
+                    label: "截面法向量 n⃗₂",
+                  },
+                ]
+              : []),
+          ];
+        }
         return [
           { colorKey: "primary", swatch: "line", label: "截面交线 BD" },
           {
@@ -489,7 +584,7 @@ export default function SpatialAngleAnimation({
             : []),
         ];
     }
-  }, [activeMode, showNormals]);
+  }, [activeMode, showNormals, isTriPrism]);
 
   // 左屏教学提示与题设导引（符合高中数学题设规范：详实交代几何背景与动点约束，多问递进）
   const tipConfig = useMemo(() => {
@@ -517,6 +612,18 @@ export default function SpatialAngleAnimation({
           ],
         };
       case "dihedral":
+        if (modelPreset === "triPrism") {
+          return {
+            variant: "success" as const,
+            badge: "高考压轴 · 正三棱柱中点建系与钝锐二面角判别",
+            condition:
+              "在正三棱柱 $ABC-A_1B_1C_1$ 中，底面正三角形边长为 $a$，侧棱高为 $c$，$E$ 为侧棱 $AA_1$ 上动点（$\\lambda = AE/AA_1$）。几何体无现成三垂直交点，须取底边 $BC$ 中点 $O(0,0,0)$ 建系。",
+            questions: [
+              "证明底面中线 $OA \\perp BC$ 且侧棱垂直底面，建立空间直角坐标系 $O$-$xyz$，写出点 $A, B, C, E$ 坐标并求二面角 $E$-$BC$-$A$ 的大小；",
+              "分别求底面法向量 $\\vec{n}_1$ 与截面 $EBC$ 法向量 $\\vec{n}_2$，利用内点点积符号判断「同进同出互补 / 一进一出相等」并结合平面角 $\\angle EOA$ 完成钝锐判别对账。",
+            ],
+          };
+        }
         return {
           variant: "success" as const,
           badge: "高考母题 · 空间二面角与平面角判定",
@@ -541,7 +648,6 @@ export default function SpatialAngleAnimation({
         };
     }
     // 依赖中保留二级选项变量：TipCard 教学提示须随二级选项切换同步特化（项目纪律 left/tipcard-secondary-sync）
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeMode, modelPreset]);
 
   return (
@@ -561,6 +667,7 @@ export default function SpatialAngleAnimation({
               onChange={(m) => {
                 setActiveMode(m as AngleMode);
                 setModelPreset("free");
+                setActiveAnswerStep(1);
               }}
               columns={2}
             />
@@ -584,6 +691,17 @@ export default function SpatialAngleAnimation({
               onReset={handleReset}
             />
           </LeftPanelSection>
+
+          {answerSteps.length > 0 && (
+            <LeftPanelSection title="分步作答导航">
+              <StepNavigator
+                steps={answerSteps}
+                active={effectiveAnswerStep}
+                onChange={setActiveAnswerStep}
+                hint="右屏已同步高亮对应采分步卡片"
+              />
+            </LeftPanelSection>
+          )}
 
           {/* Step 4: 几何与向量图层控制 */}
           <LeftPanelSection title="图层控制" compact>
@@ -682,7 +800,9 @@ export default function SpatialAngleAnimation({
                   className="w-full py-1.5 px-2.5 bg-blue-50 hover:bg-blue-100/80 border border-blue-200/80 rounded-md text-xs text-blue-700 font-medium flex items-center justify-center gap-1 transition-colors active:scale-[0.99] cursor-pointer"
                 >
                   <span>📐</span>
-                  <span className="text-[11px]">沿棱对齐直视 (交线 BD)</span>
+                  <span className="text-[11px]">
+                    沿棱对齐直视 (交线 {isTriPrism ? "BC" : "BD"})
+                  </span>
                 </button>
               </div>
             )}
@@ -701,22 +821,32 @@ export default function SpatialAngleAnimation({
         <div className="w-full h-full relative">
           <ThreeDCanvas
             cameraPosition={cameraPosition}
+            overlay={
+              <AnswerStepOverlay3D
+                steps={answerSteps}
+                activeStep={
+                  answerSteps.length > 0 ? effectiveAnswerStep : undefined
+                }
+              />
+            }
             legend={<Legend3D title="图例标注" items={legendItems} />}
           >
             <CameraRig
               ref={controlsRef}
               enabled={interactionMode === "orbit"}
             />
-            <CameraFit bounds={sceneBounds} token={viewToken} />
-            {/* 基础长方体 + 顶点标号（建系后切换为坐标标注）共享骨架 */}
-            <CuboidBaseScene
-              a={a}
-              b={b}
-              c={c}
-              vertices={vertices}
-              showAxes={showAxes}
-              showCoordinates={showCoordinates}
-            />
+            <CameraFit bounds={effectiveBounds} token={viewToken} />
+            {/* 基础长方体 + 顶点标号（正三棱柱母题时隐藏，改由正三棱柱子场景接管建系与骨架） */}
+            {!isTriPrism && (
+              <CuboidBaseScene
+                a={a}
+                b={b}
+                c={c}
+                vertices={vertices}
+                showAxes={showAxes}
+                showCoordinates={showCoordinates}
+              />
+            )}
 
             {/* ═════════ 模式一：异面直线所成的角 (纯几何线段，无箭头误导) ═════════ */}
             {activeMode === "skewLines" && (
@@ -730,6 +860,9 @@ export default function SpatialAngleAnimation({
                 showRightAngles={showRightAngles}
                 showAngles={showAngles}
                 showNormals={showNormals}
+                activeStep={
+                  answerSteps.length > 0 ? effectiveAnswerStep : undefined
+                }
               />
             )}
 
@@ -748,6 +881,9 @@ export default function SpatialAngleAnimation({
                 showAngles={showAngles}
                 showNormals={showNormals}
                 interactionMode={interactionMode}
+                activeStep={
+                  answerSteps.length > 0 ? effectiveAnswerStep : undefined
+                }
                 onEPointDrag={handleEPointDrag}
               />
             )}
@@ -758,6 +894,8 @@ export default function SpatialAngleAnimation({
                 c={c}
                 vertices={vertices}
                 dihedralData={dihedralData}
+                isTriPrism={isTriPrism}
+                triPrismData={triPrismData}
                 showAxes={showAxes}
                 showCoordinates={showCoordinates}
                 showAuxiliary={showAuxiliary}
@@ -765,6 +903,9 @@ export default function SpatialAngleAnimation({
                 showAngles={showAngles}
                 showNormals={showNormals}
                 interactionMode={interactionMode}
+                activeStep={
+                  answerSteps.length > 0 ? effectiveAnswerStep : undefined
+                }
                 onEPointDrag={handleEPointDrag}
               />
             )}
@@ -781,6 +922,9 @@ export default function SpatialAngleAnimation({
                 showRightAngles={showRightAngles}
                 showNormals={showNormals}
                 interactionMode={interactionMode}
+                activeStep={
+                  answerSteps.length > 0 ? effectiveAnswerStep : undefined
+                }
                 onEPointDrag={handleEPointDrag}
               />
             )}
@@ -796,6 +940,8 @@ export default function SpatialAngleAnimation({
       right={
         <MathPanel
           {...mathData}
+          focusStep={answerSteps.length > 0 ? effectiveAnswerStep : undefined}
+          focusTarget="reasoning"
           title={
             activeMode === "skewLines"
               ? "异面直线角与公垂线高考看板"

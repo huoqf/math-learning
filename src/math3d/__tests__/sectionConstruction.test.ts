@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   buildPolyhedronConstructionSteps,
   buildCuboidConstructionSteps,
+  getControlEdgeEndpoints,
   intersectLines3D,
 } from "../sectionConstruction";
 
@@ -102,5 +103,101 @@ describe("sectionConstruction 作图推演纯函数测试", () => {
     expect(tetraSteps.totalSteps).toBe(2);
     expect(tetraSteps.step).toBe(2);
     expect(tetraSteps.partialPolygon.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("buildPolyhedronConstructionSteps: 支持正六边形 / 等腰梯形 / 正三角形典型预设与平行第四边分支", () => {
+    const hex4 = buildPolyhedronConstructionSteps(
+      "cuboid",
+      3,
+      3,
+      3,
+      0.5,
+      0.5,
+      0.5,
+      4,
+      "cubeHexagon",
+    );
+    expect(hex4.method).toBe("intersection");
+    expect(hex4.totalSteps).toBe(4);
+    expect(hex4.partialPolygon.length).toBe(6);
+
+    const trap2 = buildPolyhedronConstructionSteps(
+      "cuboid",
+      3,
+      3,
+      3,
+      0.5,
+      0.5,
+      0.5,
+      2,
+      "cubeTrapezoid",
+    );
+    expect(trap2.activeLines.some((l) => l.label === "RS ∥ PQ")).toBe(true);
+
+    const trap3 = buildPolyhedronConstructionSteps(
+      "cuboid",
+      3,
+      3,
+      3,
+      0.5,
+      0.5,
+      0.5,
+      3,
+      "cubeTrapezoid",
+    );
+    expect(trap3.method).toBe("parallel");
+    expect(trap3.totalSteps).toBe(3);
+    expect(trap3.partialPolygon.length).toBe(4);
+
+    const tri2 = buildPolyhedronConstructionSteps(
+      "cuboid",
+      3,
+      3,
+      3,
+      0.6,
+      0.6,
+      0.6,
+      2,
+      "cubeTriangle",
+    );
+    expect(tri2.method).toBe("direct");
+    expect(tri2.totalSteps).toBe(2);
+    expect(tri2.partialPolygon.length).toBe(3);
+
+    // 自由模式中 posP === posQ 触发面面平行第四边分支
+    const parallelFree = buildCuboidConstructionSteps(
+      3,
+      3,
+      3,
+      0.4,
+      0.4,
+      0.5,
+      3,
+    );
+    expect(parallelFree.method).toBe("parallel");
+    expect(parallelFree.totalSteps).toBe(3);
+    expect(parallelFree.partialPolygon.length).toBe(4);
+  });
+
+  it("getControlEdgeEndpoints: 五种多面体均返回三条非退化控制侧棱端点", () => {
+    const kinds = [
+      "cuboid",
+      "pyramid",
+      "tetrahedron",
+      "prism",
+      "frustum",
+    ] as const;
+    for (const kind of kinds) {
+      const edges = getControlEdgeEndpoints(kind, 3, 3, 3);
+      expect(edges.length).toBe(3);
+      for (const edge of edges) {
+        const len = Math.hypot(
+          edge.end.x - edge.start.x,
+          edge.end.y - edge.start.y,
+          edge.end.z - edge.start.z,
+        );
+        expect(len).toBeGreaterThan(0.5);
+      }
+    }
   });
 });

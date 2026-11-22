@@ -1,4 +1,5 @@
 import type { SpatialDistanceMode } from "@/data/types";
+import { solveSkewLinesDistance } from "@/math3d/spatialDistance";
 
 /**
  * 空间距离实验室的「典型情景预设」与「TipCard 导引文案」数据层。
@@ -27,8 +28,9 @@ export interface SpatialDistancePreset {
  */
 export function getSpatialDistancePresets(
   mode: DistanceMode,
-  optimal: { lambda: number; mu: number },
+  _optimal?: { lambda: number; mu: number },
 ): SpatialDistancePreset[] {
+  const stdOptimal = solveSkewLinesDistance(3, 2, 2, 0, 0);
   const presetsByMode: Record<DistanceMode, SpatialDistancePreset[]> = {
     skewDistance: [
       {
@@ -49,7 +51,13 @@ export function getSpatialDistancePresets(
       {
         key: "goldenPerp",
         label: "公垂线极值点",
-        params: { a: 3, b: 2, c: 2, ...optimal },
+        params: {
+          a: 3,
+          b: 2,
+          c: 2,
+          lambda: Number(stdOptimal.optimalLambda.toFixed(4)),
+          mu: Number(stdOptimal.optimalMu.toFixed(4)),
+        },
       },
     ],
     pointPlaneDistance: [
@@ -67,6 +75,28 @@ export function getSpatialDistancePresets(
         key: "midSection",
         label: "中点截面构型",
         params: { a: 3, b: 2, c: 2, lambda: 0.5, mu: 0.4 },
+      },
+    ],
+    pointLineDistance: [
+      {
+        key: "free",
+        label: "自由探索",
+        params: { a: 3, b: 2, c: 2, lambda: 0.5, mu: 0.4 },
+      },
+      {
+        key: "cubeMid",
+        label: "正方体中点母题",
+        params: { a: 3, b: 3, c: 3, lambda: 0.5, mu: 0.4 },
+      },
+      {
+        key: "vertexBase",
+        label: "底面顶点垂距",
+        params: { a: 3, b: 2, c: 2, lambda: 0, mu: 0.4 },
+      },
+      {
+        key: "topVertex",
+        label: "顶面顶点垂距",
+        params: { a: 3, b: 2, c: 2, lambda: 1.0, mu: 0.4 },
       },
     ],
     volumeExtrema: [
@@ -104,11 +134,23 @@ export function getSpatialDistanceTip(
       case "cube":
         return "【初始条件】在正方体 $ABCD-A_1B_1C_1D_1$ 中，考察面对角线 $A_1B$ 与 $AC$（棱长为 $a$）。\n\n【核心设问】\n(1) 求异面直线 $A_1B$ 与 $AC$ 所成的角（证明为 $60^\\circ$）以及公垂线段长度；\n(2) 过直线 $AC$ 作平行于 $A_1B$ 的平面 $ACD_1$，验证两异面直线距离转化为点 $B$ 到该平面的距离。";
       case "sideEdge":
-        return "【初始条件】在长方体 $ABCD-A_1B_1C_1D_1$ 中，直线 1 为侧棱 $BB_1$，直线 2 为底面对角线 $AC$。\n\n【核心设问】\n(1) 设动点 $P \\in BB_1, Q \\in AC$，求线段 $PQ$ 最小时两动点的参数解与极小值；\n(2) 证明公垂足 $H_2$ 为原点在对角线 $AC$ 上的正投影，侧棱到截面 $ACC_1A_1$ 的垂线即为公垂线。";
+        return "【初始条件】在长方体 $ABCD-A_1B_1C_1D_1$ 中，直线 1 为侧棱 $BB_1$，直线 2 为底面对角线 $AC$。\n\n【核心设问】\n(1) 设动点 $P \\in BB_1,\\; Q \\in AC$，求线段 $PQ$ 最小时两动点的参数解与极小值；\n(2) 证明公垂足 $H_2$ 为顶点 $B$ 在对角线 $AC$ 上的正投影，侧棱到截面 $ACC_1A_1$ 的垂线即为公垂线。";
       case "goldenPerp":
         return "【初始条件】长方体中两异面直线上的动点 $P(\\lambda), Q(\\mu)$ 恰处于极值解位置。\n\n【核心设问】\n(1) 检验动线段 $\\vec{PQ}$ 是否同时垂直于两直线方向向量（$\\vec{PQ} \\cdot \\vec{u} = 0$ 且 $\\vec{PQ} \\cdot \\vec{v} = 0$）；\n(2) 比较二元二次型极值分析法与空间向量正投影法在求解公垂线时的等价性。";
       default:
         return "【初始条件】长方体中动点 $P$ 在直线 $l_1$ 上滑动，动点 $Q$ 在直线 $l_2$ 上滑动。\n\n【核心设问】\n(1) 自由拖拽动点 $P, Q$，观察动线段 $PQ$ 的长度变化与极值临界点；\n(2) 开启“化归平行转化平面”开关，观察两异面直线距离如何转化为线面距离与点面距离。";
+    }
+  }
+  if (mode === "pointLineDistance") {
+    switch (preset) {
+      case "cubeMid":
+        return "【初始条件】在棱长为 $a$ 的正方体 $ABCD-A_1B_1C_1D_1$ 中，动点 $P$ 位于侧棱 $AA_1$ 中点（$\\lambda = 0.5$），定直线 $l$ 为体对角线 $BD_1$。\n\n【核心设问】\n(1) 利用对称性证明 $PB = PD_1$，求动点 $P$ 到体对角线 $BD_1$ 的垂足 $H$ 位置与距离 $d$；\n(2) 对比空间向量射影公式 $d = \\sqrt{|\\overrightarrow{BP}|^2 - |\\overrightarrow{BP}\\cdot\\vec{u}_0|^2}$ 与等腰三角形三线合一几何法的计算结果。";
+      case "vertexBase":
+        return "【初始条件】在长方体 $ABCD-A_1B_1C_1D_1$ 中，取 $P = A(0,0,0)$（$\\lambda = 0$），定直线为体对角线 $BD_1$。\n\n【核心设问】\n(1) 以 $A$ 为原点建系，写出向量 $\\overrightarrow{BA}$ 与单位方向向量 $\\vec{u}_0$，计算点 $A$ 在 $BD_1$ 上的投影长度与点线距离 $d$；\n(2) 在直角三角形 $\\triangle ABD_1$ 中利用等面积法验证 $d = \\frac{AB \\cdot AD_1}{BD_1}$。";
+      case "topVertex":
+        return "【初始条件】动点 $P$ 位于侧棱顶端 $A_1(0,0,c)$（$\\lambda = 1$），定直线为体对角线 $BD_1$。\n\n【核心设问】\n(1) 在空间直角坐标系中求顶点 $A_1$ 到直线 $BD_1$ 的距离 $d$ 及垂足 $H$ 坐标；\n(2) 证明点线距与斜边、方向向量夹角正弦值的关系 $d = |\\overrightarrow{BA_1}|\\sin\\langle\\overrightarrow{BA_1}, \\vec{u}\\rangle$。";
+      default:
+        return "【初始条件】在长方体 $ABCD-A_1B_1C_1D_1$ 中，底面棱长为 $a, b$，侧棱长为 $c$，动点 $P(0,0,\\lambda c)$ 在侧棱 $AA_1$ 上滑动，定直线 $l$ 为体对角线 $BD_1$。\n\n【核心设问】\n(1) 构造斜向量 $\\overrightarrow{BP}$ 与直线 $BD_1$ 的单位方向向量 $\\vec{u}_0$，用投影勾股公式求解点 $P$ 到直线 $BD_1$ 的距离 $d$；\n(2) 拖拽动点 $P$，结合直角三角形 $\\triangle PHB$ 分析射影长度与垂线段 $PH$ 的此消彼长关系。";
     }
   }
   if (mode === "pointPlaneDistance") {

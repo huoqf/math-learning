@@ -63,12 +63,12 @@ export const solidFoldingNode: KnowledgeNode = {
 export const solidAngleNode: KnowledgeNode = {
   id: "know-solid-angle",
   title: "空间直角坐标系与求空间角",
-  labTitle: "空间角：长方体截面二面角",
+  labTitle: "空间直角坐标系与三大空间角",
   chapter: "立体几何与空间向量",
   module: "空间向量应用",
   importance: "hard",
   animationIds: ["anim-solid-angle"],
-  prerequisites: ["know-solid-position"],
+  prerequisites: ["know-solid-position", "know-vector3d-basis"],
   route: "/solid-angle",
 };
 

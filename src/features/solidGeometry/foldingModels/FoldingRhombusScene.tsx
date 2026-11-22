@@ -8,6 +8,11 @@ import {
   FormulaLabel3D,
   AngleArc3D,
 } from "@/components/Math3D";
+import {
+  buildFoldArcSegments,
+  constrainFoldDragPoint,
+  resolveFoldAlphaFromDrag,
+} from "@/math3d/folding";
 import type { FoldingSceneCommonProps } from "./types";
 
 /** 菱形沿短对角线 BD 翻折模型场景 */
@@ -17,6 +22,7 @@ export function FoldingRhombusScene({
   showDihedralArc,
   alphaDeg,
   a,
+  activeStep,
   interactionMode,
   onPointDrag,
   foldingData,
@@ -25,12 +31,23 @@ export function FoldingRhombusScene({
   const A_0 = foldingData.unfoldedPoints.A_0;
   const hAO = (Math.sqrt(3) / 2) * a;
   const showUnfolded = foldState === "both" || foldState === "unfolded";
+  const arcSegments = buildFoldArcSegments(O, { x: -1, y: 0, z: 0 }, hAO, 20);
+  const projA = { x: A_prime.x, y: 0, z: 0 };
 
   return (
     <>
       {/* (A) 静态底面 △BCD 实体填充面与无箭头棱 */}
-      <Polygon3DFace points={[B, C, D]} colorKey="primary" opacity={0.25} />
-      <Segment3D from={B} to={D} colorKey="secondary" lineWidth={3} />
+      <Polygon3DFace
+        points={[B, C, D]}
+        colorKey="primary"
+        opacity={activeStep === 1 ? 0.36 : 0.25}
+      />
+      <Segment3D
+        from={B}
+        to={D}
+        colorKey="secondary"
+        lineWidth={activeStep === 1 ? 4.5 : 3}
+      />
       <Segment3D from={B} to={C} colorKey="primary" />
       <Segment3D from={D} to={C} colorKey="primary" />
       <Segment3D from={O} to={C} colorKey="paramTertiary" />
@@ -86,22 +103,32 @@ export function FoldingRhombusScene({
           <Polygon3DFace
             points={[B, A_prime, D]}
             colorKey="highlight"
-            opacity={0.35}
+            opacity={activeStep === 2 ? 0.48 : 0.35}
           />
           <Segment3D
             from={B}
             to={A_prime}
             colorKey="highlight"
-            lineWidth={2.5}
+            lineWidth={activeStep === 2 ? 3.8 : 2.5}
           />
           <Segment3D
             from={D}
             to={A_prime}
             colorKey="highlight"
-            lineWidth={2.5}
+            lineWidth={activeStep === 2 ? 3.8 : 2.5}
           />
-          <Segment3D from={O} to={A_prime} colorKey="highlight" lineWidth={2} />
-          <Segment3D from={A_prime} to={C} colorKey="accent" lineWidth={2} />
+          <Segment3D
+            from={O}
+            to={A_prime}
+            colorKey="highlight"
+            lineWidth={activeStep === 2 ? 3.2 : 2}
+          />
+          <Segment3D
+            from={A_prime}
+            to={C}
+            colorKey="accent"
+            lineWidth={activeStep === 3 ? 3.8 : 2}
+          />
 
           {/* 二面角平面角构造垂线对：OC ⊥ BD 与 OA' ⊥ BD (二面角 A'-BD-C 的平面角) */}
           {showDihedralArc && alphaDeg > 0 && alphaDeg < 180 && (
@@ -110,13 +137,13 @@ export function FoldingRhombusScene({
                 from={O}
                 to={C}
                 colorKey="paramPrimary"
-                lineWidth={2.5}
+                lineWidth={activeStep === 3 ? 3.8 : 2.5}
               />
               <Segment3D
                 from={O}
                 to={A_prime}
                 colorKey="paramPrimary"
-                lineWidth={2.5}
+                lineWidth={activeStep === 3 ? 3.8 : 2.5}
               />
               <AngleArc3D
                 vertex={O}
@@ -132,15 +159,40 @@ export function FoldingRhombusScene({
             </>
           )}
 
+          {/* 翻折半圆弧轨迹与底面垂足射影 */}
+          {arcSegments.map((seg, i) => (
+            <Segment3D
+              key={`rhombus-arc-${i}`}
+              from={seg.from}
+              to={seg.to}
+              colorKey="trace"
+              dashed
+              opacity={0.45}
+              lineWidth={1.2}
+            />
+          ))}
+          {alphaDeg > 2 && alphaDeg < 178 && (
+            <>
+              <Segment3D
+                from={A_prime}
+                to={projA}
+                colorKey="secondary"
+                dashed
+                lineWidth={1.6}
+              />
+              <Point3D position={projA} colorKey="secondary" />
+            </>
+          )}
+
           <Point3D
             position={A_prime}
             draggable={interactionMode === "drag"}
-            constrain={(raw) => ({
-              x: -(hAO * Math.cos((alphaDeg * Math.PI) / 180)),
-              y: 0,
-              z: Math.max(0, Math.min(hAO, raw.z)),
-            })}
-            onDrag={(next) => onPointDrag(next.z, hAO)}
+            constrain={(raw) =>
+              constrainFoldDragPoint(raw, O, { x: -1, y: 0, z: 0 }, hAO)
+            }
+            onDrag={(next) =>
+              onPointDrag(resolveFoldAlphaFromDrag(-next.x, next.z))
+            }
             colorKey="highlight"
           />
           <FormulaLabel3D position={A_prime} tex="A'" offset={[-0.2, 0, 0.2]} />

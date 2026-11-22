@@ -7,7 +7,9 @@ import type {
   ReasoningStep,
 } from "../types";
 import { MATH_COLORS } from "@/theme";
+import { formatMathNumber } from "@/utils/mathFormat";
 import { calculateCylinderSphere } from "@/math3d/circumInSphere";
+import { buildRotationUnfoldData } from "@/math3d/rotationUnfold";
 import {
   coneGeneratrix,
   frustumGeneratrix,
@@ -32,11 +34,228 @@ export function buildRotationBodyPanel(
   const cutDistance = params.cutDistance ?? 0.8;
   const mode = (config?.mode as string | undefined) ?? "generation";
   const sweepAngleDeg = params.sweepAngleDeg ?? 360;
+  const unfoldProgress = params.unfoldProgress ?? 1;
 
   const quantities: MathQuantity[] = [];
   const theorems: Theorem[] = [];
   const gaokaoPoints: GaokaoPoint[] = [];
   const warnings: WarningItem[] = [];
+
+  if (mode === "unfoldPath" && shape !== "semicircle") {
+    const unfoldType =
+      shape === "rectangle"
+        ? "cylinder"
+        : shape === "rightTriangle"
+          ? "cone"
+          : "frustum";
+    const unfold = buildRotationUnfoldData({
+      type: unfoldType,
+      r1,
+      r2,
+      height,
+      unfoldProgress,
+    });
+    const lStr = formatMathNumber(unfold.generatorLength, 3);
+    const alphaStr = formatMathNumber(unfold.unfoldAngleDeg, 1);
+    const minStr = formatMathNumber(unfold.minPathLength, 4);
+    const r1Str = formatMathNumber(r1);
+    const r2Str = formatMathNumber(r2);
+    const hStr = formatMathNumber(height);
+    const pPct = formatMathNumber(unfoldProgress * 100, 0);
+
+    quantities.push(
+      {
+        label: "侧面展开度 $p$",
+        symbol: "p",
+        value: `${pPct}%`,
+        color: MATH_COLORS.paramTertiary,
+      },
+      {
+        label: "母线长 $l$",
+        symbol: "l",
+        value: lStr,
+        color: MATH_COLORS.complexNum,
+      },
+      {
+        label: "展开扇面圆心角 $\\alpha$",
+        symbol: "\\alpha",
+        value:
+          unfoldType === "cylinder"
+            ? "360° (矩形宽 $2\\pi r$)"
+            : `${alphaStr}°`,
+        color: MATH_COLORS.sequenceCobweb,
+      },
+      {
+        label: "表面最短路径 $L_{\\min}$",
+        symbol: "L_{\\min}",
+        value: Number(unfold.minPathLength.toFixed(4)),
+        color: MATH_COLORS.paramPrimary,
+      },
+    );
+
+    theorems.push({
+      name: "化曲为直最短路径原理",
+      latex: `L_{\\min} = |AB|_{\\text{展开平面内有效最短线}}`,
+      level: "core",
+      condition: "沿旋转体一条母线剪开铺平后，侧面弧长与母线长均保持等距不变",
+    });
+
+    if (unfoldType === "cylinder") {
+      theorems.push({
+        name: "圆柱侧面展开最短路径公式",
+        latex: `L_{\\min} = \\sqrt{(2\\pi \\color{${MATH_COLORS.paramPrimary}}{r})^2 + \\color{${MATH_COLORS.paramTertiary}}{h}^2}`,
+        level: "core",
+        condition: "底面圆周点 $A$ 绕侧面一周到达上底同母线点 $A_1$",
+      });
+    } else if (unfoldType === "cone") {
+      theorems.push({
+        name: "圆锥侧面展开最短路径（含扇角临界）",
+        latex: `L_{\\min} = \\begin{cases} 2\\color{${MATH_COLORS.paramTertiary}}{l}\\sin\\dfrac{\\alpha}{2}, & \\alpha \\le 180^\\circ \\\\[1ex] 2\\color{${MATH_COLORS.paramTertiary}}{l}, & \\alpha > 180^\\circ \\end{cases}`,
+        level: "core",
+        condition:
+          "展开扇形圆心角 $\\alpha = \\frac{r}{l} \\times 360^\\circ$；若 $\\alpha > 180^\\circ$，路径折过锥顶退化为两倍母线长",
+      });
+    } else {
+      theorems.push({
+        name: "圆台补台成锥余弦定理最短路",
+        latex: `L_{\\min} = \\sqrt{R_1^2 + R_2^2 - 2 R_1 R_2 \\cos\\theta_{\\text{eff}}}, \\quad \\theta_{\\text{eff}} = \\min(\\alpha, 2\\pi - \\alpha)`,
+        level: "core",
+        condition:
+          "令大扇径 $R_1 = \\frac{r_1}{r_1 - r_2}l$、内径 $R_2 = \\frac{r_2}{r_1 - r_2}l$；若连线被上底内圆遮挡，表面贴合路径改由切线段加顶边圆弧接续",
+      });
+    }
+
+    if (unfold.pathRegime === "cone_apex_degenerate") {
+      warnings.push({
+        text: `当前圆锥展开圆心角 $\\alpha = ${alphaStr}^\\circ > 180^\\circ$，展开扇形超过半圆，底面两剪缝点直接弦线会穿出纸面，最短路径折经锥顶取 $L_{\\min} = 2l = ${minStr}$。`,
+        level: "warning",
+      });
+    } else if (unfold.pathRegime === "frustum_tangent_arc") {
+      warnings.push({
+        text: `当前圆台参数下，理想余弦弦长（${formatMathNumber(unfold.chordLawOfCosinesLength, 4)}）会侵入上底空心圆内侧；受限于扇环表面，真实表面最短路径先沿外点到内圆的切线行进，再贴合顶边圆弧到达终点 $B$，实长 $L_{\\min} = ${minStr}$。`,
+        level: "info",
+      });
+    } else if (shape === "rightTrapezoid" && Math.abs(r1 - r2) < 0.05) {
+      warnings.push({
+        text: "上、下底半径接近相等（$r_2 \\approx r_1$），圆台展开扇环演化为矩形，最短路径收敛于圆柱螺旋对角线公式。",
+        level: "warning",
+      });
+    }
+
+    gaokaoPoints.push(
+      {
+        text: "新高考选填与大题经典考点：求曲面两点间最短距离时，务必写出「展开圆心角 $\\alpha$」与「等距母线半径 $R_1, R_2$」，先检验展开角是否超过 $180^\\circ$ 或被内孔遮挡，再用余弦定理或勾股定理求解。",
+        importance: "gaokao",
+      },
+      {
+        text: "防错提示：圆锥展开角 $\\alpha = \\frac{r}{l}\\times 360^\\circ$ 是展开扇形的圆心角，切忌与底面圆周角混为一谈；当 $\\alpha > 180^\\circ$ 时，过扇面内部的最短路径会折经锥顶或沿边界接续。",
+        importance: "core",
+      },
+    );
+
+    const reasoningSteps: ReasoningStep[] =
+      unfoldType === "cylinder"
+        ? [
+            {
+              step: 1,
+              title: "沿母线剪开侧面建立矩形展开图",
+              detail:
+                "圆柱侧面沿过 $A, A_1$ 的母线剪开并铺平为矩形，底边宽等于底面圆周长 $2\\pi r$，高等于母线长 $h$：",
+              latex: `\\begin{aligned} W &= 2\\pi r = 2\\pi \\times ${r1Str}, \\quad H = h = ${hStr} \\end{aligned}`,
+              rubric: "【高考采分点】正确确定展开矩形边长 (+4分)",
+            },
+            {
+              step: 2,
+              title: "由两点之间线段最短建立勾股模型",
+              detail:
+                "展开图中从左下顶点 $A$ 绕行一周等价于沿矩形对角线直达右上顶点 $A_1$，代入勾股定理：",
+              latex: `\\begin{aligned} L_{\\min} &= \\sqrt{(2\\pi r)^2 + h^2} \\\\[1ex] &= \\sqrt{(${formatMathNumber(2 * Math.PI * r1, 3)})^2 + ${hStr}^2} = ${minStr} \\end{aligned}`,
+              rubric: "【高考采分点】代入勾股解析式求精确值 (+5分)",
+            },
+            {
+              step: 3,
+              title: "还原 3D 表面螺旋轨线校验等距性",
+              detail:
+                "随着侧面卷回闭合（展开度 $p: 1 \\to 0$），矩形对角线等距映射为圆柱面上的最短曲线，弧长恒等于 $L_{\\min}$：",
+              latex: `\\left. L_{\\min} \\right|_{p \\in [0, 1]} = ${minStr}`,
+              rubric: "【高考采分点】检验曲平展开等距性质 (+3分)",
+            },
+          ]
+        : unfoldType === "cone"
+          ? [
+              {
+                step: 1,
+                title: "计算圆锥母线长与扇形圆心角",
+                detail:
+                  "由底面圆周长等于展开扇形弧长 $l\\alpha = 2\\pi r$，先求母线长 $l$ 与扇形张角 $\\alpha$：",
+                latex: `\\begin{aligned} l &= \\sqrt{r^2 + h^2} = ${lStr} \\\\[1ex] \\alpha &= \\frac{r}{l} \\times 360^\\circ = ${alphaStr}^\\circ \\end{aligned}`,
+                rubric: "【高考采分点】求解母线长与扇形圆心角 (+4分)",
+              },
+              {
+                step: 2,
+                title: "检验扇角临界范围并列余弦/弦长式",
+                detail:
+                  unfold.pathRegime === "cone_apex_degenerate"
+                    ? "因 $\\alpha > 180^\\circ$，展开扇形超过半圆弧，过锥顶折线满足表面约束，故取两倍母线长："
+                    : "因 $\\alpha \\le 180^\\circ$，展开扇形不超过半圆弧，在等腰 $\\triangle OAA'$ 中由余弦定理得弦长：",
+                latex:
+                  unfold.pathRegime === "cone_apex_degenerate"
+                    ? `L_{\\min} = 2 l = 2 \\times ${lStr} = ${minStr}`
+                    : `\\begin{aligned} L_{\\min} &= \\sqrt{l^2 + l^2 - 2 l^2 \\cos\\alpha} \\\\[1ex] &= 2(${lStr})\\sin\\frac{${alphaStr}^\\circ}{2} = ${minStr} \\end{aligned}`,
+                rubric: "【高考采分点】临界判定与三角/余弦求值 (+5分)",
+              },
+              {
+                step: 3,
+                title: "核对极值与动态展开一致性",
+                detail:
+                  "拖动展开度滑块 $p$ 可见平面弦线在闭合态自动弯曲贴合锥面，全程保持长度不变量：",
+                latex: `\\left. L_{\\min} \\right|_{p \\in [0, 1]} = ${minStr}`,
+                rubric: "【高考采分点】数形验证表面最短路径 (+3分)",
+              },
+            ]
+          : [
+              {
+                step: 1,
+                title: "补台成锥求展开扇环内外径与圆心角",
+                detail:
+                  "延长圆台两母线交于虚拟锥顶，利用相似三角形求大圆半径 $R_1$、小圆半径 $R_2$ 与圆心角 $\\alpha$：",
+                latex: `\\begin{aligned} l &= \\sqrt{(r_1 - r_2)^2 + h^2} = ${lStr} \\\\[1ex] R_1 &= ${formatMathNumber(unfold.outerRadius2D, 3)}, \\quad R_2 = ${formatMathNumber(unfold.innerRadius2D, 3)} \\\\[1ex] \\alpha &= \\frac{|r_1 - r_2|}{l} \\times 360^\\circ = ${alphaStr}^\\circ \\end{aligned}`,
+                rubric: "【高考采分点】补台成锥求扇环内外半径与张角 (+4分)",
+              },
+              {
+                step: 2,
+                title: "取有效弦角列余弦定理并校验内孔遮挡",
+                detail:
+                  unfold.pathRegime === "frustum_tangent_arc"
+                    ? `取有效弦角 $\\theta_{\\text{eff}} = \\min(\\alpha, 360^\\circ-\\alpha)$ 时连线切入内孔 $R_2$，实际贴面路径为切线段加顶边圆弧：`
+                    : `因连线完全落于扇环内部，取有效弦角 $\\theta_{\\text{eff}} = ${formatMathNumber((unfold.effectiveChordAngleRad * 180) / Math.PI, 1)}^\\circ$ 代入余弦定理：`,
+                latex:
+                  unfold.pathRegime === "frustum_tangent_arc"
+                    ? `\\begin{aligned} L_{\\text{弦}} &= \\sqrt{R_1^2 + R_2^2 - 2 R_1 R_2 \\cos\\theta_{\\text{eff}}} = ${formatMathNumber(unfold.chordLawOfCosinesLength, 4)} \\\\[1ex] L_{\\text{贴面}} &= \\sqrt{R_1^2 - R_2^2} + R_2(\\alpha - \\arccos\\frac{R_2}{R_1}) = ${minStr} \\end{aligned}`
+                    : `\\begin{aligned} L_{\\min} &= \\sqrt{R_1^2 + R_2^2 - 2 R_1 R_2 \\cos\\theta_{\\text{eff}}} \\\\[1ex] &= \\sqrt{(${formatMathNumber(unfold.outerRadius2D, 2)})^2 + (${formatMathNumber(unfold.innerRadius2D, 2)})^2 - 2 R_1 R_2 \\cos\\theta_{\\text{eff}}} = ${minStr} \\end{aligned}`,
+                rubric: "【高考采分点】余弦定理建模与约束修正 (+5分)",
+              },
+              {
+                step: 3,
+                title:
+                  "检验上下底退化极限（$\\Delta r \\to 0$ / $r_2 \\to 0$）",
+                detail: `当下底半径 $r_1 = ${r1Str}$、上底半径 $r_2 = ${r2Str}$ 趋近相等时，圆台无缝演化为圆柱；若 $r_2 \\to 0$ 则演化为圆锥：`,
+                latex: `r_2 \\to r_1 \\implies L_{\\min} \\to \\sqrt{(2\\pi r_1)^2 + h^2}`,
+                rubric: "【高考采分点】总结柱锥台统一演化结论 (+3分)",
+              },
+            ];
+
+    return {
+      quantities,
+      theorems,
+      gaokaoPoints,
+      warnings,
+      reasoningSteps,
+      examAnchor: "新高考选填高频压轴 · 旋转体侧面展开图化曲为直求最短距离",
+      mnemonic:
+        "曲表求距先剪开，扇环补锥算角来；莫越缺口莫穿孔，勾股余弦秒破题。",
+    };
+  }
 
   if (mode === "generation") {
     quantities.push({
@@ -107,7 +326,7 @@ export function buildRotationBodyPanel(
         color: MATH_COLORS.primary,
       },
       {
-        label: "侧面展开测地线最短长",
+        label: "侧面展开表面最短路径长",
         symbol: "L_{\\min}",
         value: shortestPath.toFixed(2),
         color: MATH_COLORS.highlight,
@@ -223,7 +442,7 @@ export function buildRotationBodyPanel(
         color: MATH_COLORS.secondary,
       },
       {
-        label: "侧面展开测地线最短长",
+        label: "侧面展开表面最短路径长",
         symbol: "L_{\\min}",
         value: shortestPath.toFixed(2),
         color: MATH_COLORS.highlight,

@@ -24,10 +24,12 @@
 |------|------|----------|-------------------|
 | **画布容器** | `ThreeDCanvas` | `@/components/Layout/ThreeDCanvas` | 根画布，Props: `cameraPosition`, `legend`, `overlay` (浮层槽位) |
 | **相机控制** | `CameraRig` | `@/components/Math3D/CameraRig` | 轨道相机。Props: `enabled` (动点交互时设为 false 防冲突), `autoRotate` |
+| **自适应取景** | `CameraFit` | `@/components/Math3D/CameraFit` | 根据包围盒自适应对齐相机视距与中心。Props: `bounds`, `token` |
 | **交互模式浮层** | `ModeSwitchOverlay3D` | `@/components/Math3D` | 3D 右上角【🔄 视角漫游】与【👆 动点交互】切换器。Props: `mode`, `onModeChange`, `pointCount` |
 | **坐标网格** | `Scene3DGrid` | `@/components/Math3D/Scene3DGrid` | 空间直角坐标系（含 X/Y/Z 彩色三轴与箭头）。**纯三轴建系（showGrid 默认为 false 杜绝地砖干扰）** |
 | **3D 点** | `Point3D` | `@/components/Math3D/Point3D` | 空间点。固定点 $r=0.042$ 纯实心；动点 $r=0.075$ 带外光晕与全局射线追踪。Props: `draggable`, `constrain`, `onDrag`, `colorKey` |
 | **3D 空间线段** | `Segment3D` | `@/components/Math3D/Segment3D` | 空间几何线段/棱/垂线段/射影线（纯几何线段无箭头）。Props: `from`, `to`, `colorKey`, `lineWidth`, `dashed` |
+| **3D 空间圆** | `Circle3D` | `@/components/Math3D/Circle3D` | 空间截面圆与底面外接圆。Props: `center`, `radius`, `normal`, `colorKey`, `fillOpacity`, `dashed` |
 | **3D 平面** | `Plane3D` | `@/components/Math3D/Plane3D` | 空间平面。Props: `origin`, `uAxis`, `vAxis`, `width`, `height`, `colorKey`, `opacity` |
 | **3D 多边形面** | `Polygon3DFace` | `@/components/Math3D/Polygon3DFace` | 空间 3 或 4 顶点多边形面。Props: `points`, `colorKey`, `opacity` |
 | **3D 向量** | `Vector3DArrow` | `@/components/Math3D/Vector3DArrow` | 带箭头 3D 向量（仅法向量/基向量使用，严禁画几何线段）。Props: `from`, `to`, `colorKey`, `radius` |
@@ -35,14 +37,15 @@
 | **线面角组件** | `LinePlaneAngle3D` | `@/components/Math3D` | 斜线/垂线段/投影线/法向量/角弧一体化组件 |
 | **3D 点标签** | `PointLabel3D` | `@/components/Math3D/PointLabel3D` | 纯 3D 矢量文字。**所有单字母几何顶点唯一合法组件（严禁传 Unicode 下标）**。Props: `position`, `text`, `offset` |
 | **上下标标签** | `CompoundLabel3D` | `@/components/Math3D/CompoundLabel3D` | 纯 3D 矢量上下标（如 $A_1, P_1$）。**所有带下标顶点唯一合法组件**。Props: `position`, `base`, `subscript` |
-| **3D 公式标签**| `FormulaLabel3D` | `@/components/Math3D/FormulaLabel3D` | KaTeX 空间公式（如 $\vec{a}, \vec{OP}$）。**默认 plain 纯净透明模式，严禁用于几何顶点**。Props: `position`, `tex`, `plain` |
+| **3D 公式标签**| `FormulaLabel3D` | `@/components/Math3D/FormulaLabel3D` | KaTeX 空间公式（如 $\vec{a}, \vec{OP}$）。**默认 plain 纯净透明模式，严禁用于几何顶点与双反斜杠**。Props: `position`, `tex`, `offset`, `colorKey`, `distanceFactor`, `plain` |
 | **顶点标签组** | `VertexLabelGroup3D` | `@/components/Math3D` | 多面体顶点标签批量生成器。Props: `vertices`, `items`, `fontSize` |
 | **直角三角形** | `RightTriangle3D` | `@/components/Math3D` | 空间直角三角形复合组件（含直角标志与边长公式）。Props: `rightVertex`, `vertexA`, `vertexB` |
 | **仿射基底组** | `AffineBasis3D` | `@/components/Math3D` | 空间仿射基底/向量组复合组件。Props: `origin`, `vecA`, `vecB`, `vecC` |
 | **3D 图例** | `Legend3D` | `@/components/Math3D/Legend3D` | 底端浮动图例。Props: `title`, `items` |
 | **截面可视化** | `SectionPlane3D` | `@/components/Math3D` | 3D 截面多边形、底面投影与交轨辅助线 |
+| **深度预处理与球壳** | `DepthPrepassMesh` / `SphereShell` | `@/components/Math3D/solids` | 半透明多面体/切接球透视消隐壳体与透视切圆组件 |
 | **立体几何体** | `Cuboid` / `Cylinder` / `Cone` / `RegularPyramid` / `CircumSphere` / `InSphere` | `@/components/Math3D/solids` | 标准几何体 3D 实体模型 |
-| **三视图面板** | `ThreeViewsPanel` | `@/components/Math3D` | 纯 SVG 正投影（主/左/俯）。Props: `views`, `extent` |
+| **2D 降维小窗与三视图** | `SphereCrossSectionOverlay2D` / `ParamCurveOverlay2D` / `ThreeViewsPanel` | `@/components/Math3D` | 2D 轴截面/特征直角三角形浮窗、动点参数函数极值曲线浮窗与可选正投影面板 |
 
 ---
 
@@ -70,7 +73,24 @@ import { projectPointOnSegment } from "@/math3d/vector3";
 />
 ```
 
-### ③ 旋转体标准母线与单一数据源 (`profile` 驱动)
+### ③ 空间圆弧/翻折角全角域拖拽 (`constrainFoldDragPoint` + `resolveFoldAlphaFromDrag`)
+严禁使用 `Math.asin(z / r)` 反算翻折角（会锁死在 $[0^\circ, 90^\circ]$ 无法进入钝角区间）！必须使用 `@/math3d/folding` 的圆弧投影与 `Math.atan2` 全角域反算：
+```tsx
+import { constrainFoldDragPoint, resolveFoldAlphaFromDrag } from "@/math3d/folding";
+
+<Point3D
+  position={movingPoint}
+  draggable={interactionMode === "drag"}
+  constrain={(raw) => constrainFoldDragPoint(raw, hingeFoot, radialDir, radius)}
+  onDrag={(next) => {
+    const radial = (next.x - hingeFoot.x) * er.x + (next.y - hingeFoot.y) * er.y;
+    onPointDrag(resolveFoldAlphaFromDrag(radial, next.z)); // 返回 [0, 180]
+  }}
+  colorKey="highlight"
+/>
+```
+
+### ④ 旋转体标准母线与单一数据源 (`profile` 驱动)
 - **单一数据源**：旋转体特征点 $O, O_1, A, A_1, S$、虚线母线框与尺寸线必须 100% 绑定 `profile` 数组顶点，严禁使用局部默认值导致滑块脱节；
 - **动态生成同轴**：动态扫掠时动点 $A_1, A$ 必须随旋转母线挂载同轴转动；
 - **透视切圆**：球体外轮廓必须采用基于相机距离 $d$ 的透视切圆解析解 $h_{\text{rim}} = R^2/d, r_{\text{rim}} = R\sqrt{1-R^2/d^2}$，消除放大脱节。

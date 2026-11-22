@@ -37,6 +37,7 @@ export default function SurfaceRelationAnimation() {
   const [activeMode, setActiveMode] = useState<TeachingMode>("parallelJudge");
   const [subType, setSubType] = useState<string>("standard");
   const [showAxes, setShowAxes] = useState<boolean>(false);
+  const [showNormals, setShowNormals] = useState<boolean>(false);
   const [interactionMode, setInteractionMode] =
     useState<InteractionMode3D>("orbit");
   const [params, setParams] = useState<Record<string, number>>({
@@ -447,12 +448,23 @@ export default function SurfaceRelationAnimation() {
 
           {/* 4. 图层控制 */}
           <LeftPanelSection title="图层控制" compact>
-            <Toggle
-              label="显示空间直角坐标系"
-              checked={showAxes}
-              onChange={setShowAxes}
-              size="compact"
-            />
+            <div className="space-y-1.5">
+              <Toggle
+                label="显示空间直角坐标系"
+                checked={showAxes}
+                onChange={setShowAxes}
+                size="compact"
+              />
+              {(activeMode === "parallelJudge" ||
+                activeMode === "perpJudge") && (
+                <Toggle
+                  label="【选必一对照】显示平面法向量"
+                  checked={showNormals}
+                  onChange={setShowNormals}
+                  size="compact"
+                />
+              )}
+            </div>
           </LeftPanelSection>
 
           {/* 5. 视角预设 */}
@@ -522,6 +534,7 @@ export default function SurfaceRelationAnimation() {
               isIntersect={subType !== "counterExample"}
               tiltDeg={tiltDeg}
               zHeight={zHeight}
+              showNormals={showNormals}
             />
           )}
 
@@ -537,7 +550,10 @@ export default function SurfaceRelationAnimation() {
 
           {/* 模式 3：面面垂直判定 */}
           {activeMode === "perpJudge" && (
-            <SurfacePerpJudgeScene planeRotDeg={planeRotDeg} />
+            <SurfacePerpJudgeScene
+              planeRotDeg={planeRotDeg}
+              showNormals={showNormals}
+            />
           )}
 
           {/* 模式 4：面面垂直性质 */}

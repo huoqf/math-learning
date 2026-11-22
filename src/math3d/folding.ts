@@ -16,6 +16,69 @@ export function resolveFoldAlpha(
   return foldState === "unfolded" ? 0 : alphaDeg;
 }
 
+/**
+ * 由翻折动点相对折痕垂足在垂直平面内的 (radial, z) 坐标反算全角域翻折角 α ∈ [0, 180]
+ * radial 为沿展平初始位置方向（α=0° 指向）的投影，支持平滑跨过 90° 进入钝角区间。
+ */
+export function resolveFoldAlphaFromDrag(radial: number, z: number): number {
+  const safeZ = Math.max(0, z);
+  const rad = Math.atan2(safeZ, radial);
+  const deg = Math.round((rad * 180) / Math.PI);
+  return Math.max(0, Math.min(180, deg));
+}
+
+/**
+ * 将 3D 拖拽原始坐标约束投影到折痕垂面内的上半圆弧轨迹上（z ≥ 0）
+ */
+export function constrainFoldDragPoint(
+  raw: Vec3,
+  center: Vec3,
+  radialDir: Vec3,
+  radius: number,
+): Vec3 {
+  const rLen = Math.hypot(radialDir.x, radialDir.y) || 1;
+  const rx = radialDir.x / rLen;
+  const ry = radialDir.y / rLen;
+  const dx = (raw.x - center.x) * rx + (raw.y - center.y) * ry;
+  const dz = Math.max(0, raw.z);
+  const dist = Math.hypot(dx, dz) || 1;
+  return {
+    x: center.x + ((radius * dx) / dist) * rx,
+    y: center.y + ((radius * dx) / dist) * ry,
+    z: (radius * dz) / dist,
+  };
+}
+
+/**
+ * 在折痕垂面上生成从 α=0° 到 α=180° 的半圆弧轨迹分段（纯函数供 3D 渲染）
+ */
+export function buildFoldArcSegments(
+  center: Vec3,
+  radialDir: Vec3,
+  radius: number,
+  segments = 24,
+): { from: Vec3; to: Vec3 }[] {
+  const rLen = Math.hypot(radialDir.x, radialDir.y) || 1;
+  const rx = radialDir.x / rLen;
+  const ry = radialDir.y / rLen;
+  const pts: Vec3[] = [];
+  for (let i = 0; i <= segments; i++) {
+    const theta = (i / segments) * Math.PI;
+    const c = Math.cos(theta);
+    const s = Math.sin(theta);
+    pts.push({
+      x: center.x + radius * c * rx,
+      y: center.y + radius * c * ry,
+      z: center.z + radius * s,
+    });
+  }
+  const out: { from: Vec3; to: Vec3 }[] = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    out.push({ from: pts[i], to: pts[i + 1] });
+  }
+  return out;
+}
+
 export interface FoldingResult {
   model: FoldingModelKind;
   /** 3D 关键顶点映射 */
@@ -237,11 +300,36 @@ export function calculateRectangleDiagonalFolding(
     foldRayEnd: A_prime,
   };
 
+  // 翻折面 A'BD 法向量 n2 = (A' - B) × (D - B) 归一化
+  const vBA = {
+    x: A_prime.x - B.x,
+    y: A_prime.y - B.y,
+    z: A_prime.z - B.z,
+  };
+  const vBD = { x: D.x - B.x, y: D.y - B.y, z: D.z - B.z };
+  const n2Raw = {
+    x: vBA.y * vBD.z - vBA.z * vBD.y,
+    y: vBA.z * vBD.x - vBA.x * vBD.z,
+    z: vBA.x * vBD.y - vBA.y * vBD.x,
+  };
+  const n2Len = Math.hypot(n2Raw.x, n2Raw.y, n2Raw.z) || 1;
+  // 确保与底面法向 n1=(0,0,1) 在 α < 90° 时同指向半空间外侧（与折转一致）
+  const signN2 = n2Raw.z < 0 && alphaDeg < 90 ? -1 : 1;
+  const normals = {
+    n1: { x: 0, y: 0, z: 1 },
+    n2: {
+      x: (signN2 * n2Raw.x) / n2Len,
+      y: (signN2 * n2Raw.y) / n2Len,
+      z: (signN2 * n2Raw.z) / n2Len,
+    },
+  };
+
   return {
     model: "rectangleDiagonal",
     points: { A, B, C, D, HA, HC, "A'": A_prime },
     unfoldedPoints: { A_0: A },
     dihedralRays,
+    normals,
     movingSegmentLength,
     movingSegmentName: "|A'C|",
     pyramidVolume,

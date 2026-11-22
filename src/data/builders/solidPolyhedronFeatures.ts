@@ -258,6 +258,17 @@ export function buildPolyhedronFeaturesPanel(
           "【高考采分点】由 $kS_2 = \\sqrt{S_1S_2}$ 代回，写出 $V = \\frac{1}{3}h(S_1 + \\sqrt{S_1S_2} + S_2)$，得 5 分。",
       },
     );
+
+    gaokaoPoints.push(
+      {
+        text: "【补台成锥相似法】求解正棱台高、斜高与外接球问题时，首要动作是延长侧棱还原出原大棱锥，利用「相似比等于对应边长之比」求得全锥高 $H$。",
+        importance: "gaokao",
+      },
+      {
+        text: "【台体公式统一记法】记住 $V = \\frac{1}{3}h(S_1 + \\sqrt{S_1S_2} + S_2)$：令 $S_1 = S_2$ 即退化为柱体体积 $Sh$，令 $S_1 = 0$ 即退化为锥体体积 $\\frac{1}{3}Sh$，选择题可快速特值验证。",
+        importance: "core",
+      },
+    );
   } else {
     // equalVolumeMethod
     const res = calculateEqualVolumeMethod(a, b, h);

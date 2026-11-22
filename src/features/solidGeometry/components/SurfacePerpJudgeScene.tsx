@@ -10,10 +10,12 @@ import { calculatePerpJudgeFamily } from "@/math3d/surfaceRelation";
 
 interface SurfacePerpJudgeSceneProps {
   planeRotDeg: number;
+  showNormals?: boolean;
 }
 
 export const SurfacePerpJudgeScene: React.FC<SurfacePerpJudgeSceneProps> = ({
   planeRotDeg,
+  showNormals = false,
 }) => {
   const fam = calculatePerpJudgeFamily(planeRotDeg);
 
@@ -70,42 +72,46 @@ export const SurfacePerpJudgeScene: React.FC<SurfacePerpJudgeSceneProps> = ({
         radius={0.05}
       />
 
-      {/* 底面 alpha 法向量 n1 */}
-      <Vector3DArrow
-        from={{ x: -1.8, y: -1.8, z: 0 }}
-        to={{ x: -1.8, y: -1.8, z: 1.5 }}
-        colorKey="secondary"
-      />
-      <FormulaLabel3D
-        position={{ x: -1.6, y: -1.8, z: 1.6 }}
-        tex="\\vec{n}_1"
-      />
+      {/* 选必一对照：底面与旋转平面法向量 */}
+      {showNormals && (
+        <>
+          <Vector3DArrow
+            from={{ x: -1.8, y: -1.8, z: 0 }}
+            to={{ x: -1.8, y: -1.8, z: 1.5 }}
+            colorKey="secondary"
+          />
+          <FormulaLabel3D
+            position={{ x: -1.6, y: -1.8, z: 1.6 }}
+            tex="\vec{n}_1"
+          />
 
-      {/* 旋转平面 beta 法向量 n2 */}
-      <Vector3DArrow
-        from={{ x: 0, y: 0, z: 1.2 }}
-        to={{
-          x: fam.betaNormal.x * 1.5,
-          y: fam.betaNormal.y * 1.5,
-          z: 1.2,
-        }}
-        colorKey="paramSecondary"
-      />
-      <FormulaLabel3D
-        position={{
-          x: fam.betaNormal.x * 1.6,
-          y: fam.betaNormal.y * 1.6,
-          z: 1.3,
-        }}
-        tex="\\vec{n}_2"
-      />
+          <Vector3DArrow
+            from={{ x: 0, y: 0, z: 1.2 }}
+            to={{
+              x: fam.betaNormal.x * 1.5,
+              y: fam.betaNormal.y * 1.5,
+              z: 1.2,
+            }}
+            colorKey="paramSecondary"
+          />
+          <FormulaLabel3D
+            position={{
+              x: fam.betaNormal.x * 1.6,
+              y: fam.betaNormal.y * 1.6,
+              z: 1.3,
+            }}
+            tex="\vec{n}_2"
+          />
+        </>
+      )}
 
-      {/* 二面角直角角弧 (l ⊥ alpha / beta ⊥ alpha) */}
+      {/* 二面角直角标记 (l ⊥ alpha / beta ⊥ alpha) */}
       <AngleArc3D
         vertex={{ x: 0, y: 0, z: 0 }}
         dirA={{ x: fam.uAxis.x, y: fam.uAxis.y, z: 0 }}
         dirB={{ x: 0, y: 0, z: 1 }}
         radius={0.55}
+        isRight
         colorKey="highlight"
       />
     </>

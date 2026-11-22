@@ -72,8 +72,11 @@ const groupArgMatch = args.find((arg) => arg.startsWith('--group='));
 const targetGroup = groupArgMatch ? groupArgMatch.split('=')[1] : null;
 const ruleArgMatch = args.find((arg) => arg.startsWith('--rule='));
 const targetRule = ruleArgMatch ? ruleArgMatch.split('=')[1] : null;
-const targetArg = args.find((arg) => !arg.startsWith('-')) || 'src';
-const scanDir = path.resolve(workspaceRoot, targetArg);
+const targetArgs = args.filter((arg) => !arg.startsWith('-'));
+const displayTarget = targetArgs.length > 0 ? targetArgs.join(', ') : 'src';
+const scanDirs = (targetArgs.length > 0 ? targetArgs : ['src']).map((t) =>
+  path.resolve(workspaceRoot, t),
+);
 const baselinePath = path.resolve(workspaceRoot, '.audit-baseline.json');
 
 let filterTip = '';
@@ -85,13 +88,14 @@ if (targetRule) {
 
 if (!isQuiet) {
   console.log(
-    `\n🔍 ${c.bold}[Math Page Audit]${c.reset} 开始静态代码与高考规范审计: ${c.cyan}${targetArg}${c.reset}${filterTip} (strictMode: ${isStrict ? `${c.red}ON${c.reset}` : `${c.gray}OFF${c.reset}`})\n` +
+    `\n🔍 ${c.bold}[Math Page Audit]${c.reset} 开始静态代码与高考规范审计: ${c.cyan}${displayTarget}${c.reset}${filterTip} (strictMode: ${isStrict ? `${c.red}ON${c.reset}` : `${c.gray}OFF${c.reset}`})\n` +
     '─'.repeat(60)
   );
 }
 
 const result = runAudit({
-  targetDir: scanDir,
+  targetDir: scanDirs[0],
+  targetDirs: scanDirs,
   workspaceRoot,
   isStrict,
   group: targetGroup,

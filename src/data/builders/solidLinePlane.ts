@@ -107,7 +107,7 @@ export function buildLinePlaneRelationPanel(
         step: 2,
         title: "建模联立 · 求面法向量并计算数量积",
         detail:
-          "平面 PAD 即为 yz 坐标面 (方程为 x = 0)，易得其单位法向量。当 λ_E = λ_F 时，动向量化简为 (0, λ_E b, 0)，计算数量积：",
+          "平面 $PAD$ 即为 $yz$ 坐标面（方程为 $x = 0$），易得其单位法向量。当 $\\lambda_E = \\lambda_F$ 时，动向量化简为 $(0, \\lambda_E b, 0)$，计算数量积：",
         latex: `\\vec{n}_{PAD} = (1, 0, 0), \\; \\lambda_E = \\lambda_F \\implies \\vec{EF} \\cdot \\vec{n}_{PAD} = 0 \\cdot 1 + \\lambda_E b \\cdot 0 + 0 \\cdot 0 = 0`,
         rubric: "【高考采分点】正确求出法向量并完成数量积垂直证明 (+5分)",
       },
@@ -115,7 +115,7 @@ export function buildLinePlaneRelationPanel(
         step: 3,
         title: "求解反思 · 检验面外条件书写结论",
         detail:
-          "确认动直线 EF 位于平面 PAD 外，结合数量积为零即可下结论。若用几何法，必须补出“中转直线”：当且仅当 λ_E = λ_F 时 EF ∥ BC，但 BC 不在面 PAD 内（BC 上各点 x = a ≠ 0），不能直接用它下结论，须改取与 BC 平行且落在面 PAD 内的 AD —— 线面平行判定定理要求的是“平面外一条直线与此平面内的一条直线平行”：",
+          "确认动直线 $EF$ 位于平面 $PAD$ 外，结合数量积为零即可下结论。若用几何法，必须补出“中转直线”：当且仅当 $\\lambda_E = \\lambda_F$ 时 $EF \\parallel BC$，但 $BC$ 不在面 $PAD$ 内（$BC$ 上各点 $x = a \\neq 0$），不能直接用它下结论，须改取与 $BC$ 平行且落在面 $PAD$ 内的 $AD$ —— 线面平行判定定理要求的是“平面外一条直线与此平面内的一条直线平行”：",
         latex: `\\lambda_E = \\lambda_F \\iff \\vec{EF} = \\lambda_E \\overrightarrow{BC} \\implies EF \\parallel BC; \\quad BC \\parallel AD, \\; AD \\subset \\text{面 }PAD, \\; EF \\not\\subset \\text{面 }PAD \\implies EF \\parallel \\text{平面 }PAD`,
         rubric: "【高考采分点】严密声明直线在面外条件并给出充分必要结论 (+4分)",
       },
@@ -124,7 +124,7 @@ export function buildLinePlaneRelationPanel(
     const warnings: WarningItem[] = [];
     if (!isParallel) {
       warnings.push({
-        text: `当前 λ_E (${lambdaE}) ≠ λ_F (${lambdaF})，EF 与底面边 BC 不平行，无法构成线面平行！调节滑块使 λ_E = λ_F。`,
+        text: `当前 $\\lambda_E = ${lambdaE}$ 与 $\\lambda_F = ${lambdaF}$ 不相等，$EF$ 与底面边 $BC$ 不平行，无法构成线面平行！调节滑块使 $\\lambda_E = \\lambda_F$。`,
         level: "warning",
       });
     }

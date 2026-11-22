@@ -22,6 +22,7 @@ interface DoublePointDistanceModeSceneProps {
   C: Vec3;
   resDouble: DoublePointDistanceResult;
   interactionMode: InteractionMode3D;
+  activeStep?: number;
   onQDrag: (mu: number) => void;
 }
 
@@ -36,6 +37,7 @@ export default function DoublePointDistanceModeScene({
   C,
   resDouble,
   interactionMode,
+  activeStep,
   onQDrag,
 }: DoublePointDistanceModeSceneProps) {
   // 公垂线判断
@@ -46,7 +48,12 @@ export default function DoublePointDistanceModeScene({
   return (
     <>
       {/* 底面对角线 AC 高亮轨迹导轨 (纯几何线段) */}
-      <Segment3D from={A} to={C} colorKey="secondary" lineWidth={2.5} />
+      <Segment3D
+        from={A}
+        to={C}
+        colorKey="secondary"
+        lineWidth={activeStep === 1 ? 3.8 : 2.5}
+      />
 
       {/* 动点 Q：在 AC 上可向量正交平滑拖拽 */}
       <Point3D
@@ -73,7 +80,10 @@ export default function DoublePointDistanceModeScene({
         from={P}
         to={Q}
         colorKey={isAtCommonPerp ? "paramTertiary" : "highlight"}
-        lineWidth={isAtCommonPerp ? 3.5 : 3}
+        lineWidth={
+          (isAtCommonPerp ? 3.5 : 3) +
+          (activeStep === 2 || activeStep === 3 ? 1.4 : 0)
+        }
       />
 
       {/* 当到达公垂线极值时，渲染双直角方框 */}

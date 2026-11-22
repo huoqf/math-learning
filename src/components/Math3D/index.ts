@@ -43,6 +43,12 @@ export type { LegendItem } from "./Legend3D";
 export { Point3D } from "./Point3D";
 export { ModeSwitchOverlay3D } from "./ModeSwitchOverlay3D";
 export type { InteractionMode3D } from "./ModeSwitchOverlay3D";
+export { AnswerStepOverlay3D } from "./AnswerStepOverlay3D";
+export type { AnswerStepOverlay3DProps } from "./AnswerStepOverlay3D";
+export { SphereCrossSectionOverlay2D } from "./SphereCrossSectionOverlay2D";
+export type { SphereCrossSectionOverlay2DProps } from "./SphereCrossSectionOverlay2D";
+export { ParamCurveOverlay2D } from "./ParamCurveOverlay2D";
+export type { ParamCurveOverlay2DProps } from "./ParamCurveOverlay2D";
 
 // ============================================================================
 // 几何图元与角标示 (Geometric Primitives & Angle Elements)

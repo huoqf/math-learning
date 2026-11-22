@@ -390,3 +390,143 @@ export function solvePointToPlaneDistance(
     centroidBase,
   };
 }
+
+export interface TriangularPrismDihedralResult {
+  triHeight: number;
+  zE: number;
+  vertices: {
+    O: Vec3;
+    A: Vec3;
+    B: Vec3;
+    C: Vec3;
+    A1: Vec3;
+    B1: Vec3;
+    C1: Vec3;
+    E: Vec3;
+  };
+  n1: Vec3;
+  n2: Vec3;
+  n2Raw: Vec3;
+  normalLength: number;
+  cosTheta: number;
+  dihedralDeg: number;
+  centroidBase: Vec3;
+  centroidSection: Vec3;
+  cosNormalSigned: number;
+  normalAngleDeg: number;
+  isNormal1Inward: boolean;
+  isNormal2Inward: boolean;
+  inwardProbe: { dot1: number; dot2: number };
+  orientationRelation: "equal" | "supplementary";
+  predictedDihedralDeg: number;
+  cosThetaGeometric: number;
+  isOrientationConsistent: boolean;
+  angleClass: "acute" | "right" | "obtuse";
+  supplementaryNormalAngleDeg: number;
+}
+
+/**
+ * 正三棱柱非长方体建系母题：底面正 △ABC 边长为 a，高为 c，取 BC 中点 O 为原点建系，
+ * OC 为 x 轴、OA 为 y 轴、竖直向上为 z 轴，求二面角 E-BC-A 及其法向量进出钝锐判定。
+ */
+export function solveTriangularPrismDihedral(
+  a: number,
+  c: number,
+  lambda: number,
+): TriangularPrismDihedralResult {
+  const safeA = Math.max(0.1, a);
+  const safeC = Math.max(0.1, c);
+  const zE = Math.max(0.01, Math.min(safeC, lambda * safeC));
+  const triHeight = (Math.sqrt(3) / 2) * safeA;
+
+  const O: Vec3 = { x: 0, y: 0, z: 0 };
+  const B: Vec3 = { x: -safeA / 2, y: 0, z: 0 };
+  const C: Vec3 = { x: safeA / 2, y: 0, z: 0 };
+  const A: Vec3 = { x: 0, y: triHeight, z: 0 };
+  const B1: Vec3 = { x: -safeA / 2, y: 0, z: safeC };
+  const C1: Vec3 = { x: safeA / 2, y: 0, z: safeC };
+  const A1: Vec3 = { x: 0, y: triHeight, z: safeC };
+  const E: Vec3 = { x: 0, y: triHeight, z: zE };
+
+  const centroidBase: Vec3 = { x: 0, y: triHeight / 3, z: 0 };
+  const centroidSection: Vec3 = { x: 0, y: triHeight / 3, z: zE / 3 };
+
+  // 底面 ABC 法向量 n1 = (0, 0, 1)
+  const n1: Vec3 = { x: 0, y: 0, z: 1 };
+
+  // 截面 EBC 法向量：BC = (a, 0, 0), OE = (0, triHeight, zE) => n2Raw = (0, -zE, triHeight)
+  const n2Raw: Vec3 = { x: 0, y: -zE, z: triHeight };
+  const normalLength = Math.sqrt(zE * zE + triHeight * triHeight);
+  const safeLen = normalLength > 1e-9 ? normalLength : 1;
+  const n2: Vec3 = {
+    x: 0,
+    y: n2Raw.y / safeLen,
+    z: n2Raw.z / safeLen,
+  };
+
+  // 内点方位探针：n1 与截面内点 centroidSection，n2 与底面内点 centroidBase
+  const dot1 =
+    n1.x * (centroidSection.x - O.x) +
+    n1.y * (centroidSection.y - O.y) +
+    n1.z * (centroidSection.z - O.z);
+  const dot2 =
+    n2.x * (centroidBase.x - O.x) +
+    n2.y * (centroidBase.y - O.y) +
+    n2.z * (centroidBase.z - O.z);
+  const isNormal1Inward = dot1 > 0;
+  const isNormal2Inward = dot2 > 0;
+
+  const orientationRelation: "equal" | "supplementary" =
+    isNormal1Inward === isNormal2Inward ? "supplementary" : "equal";
+
+  const cosNormalSigned = Math.min(
+    1,
+    Math.max(-1, n1.x * n2.x + n1.y * n2.y + n1.z * n2.z),
+  );
+  const normalAngleDeg = (Math.acos(cosNormalSigned) * 180) / Math.PI;
+  const predictedDihedralDeg =
+    orientationRelation === "equal" ? normalAngleDeg : 180 - normalAngleDeg;
+
+  const cosTheta = Math.abs(cosNormalSigned);
+  const dihedralDeg = (Math.acos(cosTheta) * 180) / Math.PI;
+
+  // 几何平面角 ∠EOA 复核
+  const oeLen = Math.sqrt(triHeight * triHeight + zE * zE);
+  const cosThetaGeometric = oeLen > 1e-9 ? triHeight / oeLen : 1;
+  const predictedRad = (predictedDihedralDeg * Math.PI) / 180;
+  const isOrientationConsistent =
+    Math.abs(Math.cos(predictedRad) - cosThetaGeometric) < 1e-6;
+  const geometricDeg =
+    (Math.acos(Math.min(1, Math.max(-1, cosThetaGeometric))) * 180) / Math.PI;
+  const angleClass: "acute" | "right" | "obtuse" =
+    Math.abs(geometricDeg - 90) < 1e-6
+      ? "right"
+      : geometricDeg < 90
+        ? "acute"
+        : "obtuse";
+
+  return {
+    triHeight,
+    zE,
+    vertices: { O, A, B, C, A1, B1, C1, E },
+    n1,
+    n2,
+    n2Raw,
+    normalLength,
+    cosTheta,
+    dihedralDeg,
+    centroidBase,
+    centroidSection,
+    cosNormalSigned,
+    normalAngleDeg,
+    isNormal1Inward,
+    isNormal2Inward,
+    inwardProbe: { dot1, dot2 },
+    orientationRelation,
+    predictedDihedralDeg,
+    cosThetaGeometric,
+    isOrientationConsistent,
+    angleClass,
+    supplementaryNormalAngleDeg: 180 - normalAngleDeg,
+  };
+}

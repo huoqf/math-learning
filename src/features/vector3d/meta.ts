@@ -10,6 +10,7 @@ export const vector3dBasisNode: KnowledgeNode = {
   animationIds: ["anim-vector3d-basis"],
   prerequisites: ["know-vector-basis"],
   route: "/vector3d-basis",
+  examMethod: "空间向量基本定理基底分解、四点共面充要条件与数量积坐标运算",
 };
 
 export const vector3dBasisLoader = () => import("./Vector3DBasisAnimation");

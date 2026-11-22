@@ -10,6 +10,7 @@ interface SurfacePathModeSceneProps {
   P: Vec3;
   C1: Vec3;
   resPath: SurfacePathResult;
+  activeStep?: number;
 }
 
 export default function SurfacePathModeScene({
@@ -17,14 +18,25 @@ export default function SurfacePathModeScene({
   P,
   C1,
   resPath,
+  activeStep,
 }: SurfacePathModeSceneProps) {
   const isOptimalSide = resPath.bestPathType === "side_BB1";
 
   return (
     <>
       {/* 实时探索折线段 AP 与 PC1 (纯几何线段，无箭头) */}
-      <Segment3D from={A} to={P} colorKey="highlight" lineWidth={3} />
-      <Segment3D from={P} to={C1} colorKey="highlight" lineWidth={3} />
+      <Segment3D
+        from={A}
+        to={P}
+        colorKey="highlight"
+        lineWidth={activeStep === 1 || activeStep === 2 ? 4.2 : 3}
+      />
+      <Segment3D
+        from={P}
+        to={C1}
+        colorKey="highlight"
+        lineWidth={activeStep === 1 || activeStep === 2 ? 4.2 : 3}
+      />
 
       {/* 侧棱 BB1 上的理论最佳折点 P1 */}
       <Point3D position={resPath.optimalP1} colorKey="paramTertiary" />

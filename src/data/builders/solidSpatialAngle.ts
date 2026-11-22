@@ -14,6 +14,7 @@ import {
   solveLinePlaneAngle,
   solveDihedralAngle,
   solvePointToPlaneDistance,
+  solveTriangularPrismDihedral,
 } from "@/math3d/spatialAngle";
 
 // ── know-solid-angle: 空间角（长方体截面二面角） ──
@@ -140,6 +141,17 @@ export function buildSpatialAnglePanel(
         // 改为在「条件」与「结论」之间提供顶层 \; 语义间距断点，内容与标点完全保留。
         latex: `\\text{在 } \\triangle ACD_1 \\text{ 中利用余弦定理求 } \\angle ACD_1，\\; \\text{几何平移法求得夹角与向量法完全一致}`,
         rubric: "【高考采分点】结合几何平移法与余弦定理进行对账验证说明 (+4分)",
+      },
+    );
+
+    gaokaoPoints.push(
+      {
+        text: "异面直线所成角范围为 $\\theta \\in (0^\\circ, 90^\\circ]$，用向量法求 $\\cos\\theta = \\frac{|\\vec{u}\\cdot\\vec{v}|}{|\\vec{u}||\\vec{v}|}$ 务必加绝对值符号，防止求得钝角余弦导致失分。",
+        importance: "gaokao",
+      },
+      {
+        text: "非建系求解可采用「中位线或平行棱平移法」将异面直线转化为同一平面内的相交直线，再在三角形中结合余弦定理解角互验。",
+        importance: "core",
       },
     );
   } else if (mode === "linePlane") {
@@ -385,133 +397,250 @@ export function buildSpatialAnglePanel(
     }
   } else {
     // dihedral
-    const dih = solveDihedralAngle(a, b, c, lambda);
+    if (preset === "triPrism") {
+      // 正三棱柱非长方体中点建系母题：取 BC 中点 O(0,0,0) 建系
+      const prism = solveTriangularPrismDihedral(a, c, lambda);
+      const { O, B, C, E } = prism.vertices;
+      const hTriStr = formatMathNumber(prism.triHeight, 3);
+      const zEStr = formatMathNumber(prism.zE);
+      const aStr = formatMathNumber(a);
+      const lenN2Str = formatMathNumber(prism.normalLength, 3);
+      const dot1Str = formatMathNumber(prism.inwardProbe.dot1, 3);
+      const dot2Str = formatMathNumber(prism.inwardProbe.dot2, 3);
 
-    quantities.push(
-      {
-        label: "底面法向量 $n_1$",
-        symbol: "\\vec{n_1}",
-        value: "(0, 0, 1)",
-        color: MATH_COLORS.secondary,
-      },
-      {
-        label: "截面法向量 $n_2$",
-        symbol: "\\vec{n_2}",
-        value: `(${dih.n2Raw.x.toFixed(1)}, ${dih.n2Raw.y.toFixed(1)}, ${dih.n2Raw.z.toFixed(1)})`,
-        color: MATH_COLORS.primary,
-      },
-      {
-        label: "二面角平面角余弦 cosθ",
-        symbol: "\\cos\\theta",
-        value: Number(dih.cosTheta.toFixed(4)),
-        color: MATH_COLORS.accent,
-      },
-      {
-        label: "二面角 E-BD-A 大小",
-        symbol: "\\theta",
-        value: `${dih.dihedralDeg.toFixed(2)}°`,
-        color: MATH_COLORS.highlight,
-      },
-      {
-        label: "几何法垂足 M",
-        symbol: "M",
-        value: `(${dih.edgeFootM.x.toFixed(2)}, ${dih.edgeFootM.y.toFixed(2)}, 0)`,
-        color: MATH_COLORS.paramTertiary,
-      },
-      {
-        label: "两法向量夹角 $⟨n_1,n_2⟩$",
-        symbol: "\\langle n_1,n_2\\rangle",
-        value: `${dih.normalAngleDeg.toFixed(2)}°（cos = ${dih.cosNormalSigned.toFixed(4)}）`,
-        color: MATH_COLORS.accent,
-      },
-      {
-        label: "法向量方位自动判定",
-        symbol: "n_1,\\ n_2",
-        value: `${dih.isNormal1Inward ? "n₁ 指向内部" : "n₁ 指向外部"}，${dih.isNormal2Inward ? "n₂ 指向内部" : "n₂ 指向外部"} ⇒ ${dih.orientationRelation === "equal" ? "一进一出，θ = ⟨n₁,n₂⟩" : "同进同出，θ = 180° − ⟨n₁,n₂⟩"}：${dih.predictedDihedralDeg.toFixed(2)}°`,
-        color: MATH_COLORS.highlight,
-        highlight: "extreme",
-      },
-      {
-        label: "锐钝自动判定（几何法复核）",
-        symbol: "\\angle PMQ",
-        value: `${dih.angleClass === "acute" ? "锐角" : dih.angleClass === "right" ? "直角" : "钝角"}，cos∠PMQ = ${dih.cosThetaGeometric.toFixed(4)}｜${dih.isOrientationConsistent ? "与法向量规则吻合" : "与法向量规则不符，需检查取点"}`,
-        color: MATH_COLORS.paramPrimary,
-      },
-    );
+      quantities.push(
+        {
+          label: "中点原点 $O$ 与底边高 $OA$",
+          symbol: "|OA|",
+          value: Number(prism.triHeight.toFixed(3)),
+          color: MATH_COLORS.secondary,
+          isInvariant: true,
+          invariantNote: "正三角形底边中垂线建系，|OA| = (√3/2)a",
+        },
+        {
+          label: "动点 $E$ 坐标",
+          symbol: "E",
+          value: `(0, ${hTriStr}, ${zEStr})`,
+          color: MATH_COLORS.paramPrimary,
+        },
+        {
+          label: "底面法向量 $\\vec{n}_1$",
+          symbol: "\\vec{n}_1",
+          value: "(0, 0, 1)",
+          color: MATH_COLORS.secondary,
+        },
+        {
+          label: "截面 $EBC$ 法向量 $\\vec{n}_2$",
+          symbol: "\\vec{n}_2",
+          value: `(0, -${zEStr}, ${hTriStr})`,
+          color: MATH_COLORS.primary,
+        },
+        {
+          label: "二面角 $E$-$BC$-$A$ 大小",
+          symbol: "\\theta",
+          value: `${formatMathNumber(prism.dihedralDeg, 2)}°`,
+          color: MATH_COLORS.highlight,
+        },
+        {
+          label: "法向量进出判别（同进同出互补 / 一进一出相等）",
+          symbol: "\\text{规则}",
+          value: `${prism.isNormal1Inward ? "n₁ 指向内" : "n₁ 指向外"}，${prism.isNormal2Inward ? "n₂ 指向内" : "n₂ 指向外"} ⇒ ${prism.orientationRelation === "equal" ? "一进一出相等" : "同进同出互补"}（取 -n₂ 则钝角 ${formatMathNumber(prism.supplementaryNormalAngleDeg, 2)}° 互补）`,
+          color: MATH_COLORS.accent,
+          highlight: "extreme",
+        },
+      );
 
-    if (preset === "cubeSection") {
-      theorems.push({
-        name: "正方体截面二面角基角模型",
-        latex:
-          "\\text{正方体截面 } A_1BD \\text{ 与底面二面角 } \\cos\\theta = \\frac{\\sqrt{3}}{3}",
-        level: "core",
-        note: "在正方体中，tanθ = AA₁ / AM = a / (√2/2 a) = √2，由此推得 cosθ = 1/√(1 + tan²θ) = √3/3 ≈ 0.5774 (θ ≈ 54.74°)",
-      });
-    }
+      theorems.push(
+        {
+          name: "非长方体几何体底边中点建系通法（正三棱柱）",
+          latex: `O = \\text{底边 } BC \\text{ 中点} \\implies OA \\perp BC, \\; OO_1 \\perp \\text{底面} \\; (\\vec{OC}, \\vec{OA}, \\vec{OO_1} \\text{ 两两正交})`,
+          level: "core",
+          condition:
+            "当几何体无三条棱交于同一点且两两垂直（如正三棱柱、正棱锥）时，须先作辅助垂线并证明三线两两正交后再建系",
+        },
+        {
+          name: "二面角双法向量钝锐判别与互补相等准则",
+          latex: `\\cos\\theta_{\\text{二面角}} = \\begin{cases} \\cos\\langle\\vec{n}_1, \\vec{n}_2\\rangle, & \\text{一进一出} \\\\[0.5ex] -\\cos\\langle\\vec{n}_1, \\vec{n}_2\\rangle, & \\text{同进同出} \\end{cases}`,
+          level: "core",
+          condition:
+            "用点积 $\\vec{n}_i\\cdot(\\vec{G}_{\\text{另一面}} - \\vec{O})$ 的正负判断法向量是否指向二面角内部；若取相反法向量 $-\\vec{n}_2$，同进同出即呈钝角互补",
+        },
+      );
 
-    theorems.push(
-      {
-        name: "二面角向量法与钝锐判断定理",
-        latex: `\\cos\\langle\\vec{n_1},\\vec{n_2}\\rangle = \\frac{\\vec{n_1} \\cdot \\vec{n_2}}{|\\vec{n_1}||\\vec{n_2}|}, \\quad \\cos\\theta_{\\text{二面角}} = \\begin{cases} \\cos\\langle\\vec{n_1},\\vec{n_2}\\rangle, & \\text{一进一出} \\\\ -\\cos\\langle\\vec{n_1},\\vec{n_2}\\rangle, & \\text{同进同出} \\end{cases}`,
-        level: "core",
-        condition:
-          "「一进一出」= 两个法向量中恰有一个指向二面角内部：用 $\\vec{n}\\cdot(\\text{内点} - \\text{平面上一点})$ 的符号即可算出，无需看图",
-      },
-      {
-        name: "线面垂直的判定与性质作二面角平面角（几何法）",
-        latex: `AM \\perp BD \\;\\text{于}\\; M, \\; EA \\perp \\text{底面} \\implies EM \\perp BD, \\; \\angle AME \\text{ 即为二面角平面角}`,
-        level: "important",
-        note: "在直角三角形 $\\triangle EAM$ 中，$\\tan\\angle AME = \\frac{EA}{AM} = \\frac{z_E}{AM}$",
-      },
-      {
-        name: "截面法向量求解方程组（标准高考格式）",
-        latex: `\\begin{cases} \\vec{n_2} \\cdot \\vec{BD} = 0 \\\\ \\vec{n_2} \\cdot \\vec{BE} = 0 \\end{cases} \\;\\Rightarrow\\; \\begin{cases} -a x + b y = 0 \\\\ -a x + z_E z = 0 \\end{cases} \\;\\xrightarrow{\\text{令 } x=b z_E}\\; \\vec{n_2} = (b z_E, a z_E, a b)`,
-        level: "important",
-      },
-    );
+      gaokaoPoints.push(
+        {
+          text: "新高考立体几何高频非建系陷阱：正三棱柱底面内角为 $60^\\circ$ 而非 $90^\\circ$，若误以顶点 $B$ 为原点建系会导致坐标全盘皆错，必须取底边 $BC$ 中点 $O$ 作中线 $OA$ 建系。",
+          importance: "gaokao",
+        },
+        {
+          text: "二面角钝锐失分预防：试卷中求解出双法向量 $\\vec{n}_1, \\vec{n}_2$ 后，务必通过几何直观与内点点积符号双重验证二面角为锐角还是钝角。",
+          importance: "gaokao",
+        },
+      );
 
-    gaokaoPoints.push(
-      {
-        text: "高考立体几何第(2)问满分步骤闭环：① 建立空间直角坐标系 $O$-$xyz$；② 设法向量 $\\vec{n}=(x,y,z)$ 联立两方程赋非零特解；③ 代入向量点乘模长公式；④ 用 $\\vec{n}\\cdot(\\text{内点}-\\text{平面上一点})$ 的符号判定两法向量各自指向二面角的哪一侧，据此决定 $\\cos\\theta$ 取 $\\cos\\langle n_1,n_2\\rangle$ 还是它的相反数——这一步是纯代数判定，可写进卷面。",
-        importance: "gaokao",
-      },
-      {
-        text: "法向量进进出出判定律：若两个法向量同时指向二面角内侧（或同时指向外侧），则法向量夹角与二面角互补 (θ + <n1,n2> = 180°)；若一进一出，则相等 (θ = <n1,n2>)。",
-        importance: "gaokao",
-      },
-    );
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "取 $BC$ 中点 $O$ 证明三线两两正交并建立空间直角坐标系",
+          detail:
+            "在正三棱柱中，取底边 $BC$ 中点 $O$，由正三角形三线合一及侧棱垂直底面得 $OC \\perp OA$、$OO_1 \\perp$ 底面，以 $O$ 为原点写各点坐标：",
+          latex: `\\begin{aligned} O(0,0,0), \\; B\\left(-\\frac{${aStr}}{2},0,0\\right), \\; C\\left(\\frac{${aStr}}{2},0,0\\right) \\\\[1ex] A(0, ${hTriStr}, 0), \\; E(0, ${hTriStr}, ${zEStr}) \\end{aligned}`,
+          rubric:
+            "【高考采分点】正确证明两两垂直并精准写出正三棱柱建系坐标 (+4分)",
+        },
+        {
+          step: 2,
+          title: "求解底面 $ABC$ 与截面 $EBC$ 法向量",
+          detail:
+            "底面单位法向量取 $\\vec{n}_1 = (0, 0, 1)$；在截面 $EBC$ 中联立 $\\vec{n}_2 \\cdot \\overrightarrow{BC} = 0$ 与 $\\vec{n}_2 \\cdot \\overrightarrow{OE} = 0$：",
+          latex: `\\begin{cases} ${aStr}x = 0 \\\\ ${hTriStr}y + ${zEStr}z = 0 \\end{cases} \\implies \\vec{n}_2 = (0,\\; -${zEStr},\\; ${hTriStr})`,
+          rubric: "【高考采分点】正确联立正交方程求得截面法向量 (+4分)",
+        },
+        {
+          step: 3,
+          title: "法向量进出符号定锐钝并与平面角 $\\angle EOA$ 对账",
+          detail: `点积检验内点方位：$\\vec{n}_1\\cdot(\\vec{G}_2-\\vec{O})=${dot1Str}>0$（入内），$\\vec{n}_2\\cdot(\\vec{G}_1-\\vec{O})=${dot2Str}<0$（出外），故一进一出相等；在 $\\text{Rt}\\triangle EOA$ 中几何法复核 $\\cos\\angle EOA$ 一致：`,
+          latex: `\\begin{aligned} \\cos\\theta &= \\frac{\\vec{n}_1\\cdot\\vec{n}_2}{|\\vec{n}_1||\\vec{n}_2|} = \\frac{${hTriStr}}{${lenN2Str}} \\\\[1ex] &= ${formatMathNumber(prism.cosTheta, 4)} \\implies \\theta = ${formatMathNumber(prism.dihedralDeg, 2)}^\\circ \\end{aligned}`,
+          rubric: "【高考采分点】进出方位定锐钝并算得精确二面角余弦值 (+4分)",
+        },
+      );
 
-    reasoningSteps.push(
-      {
-        step: 1,
-        title: "几何法作二面角平面角（线面垂直转化）",
-        detail: "在底面矩形中作 AM ⊥ BD 于 M，由线面垂直的判定与性质得 EM ⊥ BD",
-        latex: `AM \\perp BD, \\; EA \\perp \\text{底面} \\implies EM \\perp BD \\implies \\angle AME \\text{ 为二面角 } E-BD-A \\text{ 的平面角}`,
-        rubric:
-          "【高考采分点】运用线面垂直的判定与性质作出并判定二面角的平面角 (+4分)",
-      },
-      {
-        step: 2,
-        title: "解方程组求截面 BDE 的法向量",
-        detail: "底面法向量取 n₁=(0,0,1)，设截面 BDE 法向量 n₂=(x,y,z)",
-        latex: `\\begin{cases} \\vec{n_2} \\cdot \\vec{BD} = 0 \\\\ \\vec{n_2} \\cdot \\vec{BE} = 0 \\end{cases} \\implies \\begin{cases} -${formatMathNumber(a)}x + ${formatMathNumber(b)}y = 0 \\\\ -${formatMathNumber(a)}x + ${formatMathNumber(zE)}z = 0 \\end{cases} \\implies \\vec{n_2} = (${formatMathNumber(dih.n2Raw.x)},\\; ${formatMathNumber(dih.n2Raw.y)},\\; ${formatMathNumber(dih.n2Raw.z)})`,
-        rubric: "【高考采分点】联立正交方程组精确求得截面法向量坐标 (+5分)",
-      },
-      {
-        step: 3,
-        title: "用点积符号判定进出方位，再代入余弦公式",
-        detail: `$\\vec{n_1}\\cdot(\\vec{G_2}-A)=${dih.inwardProbe.dot1.toFixed(2)}${dih.isNormal1Inward ? ">" : "<"}0$ 说明 $n_1$ ${dih.isNormal1Inward ? "指向内部" : "指向外部"}；$\\vec{n_2}\\cdot(\\vec{G_1}-B)=${dih.inwardProbe.dot2.toFixed(2)}${dih.isNormal2Inward ? ">" : "<"}0$ 说明 $n_2$ ${dih.isNormal2Inward ? "指向内部" : "指向外部"}。${dih.orientationRelation === "equal" ? "一进一出 ⇒ $\\cos\\theta=\\cos\\langle n_1,n_2\\rangle$" : "同进同出 ⇒ $\\cos\\theta=-\\cos\\langle n_1,n_2\\rangle$"}，正负号由算式给出，无需看图`,
-        latex: `\\vec{n_1}\\cdot(\\vec{G_2}-\\vec{A})=${dih.inwardProbe.dot1.toFixed(2)}${dih.isNormal1Inward ? ">" : "<"}0,\\; \\vec{n_2}\\cdot(\\vec{G_1}-\\vec{B})=${dih.inwardProbe.dot2.toFixed(2)}${dih.isNormal2Inward ? ">" : "<"}0 \\implies \\text{一进一出} \\implies \\cos\\theta = \\cos\\langle n_1,n_2\\rangle = \\frac{${(a * b).toFixed(2)}}{${dih.normalLength.toFixed(2)}} = ${dih.cosTheta.toFixed(4)} \\implies \\theta = ${dih.dihedralDeg.toFixed(2)}^\\circ`,
-        rubric:
-          "【高考采分点】用法向量点积符号自动定出余弦正负，不依赖目视判断 (+4分)",
-      },
-    );
+      if (E.z < 0.05 || O.z < -1 || B.x > C.x) {
+        warnings.push({
+          text: "动点 $E$ 接近底面顶点 $A$，截面与底面趋近重合，二面角接近 $0^\\circ$。",
+          level: "warning",
+        });
+      }
+    } else {
+      const dih = solveDihedralAngle(a, b, c, lambda);
 
-    if (dih.dihedralDeg < 1 || dih.dihedralDeg > 179) {
-      warnings.push({
-        text: "二面角接近 0° 或 180°，截面退化为共面！",
-        level: "warning",
-      });
+      quantities.push(
+        {
+          label: "底面法向量 $n_1$",
+          symbol: "\\vec{n_1}",
+          value: "(0, 0, 1)",
+          color: MATH_COLORS.secondary,
+        },
+        {
+          label: "截面法向量 $n_2$",
+          symbol: "\\vec{n_2}",
+          value: `(${dih.n2Raw.x.toFixed(1)}, ${dih.n2Raw.y.toFixed(1)}, ${dih.n2Raw.z.toFixed(1)})`,
+          color: MATH_COLORS.primary,
+        },
+        {
+          label: "二面角平面角余弦 cosθ",
+          symbol: "\\cos\\theta",
+          value: Number(dih.cosTheta.toFixed(4)),
+          color: MATH_COLORS.accent,
+        },
+        {
+          label: "二面角 E-BD-A 大小",
+          symbol: "\\theta",
+          value: `${dih.dihedralDeg.toFixed(2)}°`,
+          color: MATH_COLORS.highlight,
+        },
+        {
+          label: "几何法垂足 M",
+          symbol: "M",
+          value: `(${dih.edgeFootM.x.toFixed(2)}, ${dih.edgeFootM.y.toFixed(2)}, 0)`,
+          color: MATH_COLORS.paramTertiary,
+        },
+        {
+          label: "两法向量夹角 $⟨n_1,n_2⟩$",
+          symbol: "\\langle n_1,n_2\\rangle",
+          value: `${dih.normalAngleDeg.toFixed(2)}°（cos = ${dih.cosNormalSigned.toFixed(4)}）`,
+          color: MATH_COLORS.accent,
+        },
+        {
+          label: "法向量方位自动判定",
+          symbol: "n_1,\\ n_2",
+          value: `${dih.isNormal1Inward ? "n₁ 指向内部" : "n₁ 指向外部"}，${dih.isNormal2Inward ? "n₂ 指向内部" : "n₂ 指向外部"} ⇒ ${dih.orientationRelation === "equal" ? "一进一出，θ = ⟨n₁,n₂⟩" : "同进同出，θ = 180° − ⟨n₁,n₂⟩"}：${dih.predictedDihedralDeg.toFixed(2)}°`,
+          color: MATH_COLORS.highlight,
+          highlight: "extreme",
+        },
+        {
+          label: "锐钝自动判定（几何法复核）",
+          symbol: "\\angle PMQ",
+          value: `${dih.angleClass === "acute" ? "锐角" : dih.angleClass === "right" ? "直角" : "钝角"}，cos∠PMQ = ${dih.cosThetaGeometric.toFixed(4)}｜${dih.isOrientationConsistent ? "与法向量规则吻合" : "与法向量规则不符，需检查取点"}`,
+          color: MATH_COLORS.paramPrimary,
+        },
+      );
+
+      if (preset === "cubeSection") {
+        theorems.push({
+          name: "正方体截面二面角基角模型",
+          latex:
+            "\\text{正方体截面 } A_1BD \\text{ 与底面二面角 } \\cos\\theta = \\frac{\\sqrt{3}}{3}",
+          level: "core",
+          note: "在正方体中，tanθ = AA₁ / AM = a / (√2/2 a) = √2，由此推得 cosθ = 1/√(1 + tan²θ) = √3/3 ≈ 0.5774 (θ ≈ 54.74°)",
+        });
+      }
+
+      theorems.push(
+        {
+          name: "二面角向量法与钝锐判断定理",
+          latex: `\\cos\\langle\\vec{n_1},\\vec{n_2}\\rangle = \\frac{\\vec{n_1} \\cdot \\vec{n_2}}{|\\vec{n_1}||\\vec{n_2}|}, \\quad \\cos\\theta_{\\text{二面角}} = \\begin{cases} \\cos\\langle\\vec{n_1},\\vec{n_2}\\rangle, & \\text{一进一出} \\\\ -\\cos\\langle\\vec{n_1},\\vec{n_2}\\rangle, & \\text{同进同出} \\end{cases}`,
+          level: "core",
+          condition:
+            "「一进一出」= 两个法向量中恰有一个指向二面角内部：用 $\\vec{n}\\cdot(\\text{内点} - \\text{平面上一点})$ 的符号即可算出，无需看图",
+        },
+        {
+          name: "线面垂直的判定与性质作二面角平面角（几何法）",
+          latex: `AM \\perp BD \\;\\text{于}\\; M, \\; EA \\perp \\text{底面} \\implies EM \\perp BD, \\; \\angle AME \\text{ 即为二面角平面角}`,
+          level: "important",
+          note: "在直角三角形 $\\triangle EAM$ 中，$\\tan\\angle AME = \\frac{EA}{AM} = \\frac{z_E}{AM}$",
+        },
+        {
+          name: "截面法向量求解方程组（标准高考格式）",
+          latex: `\\begin{cases} \\vec{n_2} \\cdot \\vec{BD} = 0 \\\\ \\vec{n_2} \\cdot \\vec{BE} = 0 \\end{cases} \\;\\Rightarrow\\; \\begin{cases} -a x + b y = 0 \\\\ -a x + z_E z = 0 \\end{cases} \\;\\xrightarrow{\\text{令 } x=b z_E}\\; \\vec{n_2} = (b z_E, a z_E, a b)`,
+          level: "important",
+        },
+      );
+
+      gaokaoPoints.push(
+        {
+          text: "高考立体几何第(2)问满分步骤闭环：① 建立空间直角坐标系 $O$-$xyz$；② 设法向量 $\\vec{n}=(x,y,z)$ 联立两方程赋非零特解；③ 代入向量点乘模长公式；④ 用 $\\vec{n}\\cdot(\\text{内点}-\\text{平面上一点})$ 的符号判定两法向量各自指向二面角的哪一侧，据此决定 $\\cos\\theta$ 取 $\\cos\\langle n_1,n_2\\rangle$ 还是它的相反数——这一步是纯代数判定，可写进卷面。",
+          importance: "gaokao",
+        },
+        {
+          text: "法向量进进出出判定律：若两个法向量同时指向二面角内侧（或同时指向外侧），则法向量夹角与二面角互补 (θ + <n1,n2> = 180°)；若一进一出，则相等 (θ = <n1,n2>)。",
+          importance: "gaokao",
+        },
+      );
+
+      reasoningSteps.push(
+        {
+          step: 1,
+          title: "几何法作二面角平面角（线面垂直转化）",
+          detail:
+            "在底面矩形中作 AM ⊥ BD 于 M，由线面垂直的判定与性质得 EM ⊥ BD",
+          latex: `AM \\perp BD, \\; EA \\perp \\text{底面} \\implies EM \\perp BD \\implies \\angle AME \\text{ 为二面角 } E-BD-A \\text{ 的平面角}`,
+          rubric:
+            "【高考采分点】运用线面垂直的判定与性质作出并判定二面角的平面角 (+4分)",
+        },
+        {
+          step: 2,
+          title: "解方程组求截面 BDE 的法向量",
+          detail: "底面法向量取 n₁=(0,0,1)，设截面 BDE 法向量 n₂=(x,y,z)",
+          latex: `\\begin{cases} \\vec{n_2} \\cdot \\vec{BD} = 0 \\\\ \\vec{n_2} \\cdot \\vec{BE} = 0 \\end{cases} \\implies \\begin{cases} -${formatMathNumber(a)}x + ${formatMathNumber(b)}y = 0 \\\\ -${formatMathNumber(a)}x + ${formatMathNumber(zE)}z = 0 \\end{cases} \\implies \\vec{n_2} = (${formatMathNumber(dih.n2Raw.x)},\\; ${formatMathNumber(dih.n2Raw.y)},\\; ${formatMathNumber(dih.n2Raw.z)})`,
+          rubric: "【高考采分点】联立正交方程组精确求得截面法向量坐标 (+5分)",
+        },
+        {
+          step: 3,
+          title: "用点积符号判定进出方位，再代入余弦公式",
+          detail: `$\\vec{n_1}\\cdot(\\vec{G_2}-A)=${dih.inwardProbe.dot1.toFixed(2)}${dih.isNormal1Inward ? ">" : "<"}0$ 说明 $n_1$ ${dih.isNormal1Inward ? "指向内部" : "指向外部"}；$\\vec{n_2}\\cdot(\\vec{G_1}-B)=${dih.inwardProbe.dot2.toFixed(2)}${dih.isNormal2Inward ? ">" : "<"}0$ 说明 $n_2$ ${dih.isNormal2Inward ? "指向内部" : "指向外部"}。${dih.orientationRelation === "equal" ? "一进一出 ⇒ $\\cos\\theta=\\cos\\langle n_1,n_2\\rangle$" : "同进同出 ⇒ $\\cos\\theta=-\\cos\\langle n_1,n_2\\rangle$"}，正负号由算式给出，无需看图`,
+          latex: `\\vec{n_1}\\cdot(\\vec{G_2}-\\vec{A})=${dih.inwardProbe.dot1.toFixed(2)}${dih.isNormal1Inward ? ">" : "<"}0,\\; \\vec{n_2}\\cdot(\\vec{G_1}-\\vec{B})=${dih.inwardProbe.dot2.toFixed(2)}${dih.isNormal2Inward ? ">" : "<"}0 \\implies \\text{一进一出} \\implies \\cos\\theta = \\cos\\langle n_1,n_2\\rangle = \\frac{${(a * b).toFixed(2)}}{${dih.normalLength.toFixed(2)}} = ${dih.cosTheta.toFixed(4)} \\implies \\theta = ${dih.dihedralDeg.toFixed(2)}^\\circ`,
+          rubric:
+            "【高考采分点】用法向量点积符号自动定出余弦正负，不依赖目视判断 (+4分)",
+        },
+      );
+
+      if (dih.dihedralDeg < 1 || dih.dihedralDeg > 179) {
+        warnings.push({
+          text: "二面角接近 0° 或 180°，截面退化为共面！",
+          level: "warning",
+        });
+      }
     }
   }
 

@@ -1,13 +1,13 @@
 /**
- * 立体几何 17 页「3D 真渲染」契约测试（P1-14 收口）
+ * 立体几何 16 页「3D 真渲染」契约测试（第 17 节斜二测 2D SVG 于 obliqueDrawingPage.test.tsx 覆盖）
  *
  * ## 背景
  * 历史测试把 `@/components/Math3D` 与 `ThreeDCanvas` **整包 mock 成 `null`**，
- * 导致这 17 页的 **3D 元素树在测试里永不渲染** ⇒「手柄位置 / 切点 / 半径线 / 相机」
+ * 导致各 3D 页的 **3D 元素树在测试里永不渲染** ⇒「手柄位置 / 切点 / 半径线 / 相机」
  * 这类结构性缺陷在测试层面**根本无法被发现**。
  *
  * 本套测试用 `@/test/harness/threeTestLayer` 只替身「必须 WebGL / 必须 R3F 上下文」的边界，
- * 让 **Math3D/* 与各 Scene 真实执行**，并直接在**渲染出的 DOM** 上做两类断言：
+ * 让 **Math3D/* 与各 Scene 真实执行**，并直接在**渲染出的 DOM** 上做三类断言：
  *
  * 1. **结构有守护**：3D 容器存在、元素树非空、所有几何数值属性有限（NaN/Infinity 不得进入 3D 层）；
  * 2. **几何有守护**（外接球三页）：把 `<group renderorder="10">` 认作球体，
@@ -15,6 +15,7 @@
  *    - 球心处确实有标记（球心被标出）；
  *    - **没有顶点跑到球外**（∀ d(P,O) ≤ R + ε）；
  *    - **至少一个顶点落在球面上**（max d(P,O) = R）—— 这正是"切点到球心距离恒等于半径"。
+ * 3. **交互与三屏闭环守护**：覆盖点线距、旋转展开、正三棱柱建系、反例摆动、`StepNavigator` 联动与 2D 浮窗折叠。
  *
  * > 注：jsdom 无 WebGL，故光照/纹理不生效；但 React 元素树与全部几何 props
  * > 都会真实落到 DOM（React 19 会把数组 props 串成 `position="1,1,1.5"` 这类属性），
@@ -511,6 +512,109 @@ describe("立体几何 17 页 3D 真渲染契约（P1-14）", () => {
         fullBuffers[1][2] - fullBuffers[0][2],
       );
       expect(shiftFull).toBeCloseTo(R * 0.45, 2);
+    });
+  });
+
+  describe("新高考增量专题与三屏交互闭环回归", () => {
+    it("1. 空间距离页切换点线距离模式渲染 3D 场景与投影公式且全数值有限", () => {
+      const { container } = render(<SpatialDistanceAnimation />);
+      fireEvent.click(screen.getByText("点线距离"));
+
+      expect(
+        container.querySelector('[data-testid="r3f-canvas"]'),
+      ).not.toBeNull();
+      const tally = countR3fElements(container);
+      expect(
+        Object.values(tally).reduce((a, b) => a + b, 0),
+      ).toBeGreaterThanOrEqual(3);
+      expect(container.textContent).toMatch(/点到直线距离|向量投影/);
+      expect(container.innerHTML).not.toMatch(/\bNaN\b|\bInfinity\b/);
+    });
+
+    it("2. 旋转体实验室切换「侧面展开路径」渲染展开曲面、ParamPlayBar 与最短路径看板", () => {
+      const { container } = render(<RotationBodyAnimation />);
+      fireEvent.click(screen.getByText("侧面展开路径"));
+
+      expect(
+        container.querySelector('[data-testid="r3f-canvas"]'),
+      ).not.toBeNull();
+      expect(screen.getByText(/连续展平曲面/)).toBeInTheDocument();
+      expect(container.textContent).toContain("化曲为直最短路径原理");
+      expect(container.innerHTML).not.toMatch(/\bNaN\b|\bInfinity\b/);
+    });
+
+    it("3. 空间角页切「空间二面角」并选「正三棱柱建系」渲染中点建系与法向量进出判别", () => {
+      const { container } = render(<SpatialAngleAnimation />);
+      fireEvent.click(screen.getByText("空间二面角"));
+      fireEvent.click(screen.getByText("正三棱柱建系"));
+
+      expect(
+        container.querySelector('[data-testid="r3f-canvas"]'),
+      ).not.toBeNull();
+      expect(container.textContent).toContain("中点原点");
+      expect(container.textContent).toMatch(/一进一出|同进同出/);
+      expect(container.innerHTML).not.toMatch(/\bNaN\b|\bInfinity\b/);
+    });
+
+    it("4. 线面位置关系切「线面垂直」+「平行两线反例」显示摆动 ParamPlayBar", () => {
+      const { container } = render(<LinePlaneRelationAnimation />);
+      fireEvent.click(screen.getByText("线面垂直"));
+      fireEvent.click(screen.getByText("平行两线反例"));
+
+      expect(screen.getByText(/反例摆动演示/)).toBeInTheDocument();
+      expect(container.innerHTML).not.toMatch(/\bNaN\b|\bInfinity\b/);
+    });
+
+    it("5. 分步作答三屏同频闭环：点击左屏 StepNavigator「下一步」同步中屏围栏与右屏聚焦", () => {
+      const { container } = render(<SpatialDistanceAnimation />);
+      expect(container.querySelector('[data-focus-step="1"]')).not.toBeNull();
+      const firstFocusedRight =
+        container.querySelector('[data-focus-step="true"]')?.textContent ?? "";
+
+      const nextBtn = container.querySelector('button[aria-label="下一步"]');
+      expect(nextBtn).not.toBeNull();
+      fireEvent.click(nextBtn!);
+
+      expect(container.querySelector('[data-focus-step="2"]')).not.toBeNull();
+      const secondFocusedRight =
+        container.querySelector('[data-focus-step="true"]')?.textContent ?? "";
+      expect(secondFocusedRight).not.toBe("");
+      expect(secondFocusedRight).not.toBe(firstFocusedRight);
+    });
+
+    it("6. 2D 降维截面浮窗与函数曲线浮窗支持折叠与再展开", () => {
+      const circumRender = render(<CircumInSphereAnimation />);
+      const collapseSphereBtn = circumRender.container.querySelector(
+        'button[aria-label="收起截面浮窗"]',
+      );
+      expect(collapseSphereBtn).not.toBeNull();
+      fireEvent.click(collapseSphereBtn!);
+
+      const expandSphereBtn = circumRender.getByText(/2D 截面降维/);
+      expect(expandSphereBtn).toBeInTheDocument();
+      fireEvent.click(expandSphereBtn);
+      expect(
+        circumRender.container.querySelector(
+          'button[aria-label="收起截面浮窗"]',
+        ),
+      ).not.toBeNull();
+      circumRender.unmount();
+
+      const paramRender = render(<ParametricPointAnimation />);
+      const collapseCurveBtn = paramRender.container.querySelector(
+        'button[aria-label="收起函数曲线浮窗"]',
+      );
+      expect(collapseCurveBtn).not.toBeNull();
+      fireEvent.click(collapseCurveBtn!);
+
+      const expandCurveBtn = paramRender.getByText(/θ\(λ\)\s*=/);
+      expect(expandCurveBtn).toBeInTheDocument();
+      fireEvent.click(expandCurveBtn);
+      expect(
+        paramRender.container.querySelector(
+          'button[aria-label="收起函数曲线浮窗"]',
+        ),
+      ).not.toBeNull();
     });
   });
 });

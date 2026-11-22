@@ -1,8 +1,10 @@
 import { useMemo } from "react";
 import { MATH_COLORS } from "@/theme";
 import { SceneLegend, type SceneLegendItem } from "@/components/Math";
+import { MathPoint } from "@/components/Math/MathPoint";
 import {
   buildPresetPolygon,
+  interpolateObliquePoints,
   type PolygonPresetKey,
   type Point2D,
 } from "@/math/obliqueDrawing";
@@ -29,6 +31,7 @@ export function ObliqueDrawingScene({
   const alphaDeg = params.alphaDeg ?? 45;
   const ratioY = params.ratioY ?? 0.5;
   const prismH = params.prismH ?? 3.5;
+  const morphT = params.morphT ?? 1;
 
   const poly = useMemo(
     () => buildPresetPolygon(polygonType, { a, b, h }, alphaDeg, ratioY),
@@ -74,8 +77,13 @@ export function ObliqueDrawingScene({
       y: rightOrigin.y - p.y * unitScale,
     });
 
+    const animatedOblique = interpolateObliquePoints(
+      poly.originalPoints,
+      poly.obliquePoints,
+      morphT,
+    );
     const origScreenPts = poly.originalPoints.map(toLeftScreen);
-    const obliqScreenPts = poly.obliquePoints.map(toRightScreen);
+    const obliqScreenPts = animatedOblique.map(toRightScreen);
 
     const origPath =
       origScreenPts
@@ -187,12 +195,13 @@ export function ObliqueDrawingScene({
 
           {/* 原多边形顶点 */}
           {origScreenPts.map((p, idx) => (
-            <circle
+            <MathPoint
               key={`orig-pt-${idx}`}
-              cx={p.x}
-              cy={p.y}
+              x={p.x}
+              y={p.y}
               r={4}
-              fill={MATH_COLORS.primary}
+              color={MATH_COLORS.primary}
+              fontScale={font}
             />
           ))}
 
@@ -343,12 +352,13 @@ export function ObliqueDrawingScene({
 
           {/* 直观图多边形顶点 */}
           {obliqScreenPts.map((p, idx) => (
-            <circle
+            <MathPoint
               key={`obliq-pt-${idx}`}
-              cx={p.x}
-              cy={p.y}
+              x={p.x}
+              y={p.y}
               r={4}
-              fill={MATH_COLORS.secondary}
+              color={MATH_COLORS.secondary}
+              fontScale={font}
             />
           ))}
 
@@ -399,10 +409,15 @@ export function ObliqueDrawingScene({
     y: origin.y - p.y * unitScale,
   });
 
-  const bottomPts = poly.obliquePoints.map(toScreen);
+  const animatedBottom = interpolateObliquePoints(
+    poly.originalPoints,
+    poly.obliquePoints,
+    morphT,
+  );
+  const bottomPts = animatedBottom.map(toScreen);
   const topPts = bottomPts.map((p) => ({
     x: p.x,
-    y: p.y - prismH * unitScale,
+    y: p.y - prismH * morphT * unitScale,
   }));
 
   const bottomPath =

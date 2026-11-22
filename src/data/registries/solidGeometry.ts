@@ -238,7 +238,7 @@ export const linePlaneRelationMeta: ParamMeta[] = [
   },
   {
     key: "lambdaE",
-    label: "动点 E 比例 λ_E",
+    label: "动点 E 分点比",
     labelFormula: `\\text{分点比 } \\color{${MATH_COLORS.paramPrimary}}{\\lambda_E}`,
     min: 0.1,
     max: 0.9,
@@ -252,7 +252,7 @@ export const linePlaneRelationMeta: ParamMeta[] = [
   },
   {
     key: "lambdaF",
-    label: "动点 F 比例 λ_F",
+    label: "动点 F 分点比",
     labelFormula: `\\text{分点比 } \\color{${MATH_COLORS.paramSecondary}}{\\lambda_F}`,
     min: 0.1,
     max: 0.9,
@@ -644,6 +644,21 @@ export const rotationBodyMeta: ParamMeta[] = [
         labelFormula: "d=0",
         variant: "critical",
       },
+    ],
+  },
+  {
+    key: "unfoldProgress",
+    label: "侧面展开度 p",
+    labelFormula: `\\text{侧面展开度 } \\color{${MATH_COLORS.paramTertiary}}{p}`,
+    min: 0,
+    max: 1,
+    step: 0.02,
+    defaultValue: 1,
+    importance: "core",
+    group: "侧面展开参数",
+    marks: [
+      { value: 0, label: "闭合态", labelFormula: "0" },
+      { value: 1, label: "完全展平", labelFormula: "1", variant: "critical" },
     ],
   },
 ];
