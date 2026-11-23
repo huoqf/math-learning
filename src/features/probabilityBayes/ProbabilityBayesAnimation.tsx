@@ -13,7 +13,7 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useGaokaoView } from "@/hooks";
 import { CANVAS_PRESETS } from "@/theme";
 import {
   defaultParams,
@@ -35,13 +35,23 @@ import {
 
 export function ProbabilityBayesAnimation() {
   const location = useLocation();
-  const initialMode = location.pathname.includes("bayes")
+  const isGaokao = useGaokaoView();
+  const initialMode: BayesMode = location.pathname.includes("bayes")
     ? "bayes"
-    : "conditional";
+    : isGaokao
+      ? "total_prob"
+      : "conditional";
 
-  const [params, setParams] = useState<Record<string, number>>(() => ({
-    ...defaultParams,
-  }));
+  const [params, setParams] = useState<Record<string, number>>(() =>
+    isGaokao && initialMode === "bayes"
+      ? {
+          ...defaultParams,
+          pPriorD: 0.08,
+          pSensitivity: 0.98,
+          pFalsePositive: 0.02,
+        }
+      : { ...defaultParams },
+  );
 
   const [activeMode, setActiveMode] = useState<BayesMode>(initialMode);
   const [isZoomedToA, setIsZoomedToA] = useState(false);
@@ -49,9 +59,12 @@ export function ProbabilityBayesAnimation() {
 
   // 各模式情境选择（自由探索 + 典型课标情景）
   const [condScenario, setCondScenario] = useState<CondScenario>("independent");
-  const [totalScenario, setTotalScenario] = useState<TotalScenario>("factory3");
-  const [bayesScenario, setBayesScenario] =
-    useState<BayesScenario>("screening");
+  const [totalScenario, setTotalScenario] = useState<TotalScenario>(
+    isGaokao && initialMode === "total_prob" ? "warner" : "factory3",
+  );
+  const [bayesScenario, setBayesScenario] = useState<BayesScenario>(
+    isGaokao && initialMode === "bayes" ? "factory" : "screening",
+  );
 
   // 1. 视口与缩放设置 (840 x 650 full preset)
   const { containerRef, canvasSize, vp } = useAnimationViewport({

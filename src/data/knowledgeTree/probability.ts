@@ -1,4 +1,6 @@
 import type { KnowledgeNode } from "../types";
+import { combinatoricsModelsNode } from "@/features/combinatoricsModels/meta";
+import { statSamplingFeaturesNode } from "@/features/statSamplingFeatures/meta";
 
 // ========== 10. 概率与统计 ==========
 export const probabilityNodes: KnowledgeNode[] = [
@@ -21,6 +23,7 @@ export const probabilityNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "样本空间书写、互斥与对立事件的概率加法公式",
     examWeight: 3,
+    crossThemes: ["集合Venn图与互斥对立事件映射", "容斥原理计算并事件概率"],
   },
   {
     id: "know-probability-classical",
@@ -36,6 +39,10 @@ export const probabilityNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "列举法（树状图/列表）求等可能基本事件数并算比值",
     examWeight: 4,
+    crossThemes: [
+      "频率稳定性与古典概型直观对比",
+      "计数原理与超几何古典概型衔接",
+    ],
   },
   {
     id: "know-probability-independence",
@@ -53,6 +60,7 @@ export const probabilityNodes: KnowledgeNode[] = [
     examWeight: 4,
     crossThemes: ["互斥加法与独立乘法辨析", "n重伯努利试验前置"],
   },
+  statSamplingFeaturesNode,
   {
     id: "know-stat-percentile",
     title: "分层抽样、频率直方图与百分位数/中位数",
@@ -87,6 +95,7 @@ export const probabilityNodes: KnowledgeNode[] = [
     examWeight: 4,
     crossThemes: ["二项式系数赋值法", "古典概型与超几何计数基本功"],
   },
+  combinatoricsModelsNode,
   {
     id: "know-probability-bayes",
     title: "条件概率、全概率公式与贝叶斯",

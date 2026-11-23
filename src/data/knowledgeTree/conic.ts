@@ -2,6 +2,7 @@ import type { KnowledgeNode } from "../types";
 import { conicDefinitionNode } from "@/features/conicDefinition/meta";
 import { circleEquationNode } from "@/features/circleEquation/meta";
 import { conicLocusInvariantsNode } from "@/features/conicLocusInvariants/meta";
+import { conicAsymmetricVietaNode } from "@/features/conicAsymmetricVieta/meta";
 
 // ========== 9. 解析几何 ==========
 export const conicNodes: KnowledgeNode[] = [
@@ -19,6 +20,7 @@ export const conicNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "点斜式方程与点到直线距离公式",
     examWeight: 4,
+    crossThemes: ["两直线平行垂直斜率判别", "函数零点切线距离转化为点线距"],
   },
   circleEquationNode,
   {
@@ -35,6 +37,7 @@ export const conicNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "几何法弦心距勾股定理与切线判定",
     examWeight: 5,
+    crossThemes: ["数形结合求分式斜率截距最值", "切点弦方程与圆幂几何联系"],
   },
   {
     id: "know-circle-circle",
@@ -50,6 +53,7 @@ export const conicNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "两圆作差公共弦方程与圆系方程",
     examWeight: 4,
+    crossThemes: ["阿波罗尼斯圆与两圆公切线", "圆心距不等式与存在动点判别"],
   },
   conicDefinitionNode,
   {
@@ -66,6 +70,10 @@ export const conicNodes: KnowledgeNode[] = [
     questionCategory: "multi_select_hard",
     examMethod: "焦点三角形结合余弦定理求离心率",
     examWeight: 5,
+    crossThemes: [
+      "正余弦定理与基本不等式求离心率",
+      "渐近线斜率与焦点三角形面积",
+    ],
   },
   {
     id: "know-conic-parabola",
@@ -81,6 +89,7 @@ export const conicNodes: KnowledgeNode[] = [
     questionCategory: "multi_select_hard",
     examMethod: "焦半径公式与准线几何投影转化",
     examWeight: 5,
+    crossThemes: ["折线距离转化求抛物线最值", "焦点弦与斜率倒数平方定值"],
   },
   {
     id: "know-conic-line",
@@ -96,6 +105,7 @@ export const conicNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "联立方程韦达定理与弦长公式",
     examWeight: 5,
+    crossThemes: ["点差法中点弦与向量数量积转化", "面积最值联立基本不等式求解"],
   },
   {
     id: "know-conic-parametric",
@@ -111,8 +121,10 @@ export const conicNodes: KnowledgeNode[] = [
     questionCategory: "solution_final",
     examMethod: "单参数纵坐标设点、三角代换与割线消元",
     examWeight: 5,
+    crossThemes: ["三角代换求椭圆点线距离最值", "抛物线纵坐标设点降维运算"],
   },
   conicLocusInvariantsNode,
+  conicAsymmetricVietaNode,
   {
     id: "know-conic-param-t",
     title: "直线参数方程 t 的几何意义与割线定理（拓展 · 超出课标）",
@@ -127,6 +139,7 @@ export const conicNodes: KnowledgeNode[] = [
     questionCategory: "solution_final",
     examMethod: "标准参数方程 t 几何意义与割线积",
     examWeight: 2,
+    crossThemes: ["焦点弦弦长与参数t1t2几何积", "弦中点距离与三角方向向量联系"],
   },
   {
     id: "know-conic-polarization",
@@ -142,6 +155,7 @@ export const conicNodes: KnowledgeNode[] = [
     questionCategory: "solution_final",
     examMethod: "极化恒等式数量积中线转换与阿氏圆轨迹方程",
     examWeight: 5,
+    crossThemes: ["向量数量积最值化归中线长度", "比值定轨迹隐圆与解析几何衔接"],
   },
   {
     id: "know-conic-homogenization",
@@ -157,5 +171,6 @@ export const conicNodes: KnowledgeNode[] = [
     questionCategory: "solution_final",
     examMethod: "割线二次齐次化与斜率韦达方程消元",
     examWeight: 5,
+    crossThemes: ["坐标系平移与斜率和积过定点", "对称构造破解双斜率定值压轴"],
   },
 ];

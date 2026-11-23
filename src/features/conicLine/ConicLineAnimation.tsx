@@ -13,7 +13,12 @@ import {
   TipCard,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale, useParamPlay } from "@/hooks";
+import {
+  useAnimationViewport,
+  useSceneScale,
+  useParamPlay,
+  useGaokaoView,
+} from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import { ConicLineScene } from "./components/ConicLineScene";
@@ -31,15 +36,18 @@ import {
 } from "@/math/conicLine";
 
 export function ConicLineAnimation() {
+  const isGaokao = useGaokaoView();
   // 圆锥曲线类型：'ellipse' | 'hyperbola' | 'parabola'
   const [conicType, setConicType] = useState<ConicType>("ellipse");
   // 研究模式：'general' (位置关系与弦长) | 'focus' (过焦点弦) | 'midpoint' (中点弦点差法) | 'polePolar' (极点极线切点弦)
-  const [studyMode, setStudyMode] = useState<StudyMode>("general");
+  const [studyMode, setStudyMode] = useState<StudyMode>(
+    isGaokao ? "midpoint" : "general",
+  );
   // 当前选中的典型预设 key
   const [activePreset, setActivePreset] = useState<string>("free");
   // 高考分步作答控制：默认步骤 1，用户切换步序时开启中屏分区聚光与围栏
   const [answerStep, setAnswerStep] = useState<number>(1);
-  const [isStepFocusOn, setIsStepFocusOn] = useState<boolean>(false);
+  const [isStepFocusOn, setIsStepFocusOn] = useState<boolean>(isGaokao);
 
   // 参数状态
   const [params, setParams] = useState<Record<string, number>>(() => ({

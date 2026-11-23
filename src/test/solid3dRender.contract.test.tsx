@@ -59,6 +59,7 @@ import SphereDerivationAnimation from "@/features/solidSphereDerivation/SphereDe
 import PyramidDerivationAnimation from "@/features/solidPyramidDerivation/PyramidDerivationAnimation";
 import SolidAxiomsAnimation from "@/features/solidGeometry/axioms/SolidAxiomsAnimation";
 import PolyhedronFeaturesAnimation from "@/features/solidGeometry/polyhedron/PolyhedronFeaturesAnimation";
+import SolidDynamicLocusAnimation from "@/features/solidDynamicLocus/SolidDynamicLocusAnimation";
 
 /** 知识点节点 key 与页面组件的对应（`src/data/knowledgeTree/solid.ts` 17 节点） */
 const PAGES: {
@@ -145,6 +146,11 @@ const PAGES: {
     key: "know-solid-polyhedron",
     name: "多面体的结构特征与台体体积推导、等体积法",
     Component: PolyhedronFeaturesAnimation,
+  },
+  {
+    key: "know-solid-dynamic-locus",
+    name: "立体几何动点轨迹三大经典问题",
+    Component: SolidDynamicLocusAnimation,
   },
 ];
 

@@ -21,12 +21,57 @@ import {
   GAOKAO_VIEW_SUPPORTED_ROUTES,
   PATH_TO_LABEL,
 } from "@/data/routeEntries";
+import { resolveSyllabus } from "@/data/syllabus";
 import { renderMixedLatex } from "@/components/UI";
 import type {
   KnowledgeNode,
   GaokaoTopicKey,
   QuestionCategory,
 } from "@/data/types";
+
+const SYLLABUS_BOOKS = [
+  "必修一",
+  "必修二",
+  "选择性必修一",
+  "选择性必修二",
+  "选择性必修三",
+] as const;
+
+const BOOK_META: Record<
+  string,
+  { subtitle: string; gradient: string; bgLight: string; borderLight: string }
+> = {
+  必修一: {
+    subtitle: "集合逻辑 · 不等式 · 函数 · 指数与对数 · 三角函数",
+    gradient: "from-blue-600 to-indigo-600",
+    bgLight: "bg-blue-50/50",
+    borderLight: "border-blue-100",
+  },
+  必修二: {
+    subtitle: "平面向量 · 解三角形 · 复数 · 立体几何初步 · 统计与概率基础",
+    gradient: "from-emerald-600 to-teal-600",
+    bgLight: "bg-emerald-50/50",
+    borderLight: "border-emerald-100",
+  },
+  选择性必修一: {
+    subtitle: "空间向量与立体几何 · 直线和圆 · 圆锥曲线方程",
+    gradient: "from-indigo-600 to-cyan-600",
+    bgLight: "bg-indigo-50/50",
+    borderLight: "border-indigo-100",
+  },
+  选择性必修二: {
+    subtitle: "数列 · 一元函数的导数及其应用",
+    gradient: "from-rose-600 to-amber-600",
+    bgLight: "bg-rose-50/50",
+    borderLight: "border-rose-100",
+  },
+  选择性必修三: {
+    subtitle: "计数原理 · 随机变量及其分布 · 成对数据统计分析",
+    gradient: "from-amber-600 to-orange-600",
+    bgLight: "bg-amber-50/50",
+    borderLight: "border-amber-100",
+  },
+};
 
 // 教材传统三大板块映射（一轮基础视角）
 const SECTION_MAP: Record<string, "algebra" | "geometry" | "trig_prob"> = {
@@ -119,7 +164,7 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
   {
     key: "func_derivative",
     title: "函数性质与导数压轴通法",
-    badge: "大题常客 · 17分",
+    badge: "大题高频 · 15–17分",
     description:
       "求导公式表与四则运算法则打底，切线方程、单调性与极值、复合函数求导、恒成立与双变量压轴（极值点偏移 / 隐零点 / 端点效应）及生活优化建模",
     icon: Flame,
@@ -131,9 +176,9 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
   {
     key: "conic_geometry",
     title: "圆锥曲线通法与新高考破题工具",
-    badge: "18 题大题 · 17分",
+    badge: "解析大题 · 15–17分",
     description:
-      "直线与圆基础、联立韦达弦长通法、点差中点弦、单参数设点降维与齐次化斜率消元（拓展）",
+      "直线与圆基础、联立韦达弦长通法、点差中点弦、单参数设点降维、非对称韦达消元与齐次化斜率消元（拓展）",
     icon: Compass,
     gradient: "from-indigo-500 to-blue-600",
     borderLight: "border-indigo-200",
@@ -143,9 +188,9 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
   {
     key: "solid_geometry",
     title: "立体几何空间直观与代数建系",
-    badge: "15 题解答 · 13分",
+    badge: "解答必考 · 13–15分",
     description:
-      "旋转体、球的体积与表面积公式推导（祖暅原理）、空间公理与基本事实、多面体特征与台体体积推导、位置判定、空间向量基底、四大外接球模型、动态翻折、截面与空间角距等 17 个考点",
+      "旋转体、球的体积与表面积公式推导（祖暅原理）、空间公理与基本事实、位置判定、空间向量基底、四大外接球模型、动态翻折、动点轨迹与空间角距",
     icon: Box,
     gradient: "from-emerald-500 to-teal-600",
     borderLight: "border-emerald-200",
@@ -155,8 +200,9 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
   {
     key: "probability_statistics",
     title: "概率统计与概率递推",
-    badge: "17 题解答 · 15分",
-    description: "全概贝叶斯诊断、状态递推建模、正态分布与列联表检验",
+    badge: "建模解答 · 15–17分",
+    description:
+      "古典概型、计数原理与经典排列组合模型、全概贝叶斯诊断、状态递推建模、正态分布与列联表检验",
     icon: Target,
     gradient: "from-amber-500 to-orange-600",
     borderLight: "border-amber-200",
@@ -165,10 +211,10 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
   },
   {
     key: "sequence_series",
-    title: "数列递推与新定义探索",
-    badge: "选填小题通法与新定义探索 · 10分",
+    title: "数列递推、求和与跨章压轴",
+    badge: "选填+解答轮动 · 10–17分",
     description:
-      "平移构造等比、错位裂项求和、药物代谢情境建模与新高考 19 题新定义差分探索",
+      "等差等比性质、Sn与an互化、平移构造等比、错位裂项放缩求和、数学归纳法与递推综合探索",
     icon: Layers,
     gradient: "from-cyan-500 to-sky-600",
     borderLight: "border-cyan-200",
@@ -178,7 +224,7 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
   {
     key: "vector_triangle",
     title: "三角函数、平面向量与解三角形",
-    badge: "16 题解答 · 15分",
+    badge: "解答核心 · 13–15分",
     description:
       "三角函数图像与恒等变换、正余弦定理解三角形最值、投影向量与极化恒等式、阿波罗尼斯圆与复数代数及几何",
     icon: Award,
@@ -186,6 +232,18 @@ const GAOKAO_TOPIC_CONFIGS: Array<{
     borderLight: "border-purple-200",
     bgLight: "bg-purple-50/60",
     textColor: "text-purple-700",
+  },
+  {
+    key: "new_definition",
+    title: "新高考 19 题新定义与创新压轴",
+    badge: "压轴创新 · 17分",
+    description:
+      "可分数列与模同余构造、函数迭代不动点、曼哈顿广义距离等新高考第 19 题创新阅读与严谨证明",
+    icon: Sparkles,
+    gradient: "from-fuchsia-600 to-rose-600",
+    borderLight: "border-fuchsia-200",
+    bgLight: "bg-fuchsia-50/60",
+    textColor: "text-fuchsia-700",
   },
 ];
 
@@ -243,6 +301,16 @@ export function KnowledgeTreeHome() {
   const navigate = useNavigate();
   // 视图模式：新高考专题地图 (gaokao) vs 教材同步一览 (textbook)
   const [viewMode, setViewMode] = useState<"gaokao" | "textbook">("gaokao");
+  // 二轮专题题型分层筛选
+  const [categoryFilter, setCategoryFilter] = useState<
+    "all" | QuestionCategory
+  >("all");
+  // 教材同步视图组织方式：按人教A版五册递进 (book) vs 按三大板块 (section)
+  const [textbookLayout, setTextbookLayout] = useState<"book" | "section">(
+    "book",
+  );
+  // 教材同步分册过滤
+  const [bookFilter, setBookFilter] = useState<string>("all");
 
   // 1. 检查节点是否激活并返回对应路由
   const getNodeRoute = (node: KnowledgeNode): string | null => {
@@ -262,7 +330,9 @@ export function KnowledgeTreeHome() {
   const stats = useMemo(() => {
     let activeCount = 0;
     let methodCount = 0;
+    const chapterSet = new Set<string>();
     knowledgeTree.forEach((node) => {
+      chapterSet.add(node.chapter);
       if (getNodeRoute(node)) {
         activeCount++;
       }
@@ -274,10 +344,11 @@ export function KnowledgeTreeHome() {
       total: knowledgeTree.length,
       active: activeCount,
       methods: methodCount,
+      chapters: chapterSet.size,
     };
   }, []);
 
-  // 3. 教材章节聚合（三大板块 -> 章节）
+  // 3A. 教材章节聚合（三大板块 -> 章节）
   const textbookGroupedData = useMemo(() => {
     const result: Record<
       "algebra" | "geometry" | "trig_prob",
@@ -301,7 +372,28 @@ export function KnowledgeTreeHome() {
     return result;
   }, []);
 
-  // 4. 新高考专题聚合（六大攻坚专题 + 代数基础工具，按高考考频与大题重要度优先排序）
+  // 3B. 人教A版五册递进聚合（分册 -> 章节 -> 节点）
+  const bookGroupedData = useMemo(() => {
+    const result: Record<string, Record<string, KnowledgeNode[]>> = {};
+    for (const book of SYLLABUS_BOOKS) {
+      result[book] = {};
+    }
+
+    knowledgeTree.forEach((node) => {
+      const book = node.syllabus?.book ?? resolveSyllabus(node).book;
+      if (!result[book]) {
+        result[book] = {};
+      }
+      if (!result[book][node.chapter]) {
+        result[book][node.chapter] = [];
+      }
+      result[book][node.chapter].push(node);
+    });
+
+    return result;
+  }, []);
+
+  // 4. 新高考专题聚合（七大攻坚专题 + 代数基础工具，按高考考频与大题重要度优先排序）
   const gaokaoGroupedData = useMemo(() => {
     const result: Record<GaokaoTopicKey, KnowledgeNode[]> = {
       algebra_basics: [],
@@ -311,6 +403,7 @@ export function KnowledgeTreeHome() {
       probability_statistics: [],
       sequence_series: [],
       vector_triangle: [],
+      new_definition: [],
     };
 
     const importanceRank: Record<KnowledgeNode["importance"], number> = {
@@ -602,7 +695,9 @@ export function KnowledgeTreeHome() {
               </div>
             </div>
             <div className="bg-neutral-50 border border-neutral-200 rounded-xl px-4 py-3 sm:px-5 sm:py-4 min-w-[100px] text-center">
-              <div className="text-2xl font-bold text-neutral-700">10</div>
+              <div className="text-2xl font-bold text-neutral-700">
+                {stats.chapters}
+              </div>
               <div className="text-xs text-neutral-400 font-medium mt-1">
                 数学核心章
               </div>
@@ -650,19 +745,113 @@ export function KnowledgeTreeHome() {
             <strong className="text-neutral-800 font-semibold">
               {viewMode === "gaokao"
                 ? "聚焦新高考专题与代数基础工具"
-                : "按必修/选修传统章节递进"}
+                : textbookLayout === "book"
+                  ? "按人教A版五册同步递进"
+                  : "按代数/几何/三角统计板块聚合"}
             </strong>
           </div>
         </div>
+
+        {/* 二级筛选条：二轮按题型分层 / 教材同步按分册与布局切换 */}
+        {viewMode === "gaokao" ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2 bg-white/80 border border-neutral-200/70 px-3 py-2 rounded-xl text-xs">
+            <span className="text-neutral-500 font-medium mr-1">
+              题型分层筛选：
+            </span>
+            {(
+              [
+                { key: "all", label: "全部专题节点" },
+                { key: "solution_final", label: "大题压轴" },
+                { key: "multi_select_hard", label: "客观压轴" },
+                { key: "solution_first", label: "解答必得" },
+                { key: "foundation", label: "客观基础" },
+              ] as const
+            ).map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setCategoryFilter(opt.key)}
+                className={`px-2.5 py-1 rounded-md font-semibold transition-all border ${
+                  categoryFilter === opt.key
+                    ? "bg-rose-50 text-rose-700 border-rose-200 shadow-2xs"
+                    : "bg-neutral-50 text-neutral-600 border-neutral-200 hover:bg-neutral-100"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3 bg-white/80 border border-neutral-200/70 px-3 py-2 rounded-xl text-xs">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-neutral-500 font-medium mr-1">
+                教材分册：
+              </span>
+              {(["all", ...SYLLABUS_BOOKS] as const).map((book) => (
+                <button
+                  key={book}
+                  type="button"
+                  onClick={() => {
+                    setBookFilter(book);
+                    if (book !== "all") {
+                      setTextbookLayout("book");
+                    }
+                  }}
+                  className={`px-2.5 py-1 rounded-md font-semibold transition-all border ${
+                    bookFilter === book
+                      ? "bg-primary-50 text-primary-700 border-primary-200 shadow-2xs"
+                      : "bg-neutral-50 text-neutral-600 border-neutral-200 hover:bg-neutral-100"
+                  }`}
+                >
+                  {book === "all" ? "全五册" : book}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1 bg-neutral-100 p-0.5 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setTextbookLayout("book")}
+                className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+                  textbookLayout === "book"
+                    ? "bg-white text-primary-600 shadow-2xs"
+                    : "text-neutral-600 hover:text-neutral-900"
+                }`}
+              >
+                按五册递进
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setTextbookLayout("section");
+                  setBookFilter("all");
+                }}
+                className={`px-2.5 py-1 rounded-md font-semibold transition-all ${
+                  textbookLayout === "section"
+                    ? "bg-white text-primary-600 shadow-2xs"
+                    : "text-neutral-600 hover:text-neutral-900"
+                }`}
+              >
+                按三大板块
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 视图呈现区 */}
       <div className="max-w-7xl mx-auto px-6">
         {viewMode === "gaokao" ? (
-          /* 轨道 A：新高考六大专题攻坚视图 */
+          /* 轨道 A：新高考专题攻坚视图 */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-start">
             {GAOKAO_TOPIC_CONFIGS.map((topic) => {
-              const nodes = gaokaoGroupedData[topic.key] || [];
+              const allNodes = gaokaoGroupedData[topic.key] || [];
+              const nodes =
+                categoryFilter === "all"
+                  ? allNodes
+                  : allNodes.filter(
+                      (n) => n.questionCategory === categoryFilter,
+                    );
+              if (nodes.length === 0) return null;
               const activeCount = nodes.filter((n) => getNodeRoute(n)).length;
 
               return (
@@ -710,8 +899,76 @@ export function KnowledgeTreeHome() {
               );
             })}
           </div>
+        ) : textbookLayout === "book" ? (
+          /* 轨道 B-1：人教A版五册教材同步递进视图 */
+          <div className="flex flex-col gap-8">
+            {SYLLABUS_BOOKS.filter(
+              (b) => bookFilter === "all" || bookFilter === b,
+            ).map((book) => {
+              const chapters = bookGroupedData[book] || {};
+              const chapterEntries = Object.entries(chapters);
+              if (chapterEntries.length === 0) return null;
+              const meta = BOOK_META[book];
+              const bookNodes = chapterEntries.flatMap(([, list]) => list);
+              const activeCount = bookNodes.filter((n) =>
+                getNodeRoute(n),
+              ).length;
+
+              return (
+                <div key={book} className="flex flex-col gap-4">
+                  <div
+                    className={`p-4 rounded-xl border ${meta.borderLight} ${meta.bgLight} shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`w-8 h-8 rounded-lg flex items-center justify-center bg-gradient-to-br ${meta.gradient} text-white`}
+                      >
+                        <BookOpen size={17} />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-bold text-neutral-800">
+                          {book}
+                        </h2>
+                        <p className="text-xs text-neutral-500 font-medium">
+                          {meta.subtitle}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-xs text-neutral-600 font-semibold bg-white/80 border border-neutral-200/80 px-3 py-1 rounded-full self-start sm:self-center">
+                      已开放 {activeCount} / {bookNodes.length} 个实验
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start">
+                    {chapterEntries.map(([chapterName, nodes]) => (
+                      <div
+                        key={`${book}-${chapterName}`}
+                        className="bg-white border border-neutral-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow"
+                      >
+                        <h3 className="text-sm font-bold text-neutral-700 border-b border-neutral-100 pb-2 mb-4 flex items-center justify-between gap-2">
+                          <span className="flex items-center gap-2">
+                            <span
+                              className={`w-1.5 h-3 rounded-full bg-gradient-to-b ${meta.gradient}`}
+                            />
+                            {chapterName}
+                          </span>
+                          <span className="text-[11px] font-medium text-neutral-400">
+                            {nodes.length} 节
+                          </span>
+                        </h3>
+
+                        <div className="relative pl-4 flex flex-col gap-4 border-l border-neutral-100 ml-1">
+                          {nodes.map(renderNodeCard)}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         ) : (
-          /* 轨道 B：教材基础同步章节视图 */
+          /* 轨道 B-2：教材三大板块同步章节视图 */
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             {SECTIONS.map((section) => {
               const chapters = textbookGroupedData[section.key];

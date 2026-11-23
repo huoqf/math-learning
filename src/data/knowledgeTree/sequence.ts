@@ -16,6 +16,7 @@ export const sequenceNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "下角标和等和性质与前n项和二次函数",
     examWeight: 5,
+    crossThemes: ["Sn与an互化作差分段检验", "二次函数视角求Sn最值"],
   },
   {
     id: "know-sequence-geometric",
@@ -31,6 +32,7 @@ export const sequenceNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "等比乘积性质与公比 q≠1 分类讨论",
     examWeight: 5,
+    crossThemes: ["指数函数与等比数列单调比对", "等比片段和与数列极值项"],
   },
   {
     id: "know-sequence-sum",
@@ -46,6 +48,7 @@ export const sequenceNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "错位相减、裂项相消与放缩不等式证明",
     examWeight: 5,
+    crossThemes: ["分式裂项放缩与数列不等式", "奇偶并项与绝对值分段求和"],
   },
   {
     id: "know-sequence-recurrence",
@@ -61,6 +64,7 @@ export const sequenceNodes: KnowledgeNode[] = [
     questionCategory: "solution_final",
     examMethod: "待定系数构造、Sn与an混合作差及新定义差分探索",
     examWeight: 5,
+    crossThemes: ["概率递推数列与构造等比交汇", "数学归纳法证明通项不等式"],
   },
 ];
 

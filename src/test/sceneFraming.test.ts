@@ -500,7 +500,7 @@ describe("3D 场景取景回归（关键装置不得被裁出画布）", () => {
       expect(significantDiffs.length).toBeGreaterThanOrEqual(10);
     });
 
-    it("全库 16 个 3D 页面 100% 接入 CameraFit 刚性门禁（杜绝任何三维页面无取景防护）", () => {
+    it("全库 17 个 3D 页面 100% 接入 CameraFit 刚性门禁（杜绝任何三维页面无取景防护）", () => {
       const featuresDir = path.resolve(__dirname, "../features");
       const findThreeCanvasFiles = (dir: string): string[] => {
         let results: string[] = [];
@@ -520,7 +520,7 @@ describe("3D 场景取景回归（关键装置不得被裁出画布）", () => {
       };
 
       const canvasFiles = findThreeCanvasFiles(featuresDir);
-      expect(canvasFiles.length).toBe(16);
+      expect(canvasFiles.length).toBe(17);
 
       for (const file of canvasFiles) {
         const content = fs.readFileSync(file, "utf8");

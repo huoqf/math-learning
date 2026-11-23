@@ -138,7 +138,7 @@ export const SYLLABUS_CORE_ITEMS: SyllabusItem[] = [
     chapter: "指数函数与对数函数",
     itemTitle: "对数函数及其性质与运算律",
     status: "covered",
-    pages: ["/function-logarithmic"],
+    pages: ["/function-logarithmic", "/exp-log-compare"],
   },
   {
     id: "syl-comp1-zero-bisection",
@@ -153,16 +153,14 @@ export const SYLLABUS_CORE_ITEMS: SyllabusItem[] = [
     book: "必修一",
     chapter: "函数应用",
     itemTitle: "函数的应用（一）建模（3.4）",
-    status: "gap",
-    pages: [],
-    gapCode: "G7",
-    gapReason: "高考已不单独考查该条目，与导数优化建模共用叙事",
+    status: "covered",
+    pages: ["/func-growth-modeling"],
   },
 
-  // ── 必修二（22 项：三角、向量、解三角形、复数、立几初步、统计概率初步）──
+  // ── 必修一 · 第五章（7 项：三角函数）──
   {
     id: "syl-comp2-radian",
-    book: "必修二",
+    book: "必修一",
     chapter: "三角函数",
     itemTitle: "弧度制与任意角的概念",
     status: "covered",
@@ -170,7 +168,7 @@ export const SYLLABUS_CORE_ITEMS: SyllabusItem[] = [
   },
   {
     id: "syl-comp2-trig-lines",
-    book: "必修二",
+    book: "必修一",
     chapter: "三角函数",
     itemTitle: "三角函数概念与三角函数线",
     status: "covered",
@@ -178,23 +176,23 @@ export const SYLLABUS_CORE_ITEMS: SyllabusItem[] = [
   },
   {
     id: "syl-comp2-trig-formulas",
-    book: "必修二",
+    book: "必修一",
     chapter: "三角函数",
     itemTitle: "同角三角函数基本关系与诱导公式",
-    status: "covered",
-    pages: ["/trig-formulas"],
-  },
-  {
-    id: "syl-comp2-trig-identity",
-    book: "必修二",
-    chapter: "三角函数",
-    itemTitle: "三角恒等变换（和差倍角）",
     status: "covered",
     pages: ["/trig-identity"],
   },
   {
+    id: "syl-comp2-trig-identity",
+    book: "必修一",
+    chapter: "三角函数",
+    itemTitle: "三角恒等变换（和差倍角）",
+    status: "covered",
+    pages: ["/trig-formulas"],
+  },
+  {
     id: "syl-comp2-trig-transform",
-    book: "必修二",
+    book: "必修一",
     chapter: "三角函数",
     itemTitle: "正余弦函数与 y=Asin(wx+phi) 变换",
     status: "covered",
@@ -202,7 +200,7 @@ export const SYLLABUS_CORE_ITEMS: SyllabusItem[] = [
   },
   {
     id: "syl-comp2-trig-tan",
-    book: "必修二",
+    book: "必修一",
     chapter: "三角函数",
     itemTitle: "正切函数性质与图像",
     status: "covered",
@@ -210,12 +208,14 @@ export const SYLLABUS_CORE_ITEMS: SyllabusItem[] = [
   },
   {
     id: "syl-comp2-trig-model",
-    book: "必修二",
+    book: "必修一",
     chapter: "三角函数",
     itemTitle: "三角函数模型简单应用",
     status: "covered",
     pages: ["/trig-model"],
   },
+
+  // ── 必修二（15 项：向量、解三角形、复数、立几初步、统计概率初步）──
   {
     id: "syl-comp2-vector-linear",
     book: "必修二",
@@ -311,7 +311,7 @@ export const SYLLABUS_CORE_ITEMS: SyllabusItem[] = [
     chapter: "统计",
     itemTitle: "随机抽样方法与样本特征",
     status: "covered",
-    pages: ["/stat-percentile"],
+    pages: ["/stat-percentile", "/stat-sampling-features"],
   },
   {
     id: "syl-comp2-stat-distribution",
@@ -319,7 +319,7 @@ export const SYLLABUS_CORE_ITEMS: SyllabusItem[] = [
     chapter: "统计",
     itemTitle: "用样本估计总体（直方图/百分位数/均值方差）",
     status: "covered",
-    pages: ["/stat-percentile"],
+    pages: ["/stat-percentile", "/stat-sampling-features"],
   },
   {
     id: "syl-comp2-prob-classical",
@@ -541,7 +541,7 @@ export const SYLLABUS_CORE_ITEMS: SyllabusItem[] = [
     chapter: "计数原理",
     itemTitle: "两类基本计数原理、排列与组合、二项式定理",
     status: "covered",
-    pages: ["/probability-counting"],
+    pages: ["/probability-counting", "/combinatorics-models"],
   },
   {
     id: "syl-sel3-bayes",
@@ -639,12 +639,12 @@ describe("课标覆盖差集自动化门禁契约 (Syllabus Coverage Contract)",
       (i) => i.status === "gap",
     ).length;
 
-    // G1~G6 闭环后：62+7=69 covered、4-3=1 partial、5-4=1 gap
-    expect(coveredCount).toBe(69);
+    // G1~G7 全部闭环后：70 covered、1 partial、0 gap（100% 核心条目有承载页）
+    expect(coveredCount).toBe(70);
     expect(partialCount).toBe(1);
-    expect(gapCount).toBe(1);
-    // 覆盖 + 部分覆盖 = 70 项（98.6% 课标覆盖率，原 66/71 = 92.9%）
-    expect(coveredCount + partialCount).toBe(70);
+    expect(gapCount).toBe(0);
+    // 覆盖 + 部分覆盖 = 71 项（100% 课标主条目已落地）
+    expect(coveredCount + partialCount).toBe(71);
   });
 
   it("防静默退化（No Silent Regression）：所有已覆盖条目的声明路由必须在全库真实注册", () => {
@@ -661,8 +661,8 @@ describe("课标覆盖差集自动化门禁契约 (Syllabus Coverage Contract)",
     expect(unresolvablePages).toEqual([]);
   });
 
-  it("已闭环缺口不得复活：G1~G6 的承载条目必须钉死在 covered", () => {
-    // 缺口码 → 承载条目 id。报告 §2.3 的七项缺口已补六项，任何一条被改回 gap/partial
+  it("已闭环缺口不得复活：G1~G7 的承载条目必须钉死在 covered", () => {
+    // 缺口码 → 承载条目 id。报告 §2.3 的七项缺口已全部补齐，任何一条被改回 gap/partial
     // 都会在这里立刻报红，避免「补了又退」而无人察觉。
     const CLOSED_GAPS: Record<string, string> = {
       G1: "syl-sel2-seq-concept",
@@ -671,6 +671,7 @@ describe("课标覆盖差集自动化门禁契约 (Syllabus Coverage Contract)",
       G4: "syl-comp1-ineq-properties",
       G5: "syl-comp2-vector-coord-ops",
       G6: "syl-comp1-set-relation",
+      G7: "syl-comp1-model-basic",
     };
 
     for (const [code, id] of Object.entries(CLOSED_GAPS)) {
@@ -690,7 +691,7 @@ describe("课标覆盖差集自动化门禁契约 (Syllabus Coverage Contract)",
     }
   });
 
-  it("挂账缺口唯一性：当前只允许 G7（函数应用建模）单挂账", () => {
+  it("挂账缺口清零：G1~G7 已全部闭环，不再残留任何 openGapCodes", () => {
     const openGapCodes = [
       ...new Set(
         SYLLABUS_CORE_ITEMS.filter((i) => i.gapCode !== undefined).map(
@@ -698,7 +699,7 @@ describe("课标覆盖差集自动化门禁契约 (Syllabus Coverage Contract)",
         ),
       ),
     ];
-    expect(openGapCodes).toEqual(["G7"]);
+    expect(openGapCodes).toEqual([]);
   });
 
   it("状态字段自洽：gap 必带 code+reason，covered 必无 code，partial 必带 reason", () => {

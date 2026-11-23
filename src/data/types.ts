@@ -39,7 +39,8 @@ export type GaokaoTopicKey =
   | "probability_statistics"
   | "sequence_series"
   | "vector_triangle"
-  | "algebra_basics";
+  | "algebra_basics"
+  | "new_definition";
 
 export type QuestionCategory =
   "foundation" | "multi_select_hard" | "solution_first" | "solution_final";

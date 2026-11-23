@@ -67,10 +67,14 @@ import { knowledgeTree } from "@/data/knowledgeTree";
 import { buildMathQuantities } from "@/data/mathQuantities";
 import type { ParamMeta } from "@/data/types";
 import { paramMeta as compositeParamMeta } from "@/data/registries/composite";
+import { paramMeta as expLogCompareParamMeta } from "@/data/registries/expLogCompare";
 import { paramMeta as funcExpLogParamMeta } from "@/data/registries/funcExpLog";
+import { paramMeta as funcGrowthModelingParamMeta } from "@/data/registries/funcGrowthModeling";
+import { paramMeta as nestedFuncZerosParamMeta } from "@/data/registries/nestedFuncZeros";
 import { paramMeta as funcZeroParamMeta } from "@/data/registries/funcZero";
 import { paramMeta as inequalityAbsoluteParamMeta } from "@/data/registries/inequalityAbsolute";
 import { paramMeta as inequalityBasicParamMeta } from "@/data/registries/inequalityBasic";
+import { paramMeta as ineqMultivarExtremaParamMeta } from "@/data/registries/ineqMultivarExtrema";
 import { paramMeta as nikeParamMeta } from "@/data/registries/nike";
 import { paramMeta as quadraticParamMeta } from "@/data/registries/quadratic";
 import { paramMeta as radianMeasureParamMeta } from "@/data/registries/radianMeasure";
@@ -213,6 +217,25 @@ const PAGE_BRANCHES: Record<string, Branch[]> = {
       config: { studyMode },
     }),
   ),
+  "know-ineq-multivar-extrema": (
+    ["oneSub", "elim", "homog", "sumProd"] as const
+  ).map((mode) => ({
+    from: `IneqMultivarExtremaAnimation/${mode}`,
+    animId: "anim-ineq-multivar-extrema",
+    params: {
+      coefP: 1,
+      coefQ: 1,
+      numM: 1,
+      numN: 4,
+      constC: 4,
+      probeX: 1.2,
+      elimA: 1,
+      elimB: 1,
+      homogK: 4,
+      ratioT: 1.5,
+    },
+    config: { mode },
+  })),
   "know-ineq-absolute": (
     ["single", "sum", "diff", "triangle"] as const
   ).flatMap((studyMode) =>
@@ -291,6 +314,26 @@ const PAGE_BRANCHES: Record<string, Branch[]> = {
     params: { powerAlpha: 0.5, x0: 2 },
     config: { subExpLog: "power", powerMode },
   })),
+  "know-exp-log-compare": [
+    {
+      from: "ExpLogCompareAnimation/logOps",
+      animId: "anim-exp-log-compare",
+      params: { baseA: 2.0, valM: 2.0, valN: 3.0, newBaseC: 3.0 },
+      config: { mode: "logOps", activeScenario: "free" },
+    },
+    ...(["free", "bridge01", "bridgeHalf"] as const).map((activeScenario) => ({
+      from: `ExpLogCompareAnimation/medianBridge-${activeScenario}`,
+      animId: "anim-exp-log-compare",
+      params: { baseA: 2.0, xSample: 0.6 },
+      config: { mode: "medianBridge", activeScenario },
+    })),
+    ...(["free", "monotoneCross"] as const).map((activeScenario) => ({
+      from: `ExpLogCompareAnimation/monotoneCompare-${activeScenario}`,
+      animId: "anim-exp-log-compare",
+      params: { baseA: 2.0, xSample: 0.6 },
+      config: { mode: "monotoneCompare", activeScenario },
+    })),
+  ],
   "know-func-hook": (["standard", "amgm", "shifted"] as const).map(
     (activeMode) => ({
       from: `NikeAnimation/${activeMode}`,
@@ -366,6 +409,34 @@ const PAGE_BRANCHES: Record<string, Branch[]> = {
       config: { subMode: "piecewise" },
     },
   ],
+  "know-func-growth-modeling": [
+    {
+      from: "FuncGrowthModelingAnimation/growthRace",
+      animId: "anim-func-growth-modeling",
+      params: { baseA: 1.8, powerN: 2, linearK: 3.0, xProbe: 4.5 },
+      config: { mode: "growthRace" },
+    },
+    {
+      from: "FuncGrowthModelingAnimation/piecewiseBilling",
+      animId: "anim-func-growth-modeling",
+      params: { usage: 6.5, rate1: 2.0, rate2: 3.5, rate3: 5.0 },
+      config: { mode: "piecewiseBilling" },
+    },
+    ...(["linear", "quadratic", "exponential"] as const).map((fitModel) => ({
+      from: `FuncGrowthModelingAnimation/scatterFitting-${fitModel}`,
+      animId: "anim-func-growth-modeling",
+      params: { gainScale: 1.0 },
+      config: { mode: "scatterFitting", fitModel },
+    })),
+  ],
+  "know-nested-func-zeros": (
+    ["quadraticNested", "piecewiseNested", "paramBound"] as const
+  ).map((mode) => ({
+    from: `NestedFuncZerosAnimation/${mode}`,
+    animId: "anim-nested-func-zeros",
+    params: { targetA: 0.6, paramB: 2.0, shiftC: 0.0 },
+    config: { mode },
+  })),
   "know-radian-measure": (
     ["definition", "conversion", "arcSector"] as const
   ).map((studyMode) => ({
@@ -469,10 +540,14 @@ const PAGE_BRANCHES: Record<string, Branch[]> = {
  */
 const ANIM_PARAM_META: Record<string, Record<string, ParamMeta>> = {
   "anim-func-composite": compositeParamMeta,
+  "anim-exp-log-compare": expLogCompareParamMeta,
+  "anim-func-growth-modeling": funcGrowthModelingParamMeta,
+  "anim-nested-func-zeros": nestedFuncZerosParamMeta,
   "anim-func-explog": funcExpLogParamMeta,
   "anim-func-zero": funcZeroParamMeta,
   "anim-ineq-absolute": inequalityAbsoluteParamMeta,
   "anim-ineq-basic": inequalityBasicParamMeta,
+  "anim-ineq-multivar-extrema": ineqMultivarExtremaParamMeta,
   "anim-nike": nikeParamMeta,
   "anim-quadratic": quadraticParamMeta,
   "anim-radian-measure": radianMeasureParamMeta,
@@ -517,11 +592,15 @@ function isExempt(
  */
 const COMPULSORY_ONE_FEATURE_DIRS = [
   "composite",
+  "expLogCompare",
   "funcExpLog",
+  "funcGrowthModeling",
   "funcProperties",
   "funcZero",
   "inequalityAbsolute",
+  "nestedFuncZeros",
   "inequalityBasic",
+  "ineqMultivarExtrema",
   "nike",
   "quadratic",
   "radianMeasure",
@@ -546,11 +625,15 @@ const FEATURES_DIR = path.resolve(
  */
 const COMPULSORY_ONE_REGISTRY_FILES = [
   "composite.ts",
+  "expLogCompare.ts",
   "funcExpLog.ts",
+  "funcGrowthModeling.ts",
   "funcProperties.ts",
   "funcZero.ts",
   "inequalityAbsolute.ts",
+  "nestedFuncZeros.ts",
   "inequalityBasic.ts",
+  "ineqMultivarExtrema.ts",
   "nike.ts",
   "quadratic.ts",
   "quantifiers.ts",

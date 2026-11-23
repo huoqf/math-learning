@@ -21,6 +21,7 @@ vi.mock("@/data/knowledgeTree", () => ({
       chapter: "函数概念与性质",
       module: "函数",
       importance: "core",
+      questionCategory: "foundation",
       animationIds: ["anim-quadratic"],
     },
     {
@@ -29,6 +30,7 @@ vi.mock("@/data/knowledgeTree", () => ({
       chapter: "导数及其应用",
       module: "导数",
       importance: "gaokao",
+      questionCategory: "solution_first",
       animationIds: ["anim-derivative-tangent"],
     },
     {
@@ -37,6 +39,7 @@ vi.mock("@/data/knowledgeTree", () => ({
       chapter: "导数及其应用",
       module: "导数",
       importance: "hard",
+      questionCategory: "solution_final",
       animationIds: ["anim-constant-single"],
     },
     {
@@ -45,8 +48,30 @@ vi.mock("@/data/knowledgeTree", () => ({
       chapter: "数列",
       module: "等差与等比数列",
       importance: "core",
+      questionCategory: "solution_first",
       route: "/sequence-arithmetic",
       animationIds: ["anim-sequence-arithmetic"],
+    },
+    {
+      id: "know-conic-line",
+      title: "直线与圆锥曲线位置关系",
+      chapter: "解析几何",
+      module: "曲线与方程",
+      importance: "gaokao",
+      questionCategory: "solution_final",
+      route: "/conic-line",
+      animationIds: ["anim-conic-line"],
+    },
+    {
+      id: "know-gaokao-new-def",
+      title: "新定义综合压轴",
+      chapter: "高考压轴与新定义",
+      module: "新定义专题",
+      importance: "hard",
+      gaokaoTopic: "new_definition",
+      questionCategory: "solution_final",
+      route: "/gaokao-new-definition",
+      animationIds: ["anim-gaokao-new-definition"],
     },
     {
       id: "locked-node",
@@ -141,7 +166,48 @@ describe("KnowledgeTreeHome smoke test", () => {
     );
 
     mockNavigate.mockReset();
+    fireEvent.click(screen.getByText("直线与圆锥曲线位置关系"));
+    expect(mockNavigate).toHaveBeenCalledWith("/conic-line?view=gaokao");
+
+    mockNavigate.mockReset();
+    fireEvent.click(screen.getByText("新定义综合压轴"));
+    expect(mockNavigate).toHaveBeenCalledWith(
+      "/gaokao-new-definition?view=gaokao",
+    );
+
+    mockNavigate.mockReset();
     fireEvent.click(screen.getByText("二次函数"));
     expect(mockNavigate).toHaveBeenCalledWith("/quadratic");
+  });
+
+  it("支持教材同步五册递进/三大板块切换与按分册过滤", () => {
+    renderWithRouter(<KnowledgeTreeHome />);
+    fireEvent.click(screen.getByText(/教材同步章节一览/));
+
+    expect(screen.getByText("按人教A版五册同步递进")).toBeInTheDocument();
+    expect(screen.getByText("二次函数")).toBeInTheDocument();
+    expect(screen.getByText("导数的几何意义")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "必修一" }));
+    expect(screen.getByText("二次函数")).toBeInTheDocument();
+    expect(screen.queryByText("导数的几何意义")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "按三大板块" }));
+    expect(
+      screen.getByText("按代数/几何/三角统计板块聚合"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("导数的几何意义")).toBeInTheDocument();
+  });
+
+  it("在高考大专题视图支持题型分层筛选与新定义题型卡片展示", () => {
+    renderWithRouter(<KnowledgeTreeHome />);
+    expect(
+      screen.getByText("新高考 19 题新定义与创新压轴"),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "大题压轴" }));
+    expect(screen.getByText("恒成立问题")).toBeInTheDocument();
+    expect(screen.getByText("新定义综合压轴")).toBeInTheDocument();
+    expect(screen.queryByText("二次函数")).not.toBeInTheDocument();
   });
 });

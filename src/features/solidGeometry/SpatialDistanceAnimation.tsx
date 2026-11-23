@@ -26,6 +26,7 @@ import {
 import { getSolidDistanceBounds } from "@/math3d/legacy3dBounds";
 import { sampleSpatialDistanceCurve } from "@/math3d/overlaySamplers";
 import { use3DViewport } from "@/hooks/use3DViewport";
+import { useGaokaoView } from "@/hooks/useGaokaoView";
 import type { CameraPreset } from "@/hooks/use3DViewport";
 import { solidDistanceMeta } from "@/data/registries/solidGeometry";
 import { buildMathQuantities } from "@/data/mathQuantities";
@@ -51,7 +52,10 @@ import {
 } from "./spatialDistancePresets";
 
 export default function SpatialDistanceAnimation() {
-  const [activeMode, setActiveMode] = useState<DistanceMode>("skewDistance");
+  const isGaokao = useGaokaoView();
+  const [activeMode, setActiveMode] = useState<DistanceMode>(
+    isGaokao ? "volumeExtrema" : "skewDistance",
+  );
   const [modelPreset, setModelPreset] = useState<string>("free");
   const [viewMode, setViewMode] = useState<"3d" | "threeViews">("3d");
   const [interactionMode, setInteractionMode] = useState<"orbit" | "drag">(

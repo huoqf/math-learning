@@ -14,6 +14,7 @@ export const circleEquationNode: KnowledgeNode = {
   questionCategory: "foundation",
   examMethod: "圆的标准方程配方与待定系数法",
   examWeight: 5,
+  crossThemes: ["外接圆与三点共圆方程求法", "隐圆轨迹代数标准方程转化"],
 };
 
 export const circleEquationLoader = () => import("./CircleEquationAnimation");

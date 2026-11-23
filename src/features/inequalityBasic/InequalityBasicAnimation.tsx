@@ -11,7 +11,7 @@ import {
 } from "@/components/UI";
 import { SceneLegend, type SceneLegendItem } from "@/components/Math";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useGaokaoView } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { InequalityBasicScene } from "./components/InequalityBasicScene";
 import { InequalityPropertiesScene } from "./components/InequalityPropertiesScene";
@@ -20,10 +20,11 @@ import { fitViewRange } from "@/math/viewRange";
 import { defaultParams, paramMeta } from "@/data/registries/inequalityBasic";
 
 export function InequalityBasicAnimation() {
+  const isGaokao = useGaokaoView();
   // 研究模式：'semicircle' (半圆证明) | 'square' (赵爽弦图) | 'nike' (最值应用)
   const [studyMode, setStudyMode] = useState<
     "semicircle" | "square" | "nike" | "properties"
-  >("semicircle");
+  >(isGaokao ? "nike" : "semicircle");
 
   // 1. 本地状态 a, b, k
   const [params, setParams] = useState(() => ({

@@ -16,6 +16,7 @@ export const derivativeNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "切点坐标为核心的导数点斜式方程",
     examWeight: 5,
+    crossThemes: ["双切线公切线联立方程", "曲线过某点与在某点切线辨析"],
   },
   {
     id: "know-derivative-formulas",
@@ -31,6 +32,7 @@ export const derivativeNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "八大基本初等函数求导公式代入与割线极限逼近",
     examWeight: 4,
+    crossThemes: ["幂指对三角导数公式统一记忆", "平均变化率向瞬时变化率逼近"],
   },
   {
     id: "know-derivative-operations",
@@ -46,6 +48,7 @@ export const derivativeNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "积商运算法则拆解与面积增量几何直观",
     examWeight: 5,
+    crossThemes: ["乘积求导与构造原函数还原", "商式求导与分式函数单调判定"],
   },
   {
     id: "know-derivative-chain",
@@ -63,6 +66,7 @@ export const derivativeNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "线性内层复合求导与中间变量链式代换",
     examWeight: 5,
+    crossThemes: ["指对复合型函数求导与切线", "抽象复合函数对称轴导数关联"],
   },
   {
     id: "know-derivative-compare",
@@ -78,6 +82,7 @@ export const derivativeNodes: KnowledgeNode[] = [
     questionCategory: "multi_select_hard",
     examMethod: "构造辅助差函数与切线切圆放缩",
     examWeight: 5,
+    crossThemes: ["含参二次导数分类讨论", "极值点个数与三次函数图像"],
   },
   {
     id: "know-derivative-optimization",
@@ -93,6 +98,7 @@ export const derivativeNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "实际优化问题函数建构与导数极值分析",
     examWeight: 5,
+    crossThemes: ["几何体容积表面积最值建模", "利润成本与路径耗时极小化"],
   },
   {
     id: "know-derivative-constant",
@@ -108,6 +114,7 @@ export const derivativeNodes: KnowledgeNode[] = [
     questionCategory: "solution_final",
     examMethod: "分离参数与最值包络分类讨论通法",
     examWeight: 5,
+    crossThemes: ["参变分离与分类讨论双法互验", "不等式证明转化最值边界"],
   },
   {
     id: "know-constant-double",
@@ -123,6 +130,7 @@ export const derivativeNodes: KnowledgeNode[] = [
     questionCategory: "solution_final",
     examMethod: "主元优先法与双变量对称极值差",
     examWeight: 5,
+    crossThemes: ["全称与存在量词最值交集逻辑", "双变量消元化单变量比值"],
   },
   {
     id: "know-derivative-transcendental",
@@ -138,6 +146,7 @@ export const derivativeNodes: KnowledgeNode[] = [
     questionCategory: "solution_final",
     examMethod: "指对积商同构化简与复合换元",
     examWeight: 5,
+    crossThemes: ["指对同构跨界不等式证明", "六大超越函数极值单调模板"],
   },
   {
     id: "know-derivative-shift",
@@ -153,6 +162,7 @@ export const derivativeNodes: KnowledgeNode[] = [
     questionCategory: "solution_final",
     examMethod: "隐零点设代消参与对称化构造差函数",
     examWeight: 5,
+    crossThemes: ["对数平均不等式对称化消元", "虚设零点整体代换求最值下界"],
   },
   {
     id: "know-derivative-inflection",
@@ -168,6 +178,7 @@ export const derivativeNodes: KnowledgeNode[] = [
     questionCategory: "solution_final",
     examMethod: "二阶导数判导函数单调性与极值点偏移对称化",
     examWeight: 2,
+    crossThemes: ["凹凸性与切线上下界判定", "拐点对称与极值点偏移直观"],
   },
   {
     id: "know-derivative-endpoint",
@@ -183,5 +194,6 @@ export const derivativeNodes: KnowledgeNode[] = [
     questionCategory: "solution_final",
     examMethod: "端点局部分析与二阶导判导函数单调性",
     examWeight: 2,
+    crossThemes: ["端点局部符号与必要性探路", "高阶切线拟合放缩选讲"],
   },
 ];

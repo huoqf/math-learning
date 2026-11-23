@@ -82,6 +82,18 @@ import {
   defaultParams as tangentScalingDefaultParams,
 } from "@/data/registries/tangentScaling";
 import { TangentScalingScene } from "@/features/derivativeTangentScaling/components/TangentScalingScene";
+import { buildGaokaoNewDefinitionPanel } from "@/data/builders/gaokaoNewDefinition";
+import {
+  getNewDefinitionAnswerSteps,
+  defaultParams as gaokaoNewDefDefaultParams,
+} from "@/data/registries/gaokaoNewDefinition";
+import { GaokaoNewDefinitionScene } from "@/features/gaokaoNewDefinition/components/GaokaoNewDefinitionScene";
+import { buildConicAsymmetricVietaPanel } from "@/data/builders/conicAsymmetricVieta";
+import {
+  getConicAsymAnswerSteps,
+  defaultParams as conicAsymDefaultParams,
+} from "@/data/registries/conicAsymmetricVieta";
+import { ConicAsymmetricVietaScene } from "@/features/conicAsymmetricVieta/components/ConicAsymmetricVietaScene";
 import { calculateSceneScale } from "@/hooks/useSceneScale";
 
 /**
@@ -936,5 +948,107 @@ describe("导数压轴四页分步作答 SSOT 与中屏高亮联动", () => {
       expect(stepRegionOpacities(container)).toEqual(["0.3", "0.3", "1"]);
       expect(container.querySelectorAll(FRAME_SELECTOR)).toHaveLength(1);
     }
+  });
+
+  it("GaokaoNewDefinition：三大模式右屏步号标题与注册表同源，中屏严格按步号独占点亮并输出单围栏", () => {
+    for (const mode of [
+      "divisibleSeq",
+      "fixedPointIter",
+      "manhattanGeom",
+    ] as const) {
+      const panel = buildGaokaoNewDefinitionPanel(
+        { ...gaokaoNewDefDefaultParams },
+        { mode },
+      );
+      const steps = getNewDefinitionAnswerSteps(mode);
+      expect(panel.reasoningSteps?.map((s) => s.step)).toEqual(
+        steps.map((s) => s.step),
+      );
+      expect(panel.reasoningSteps?.map((s) => s.title)).toEqual(
+        steps.map((s) => s.title),
+      );
+
+      const { container, rerender, unmount } = renderInSvg(
+        <GaokaoNewDefinitionScene
+          mode={mode}
+          params={{ ...gaokaoNewDefDefaultParams }}
+          scale={testScale}
+          activeStep={1}
+          isStepFocusOn={false}
+          fontScale={fontScale}
+        />,
+      );
+      expect(stepRegionOpacities(container)).toEqual(["1", "1", "1"]);
+      expect(container.querySelectorAll(FRAME_SELECTOR)).toHaveLength(0);
+
+      for (const activeStep of [1, 2, 3] as const) {
+        rerender(
+          <svg>
+            <GaokaoNewDefinitionScene
+              mode={mode}
+              params={{ ...gaokaoNewDefDefaultParams }}
+              scale={testScale}
+              activeStep={activeStep}
+              isStepFocusOn={true}
+              fontScale={fontScale}
+            />
+          </svg>,
+        );
+        const expected = [1, 2, 3].map((k) =>
+          k === activeStep ? "1" : "0.28",
+        );
+        expect(stepRegionOpacities(container)).toEqual(expected);
+        expect(container.querySelectorAll(FRAME_SELECTOR)).toHaveLength(1);
+      }
+      unmount();
+    }
+  });
+
+  it("ConicAsymmetricVieta：非对称韦达模式右屏同源且中屏三步分区按步聚焦并输出单围栏", () => {
+    const panel = buildConicAsymmetricVietaPanel(
+      { ...conicAsymDefaultParams },
+      { mode: "asymVieta" },
+    );
+    const steps = getConicAsymAnswerSteps();
+    expect(panel.reasoningSteps?.map((s) => s.step)).toEqual(
+      steps.map((s) => s.step),
+    );
+    expect(panel.reasoningSteps?.map((s) => s.title)).toEqual(
+      steps.map((s) => s.title),
+    );
+
+    const { container, rerender } = renderInSvg(
+      <ConicAsymmetricVietaScene
+        mode="asymVieta"
+        circleType="diameter"
+        params={{ ...conicAsymDefaultParams }}
+        scale={testScale}
+        vp={testVp}
+        activeStep={1}
+        isStepFocusOn={false}
+        fontScale={fontScale}
+        onParamChange={vi.fn()}
+      />,
+    );
+    expect(stepRegionOpacities(container)).toEqual(["1", "1", "1"]);
+    expect(container.querySelectorAll(FRAME_SELECTOR)).toHaveLength(0);
+
+    rerender(
+      <svg>
+        <ConicAsymmetricVietaScene
+          mode="asymVieta"
+          circleType="diameter"
+          params={{ ...conicAsymDefaultParams }}
+          scale={testScale}
+          vp={testVp}
+          activeStep={2}
+          isStepFocusOn={true}
+          fontScale={fontScale}
+          onParamChange={vi.fn()}
+        />
+      </svg>,
+    );
+    expect(stepRegionOpacities(container)).toEqual(["0.28", "1", "0.28"]);
+    expect(container.querySelectorAll(FRAME_SELECTOR)).toHaveLength(1);
   });
 });

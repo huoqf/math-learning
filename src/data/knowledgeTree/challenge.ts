@@ -1,4 +1,5 @@
 import type { KnowledgeNode } from "../types";
+import { gaokaoNewDefinitionNode } from "@/features/gaokaoNewDefinition/meta";
 
 // ========== 11. 新高考攻坚微专题（拓展规划，追加于末尾保持展示顺序） ==========
 export const challengeNodes: KnowledgeNode[] = [
@@ -16,6 +17,7 @@ export const challengeNodes: KnowledgeNode[] = [
     questionCategory: "solution_final",
     examMethod: "指对切线放缩 ($e^x \\ge x+1$, $\\ln x \\le x-1$) 与双侧卡位",
     examWeight: 5,
+    crossThemes: ["数列不等式与指对切线放缩证明", "双切线上下卡位分离超越方程"],
   },
   {
     id: "know-parabola-archimedes",
@@ -31,5 +33,7 @@ export const challengeNodes: KnowledgeNode[] = [
     questionCategory: "multi_select_hard",
     examMethod: "焦半径调和中项、垂直弦斜率积与切线交点性质",
     examWeight: 2,
+    crossThemes: ["焦点弦调和倒数和与准线直角", "切线交点对称性与中线平行性质"],
   },
+  gaokaoNewDefinitionNode,
 ];

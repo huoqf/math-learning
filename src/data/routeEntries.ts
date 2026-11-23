@@ -29,6 +29,10 @@ import {
   inequalityBasicLoader,
 } from "@/features/inequalityBasic/meta";
 import {
+  ineqMultivarExtremaNode,
+  ineqMultivarExtremaLoader,
+} from "@/features/ineqMultivarExtrema/meta";
+import {
   nikeStandardNode,
   nikeAmgmNode,
   nikeShiftedNode,
@@ -58,7 +62,19 @@ import {
   logarithmicLoader,
   powerLoader,
 } from "@/features/funcExpLog/meta";
+import {
+  expLogCompareNode,
+  expLogCompareLoader,
+} from "@/features/expLogCompare/meta";
+import {
+  funcGrowthModelingNode,
+  funcGrowthModelingLoader,
+} from "@/features/funcGrowthModeling/meta";
 import { funcZeroNode, funcZeroLoader } from "@/features/funcZero/meta";
+import {
+  nestedFuncZerosNode,
+  nestedFuncZerosLoader,
+} from "@/features/nestedFuncZeros/meta";
 import { transformNode, transformLoader } from "@/features/transform/meta";
 import { compositeNode, compositeLoader } from "@/features/composite/meta";
 import { quadraticNode, quadraticLoader } from "@/features/quadratic/meta";
@@ -125,6 +141,10 @@ import {
   recurrenceSequenceLoader,
   modelsSequenceLoader,
 } from "@/features/sequence/meta";
+import {
+  gaokaoNewDefinitionNode,
+  gaokaoNewDefinitionLoader,
+} from "@/features/gaokaoNewDefinition/meta";
 
 // ── 7. 导数及其应用 ──
 import { derivativeNode, derivativeLoader } from "@/features/derivative/meta";
@@ -216,6 +236,10 @@ import {
   conicLocusInvariantsNode,
   loader as conicLocusInvariantsLoader,
 } from "@/features/conicLocusInvariants/meta";
+import {
+  conicAsymmetricVietaNode,
+  conicAsymmetricVietaLoader,
+} from "@/features/conicAsymmetricVieta/meta";
 
 // ── 9. 立体几何与空间向量 (3D) ──
 import {
@@ -262,6 +286,10 @@ import {
   vector3dBasisNode,
   vector3dBasisLoader,
 } from "@/features/vector3d/meta";
+import {
+  solidDynamicLocusNode,
+  solidDynamicLocusLoader,
+} from "@/features/solidDynamicLocus/meta";
 
 // ── 10. 概率与统计 ──
 import {
@@ -280,6 +308,10 @@ import {
   probabilityCountingNode,
   probabilityCountingLoader,
 } from "@/features/probabilityCounting/meta";
+import {
+  combinatoricsModelsNode,
+  combinatoricsModelsLoader,
+} from "@/features/combinatoricsModels/meta";
 import { bayesNode, bayesLoader } from "@/features/probabilityBayes/meta";
 import { markovNode, markovLoader } from "@/features/probabilityMarkov/meta";
 import {
@@ -291,6 +323,10 @@ import {
   statPercentileLoader,
 } from "@/features/statPercentile/meta";
 import {
+  statSamplingFeaturesNode,
+  statSamplingFeaturesLoader,
+} from "@/features/statSamplingFeatures/meta";
+import {
   probabilityNormalNode,
   probabilityNormalLoader,
 } from "@/features/probabilityNormal/meta";
@@ -301,7 +337,7 @@ import {
   independenceLoader,
 } from "@/features/pairedData/meta";
 
-// ── 聚合全量路由条目 (72 个节点，100% 规范化) ──
+// ── 聚合全量路由条目（按学科十组注册，100% 规范化） ──
 
 export const routeEntries: RouteEntry[] = [
   // 1. 集合与常用逻辑
@@ -311,6 +347,7 @@ export const routeEntries: RouteEntry[] = [
 
   // 2. 不等式
   { node: inequalityBasicNode, loader: inequalityBasicLoader },
+  { node: ineqMultivarExtremaNode, loader: ineqMultivarExtremaLoader },
   { node: nikeStandardNode, loader: nikeStandardLoader },
   { node: nikeAmgmNode, loader: nikeAmgmLoader },
   { node: nikeShiftedNode, loader: nikeShiftedLoader },
@@ -326,9 +363,12 @@ export const routeEntries: RouteEntry[] = [
   { node: exponentialNode, loader: exponentialLoader },
   { node: logarithmicNode, loader: logarithmicLoader },
   { node: powerNode, loader: powerLoader },
+  { node: expLogCompareNode, loader: expLogCompareLoader },
   { node: funcZeroNode, loader: funcZeroLoader },
+  { node: nestedFuncZerosNode, loader: nestedFuncZerosLoader },
   { node: transformNode, loader: transformLoader },
   { node: compositeNode, loader: compositeLoader },
+  { node: funcGrowthModelingNode, loader: funcGrowthModelingLoader },
   { node: quadraticNode, loader: quadraticLoader },
 
   // 4. 三角函数与解三角形
@@ -378,6 +418,7 @@ export const routeEntries: RouteEntry[] = [
   { node: geometricSequenceNode, loader: geometricSequenceLoader },
   { node: recurrenceSequenceNode, loader: recurrenceSequenceLoader },
   { node: modelsSequenceNode, loader: modelsSequenceLoader },
+  { node: gaokaoNewDefinitionNode, loader: gaokaoNewDefinitionLoader },
 
   // 7. 导数及其应用
   { node: derivativeNode, loader: derivativeLoader },
@@ -443,6 +484,10 @@ export const routeEntries: RouteEntry[] = [
   {
     node: conicLocusInvariantsNode,
     loader: conicLocusInvariantsLoader as RouteEntry["loader"],
+  },
+  {
+    node: conicAsymmetricVietaNode,
+    loader: conicAsymmetricVietaLoader,
   },
   {
     node: conicParamTNode,
@@ -542,12 +587,18 @@ export const routeEntries: RouteEntry[] = [
     loader: solidPolyhedronLoader,
     guarded3D: true,
   },
+  {
+    node: solidDynamicLocusNode,
+    loader: solidDynamicLocusLoader,
+    guarded3D: true,
+  },
 
   // 10. 概率与统计
   { node: probabilityEventsNode, loader: probabilityEventsLoader },
   { node: classicalProbabilityNode, loader: classicalProbabilityLoader },
   { node: probabilityIndependenceNode, loader: probabilityIndependenceLoader },
   { node: probabilityCountingNode, loader: probabilityCountingLoader },
+  { node: combinatoricsModelsNode, loader: combinatoricsModelsLoader },
   { node: bayesNode, loader: bayesLoader },
   { node: markovNode, loader: markovLoader },
   {
@@ -555,6 +606,7 @@ export const routeEntries: RouteEntry[] = [
     loader: probabilityDistributionLoader,
   },
   { node: statPercentileNode, loader: statPercentileLoader },
+  { node: statSamplingFeaturesNode, loader: statSamplingFeaturesLoader },
   { node: probabilityNormalNode, loader: probabilityNormalLoader },
   { node: regressionNode, loader: regressionLoader },
   { node: independenceNode, loader: independenceLoader },
@@ -585,4 +637,12 @@ for (const entry of routeEntries) {
 export const GAOKAO_VIEW_SUPPORTED_ROUTES: ReadonlySet<string> = new Set([
   "/sequence-arithmetic",
   "/sequence-geometric",
+  "/sequence-recurrence",
+  "/inequality-basic",
+  "/probability-counting",
+  "/probability-bayes",
+  "/conic-line",
+  "/solid-distance",
+  "/stat-percentile",
+  "/gaokao-new-definition",
 ]);

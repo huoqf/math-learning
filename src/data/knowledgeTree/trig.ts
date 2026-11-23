@@ -16,6 +16,7 @@ export const trigNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "度弧互化与弧长扇形面积公式运算",
     examWeight: 3,
+    crossThemes: ["单位圆角度与弧长度量统一", "扇形面积与均值不等式最值"],
   },
   {
     id: "know-trig-lines",
@@ -31,6 +32,7 @@ export const trigNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "单位圆有向线段正弦正切线直观",
     examWeight: 3,
+    crossThemes: ["单位圆角度与向量旋转直观", "三角不等式与弧长面积几何对比"],
   },
   {
     id: "know-trig-identity",
@@ -46,6 +48,7 @@ export const trigNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "奇变偶不变符号看象限与弦切互化",
     examWeight: 4,
+    crossThemes: ["齐次式弦切互化技巧", "三角方程降次与象限符号定号"],
   },
   {
     id: "know-trig-formulas",
@@ -61,6 +64,7 @@ export const trigNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "辅助角公式 asinx+bcosx 化单一正弦",
     examWeight: 5,
+    crossThemes: ["解三角形边角化简恒等变形", "平面向量数量积夹角三角化简"],
   },
   {
     id: "know-trig-transform",
@@ -76,6 +80,7 @@ export const trigNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "五点作图法与初相角周期伸缩平移",
     examWeight: 5,
+    crossThemes: ["函数图象平移伸缩对称综合", "区间零点个数与对称轴参数求解"],
   },
   {
     id: "know-trig-tangent",
@@ -91,6 +96,7 @@ export const trigNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "渐近线对称中心与单调开区间",
     examWeight: 3,
+    crossThemes: ["直线倾斜角与斜率 tan α 衔接", "正切单调区间与定义域保护"],
   },
   {
     id: "know-trig-model",
@@ -106,6 +112,7 @@ export const trigNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "简谐运动与实际周期情境的三角函数建模",
     examWeight: 4,
+    crossThemes: ["周期波浪摩天轮实际应用建模", "向量旋转投影与简谐运动联系"],
   },
   {
     id: "know-triangle-solve",
@@ -121,6 +128,7 @@ export const trigNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "正余弦定理边角互化与射影定理",
     examWeight: 5,
+    crossThemes: ["平面向量模长平方与余弦定理等价", "测量距离仰角实际几何建模"],
   },
   {
     id: "know-triangle-extrema",
@@ -136,5 +144,9 @@ export const trigNodes: KnowledgeNode[] = [
     questionCategory: "multi_select_hard",
     examMethod: "正弦边化角与余弦均值求最值范围",
     examWeight: 5,
+    crossThemes: [
+      "三角恒等变换与均值不等式最值",
+      "外接圆定弦定角与锐角三角形约束",
+    ],
   },
 ];

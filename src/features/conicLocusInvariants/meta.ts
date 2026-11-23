@@ -14,6 +14,7 @@ export const conicLocusInvariantsNode: KnowledgeNode = {
   questionCategory: "solution_final",
   examMethod: "相关点代入法、中心弦第三定义斜率积与反设直线常规韦达过定点",
   examWeight: 5,
+  crossThemes: ["椭圆双曲线垂径斜率积定值", "相关点轨迹转移与动直线过定点"],
 };
 
 export const loader = () =>

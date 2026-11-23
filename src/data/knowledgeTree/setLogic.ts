@@ -16,6 +16,7 @@ export const setLogicNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "Venn 图容斥原理与数轴端点法",
     examWeight: 2,
+    crossThemes: ["不等式解集交并补", "新高考集合新定义压轴前置"],
   },
   {
     id: "know-logic-conditions",
@@ -31,6 +32,7 @@ export const setLogicNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "集合包含关系与逆否命题等价法",
     examWeight: 3,
+    crossThemes: ["函数不等式充要条件判别", "立体几何与解析几何命题互推"],
   },
   {
     id: "know-logic-quantifiers",
@@ -46,5 +48,6 @@ export const setLogicNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "全称存在对偶否定与特值反例法",
     examWeight: 2,
+    crossThemes: ["恒成立与能成立问题转化", "命题否定与反证法前置"],
   },
 ];

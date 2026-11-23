@@ -1,4 +1,7 @@
 import type { KnowledgeNode } from "../types";
+import { expLogCompareNode } from "@/features/expLogCompare/meta";
+import { funcGrowthModelingNode } from "@/features/funcGrowthModeling/meta";
+import { nestedFuncZerosNode } from "@/features/nestedFuncZeros/meta";
 
 // ========== 3. 函数概念与性质 ==========
 export const functionNodes: KnowledgeNode[] = [
@@ -16,6 +19,7 @@ export const functionNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "定义域优先法则与换元单调性",
     examWeight: 3,
+    crossThemes: ["对数真数与分母定义域约束", "换元法求无理分式值域"],
   },
   {
     id: "know-func-properties",
@@ -31,6 +35,7 @@ export const functionNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "奇偶中心对称与增减区间判定",
     examWeight: 4,
+    crossThemes: ["抽象函数单调奇偶解不等式", "对称最值之和性质应用"],
   },
   {
     id: "know-func-symmetry",
@@ -46,6 +51,7 @@ export const functionNodes: KnowledgeNode[] = [
     questionCategory: "multi_select_hard",
     examMethod: "双对称推周期与自变量和定中心/轴对称",
     examWeight: 5,
+    crossThemes: ["三角函数轴对称与中心对称", "抽象函数周期求值与零点对称分布"],
   },
   {
     id: "know-quadratic",
@@ -61,6 +67,7 @@ export const functionNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "对称轴判别式区间端点三要素分析",
     examWeight: 4,
+    crossThemes: ["等差数列前n项和最值化归", "根分布与韦达定理联立前置"],
   },
   {
     id: "know-func-explog",
@@ -76,6 +83,7 @@ export const functionNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "指数底数分类讨论与定点性质",
     examWeight: 4,
+    crossThemes: ["等比数列指数型单调性", "指对反函数关于y=x对称"],
   },
   {
     id: "know-func-logarithmic",
@@ -91,6 +99,7 @@ export const functionNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "对数定义域保护与关于 y=x 互反映射",
     examWeight: 4,
+    crossThemes: ["对数型非线性回归换元", "指对混合方程交点对称性"],
   },
   {
     id: "know-power-function",
@@ -106,7 +115,9 @@ export const functionNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "第一象限幂次基准与图像走势分布",
     examWeight: 2,
+    crossThemes: ["奇偶性与第一象限幂次对比", "指对幂生长速度比较前置"],
   },
+  expLogCompareNode,
   {
     id: "know-func-hook",
     title: "对勾函数 y=ax+b/x 基本性质",
@@ -121,6 +132,7 @@ export const functionNodes: KnowledgeNode[] = [
     questionCategory: "multi_select_hard",
     examMethod: "均值不等式与斜渐近线 y=ax",
     examWeight: 4,
+    crossThemes: ["解三角形边长和积最值", "圆锥曲线弦长分式型最值"],
   },
   {
     id: "know-nike-amgm",
@@ -136,6 +148,7 @@ export const functionNodes: KnowledgeNode[] = [
     questionCategory: "multi_select_hard",
     examMethod: "积定和最小配凑与最值",
     examWeight: 4,
+    crossThemes: ["三角代换与分式配凑求最值", "解析几何面积目标函数最值"],
   },
   {
     id: "know-nike-shifted",
@@ -151,6 +164,7 @@ export const functionNodes: KnowledgeNode[] = [
     questionCategory: "multi_select_hard",
     examMethod: "分数线性变换与双渐近线平移",
     examWeight: 4,
+    crossThemes: ["分式型函数分离常数求值域", "反比例函数平移对称中心"],
   },
   {
     id: "know-func-zero",
@@ -166,7 +180,9 @@ export const functionNodes: KnowledgeNode[] = [
     questionCategory: "multi_select_hard",
     examMethod: "零点存在性定理与单调穿轴逼近",
     examWeight: 5,
+    crossThemes: ["方程实根与两函数交点互化", "嵌套函数零点个数前置"],
   },
+  nestedFuncZerosNode,
   {
     id: "know-func-transform",
     title: "函数图象的平移、伸缩与翻折变换",
@@ -181,6 +197,7 @@ export const functionNodes: KnowledgeNode[] = [
     questionCategory: "multi_select_hard",
     examMethod: "左加右减上加下减与绝对值翻折映射",
     examWeight: 4,
+    crossThemes: ["绝对值翻折与直线交点个数", "三角函数图像变换对照"],
   },
   {
     id: "know-func-composite",
@@ -196,5 +213,7 @@ export const functionNodes: KnowledgeNode[] = [
     questionCategory: "multi_select_hard",
     examMethod: "同增异减复合判定与内层值域保护",
     examWeight: 4,
+    crossThemes: ["指对复合函数单调区间与定义域", "分段衔接点单调连续判别"],
   },
+  funcGrowthModelingNode,
 ];

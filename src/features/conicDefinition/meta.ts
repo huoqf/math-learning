@@ -14,6 +14,7 @@ export const conicDefinitionNode: KnowledgeNode = {
   questionCategory: "solution_first",
   examMethod: "圆锥曲线第一/第二定义与轨迹方程",
   examWeight: 5,
+  crossThemes: ["距离比值离心率统一定义", "双曲线焦点距离差绝对值轨迹"],
 };
 
 export const conicDefinitionLoader = () => import("./ConicDefinitionAnimation");

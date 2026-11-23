@@ -16,7 +16,7 @@ import {
   StepNavigator,
 } from "@/components/UI";
 import type { ParamConfig } from "@/components/UI";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useGaokaoView } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { fitSteppedViewRange } from "@/math/viewRange";
 import { formatMathNumber } from "@/utils/mathFormat";
@@ -93,9 +93,17 @@ function calcNiceStep(span: number, targetTicks = 6): number {
 }
 
 export function RecurrencePage() {
+  const isGaokao = useGaokaoView();
+  const initialModel: RecurrenceModel = isGaokao
+    ? "new-definition"
+    : "linear-pan";
+  const initialPreset = RECURRENCE_PRESETS[initialModel]?.[0];
+
   const [recurrenceModelType, setRecurrenceModelType] =
-    useState<RecurrenceModel>("linear-pan");
-  const [activePresetKey, setActivePresetKey] = useState<string>("converge");
+    useState<RecurrenceModel>(initialModel);
+  const [activePresetKey, setActivePresetKey] = useState<string>(
+    initialPreset?.key ?? "converge",
+  );
   const [accumFnType, setAccumFnType] =
     useState<AccumulationFnType>("arithmetic");
   const [multType, setMultType] = useState<
@@ -114,7 +122,7 @@ export function RecurrencePage() {
   // 初始化参数
   const [params, setParams] = useState<Record<string, number>>(() => ({
     ...defaultParams,
-    ...(RECURRENCE_PRESETS["linear-pan"]?.[0]?.params ?? {}),
+    ...(initialPreset?.params ?? {}),
   }));
 
   const { containerRef, canvasSize, vp } = useAnimationViewport({

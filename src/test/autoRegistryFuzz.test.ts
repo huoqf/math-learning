@@ -157,6 +157,42 @@ import {
   defaultParams as endpointTaylorDefaults,
   paramMeta as endpointTaylorMeta,
 } from "@/data/registries/derivativeEndpointTaylor";
+import {
+  defaultParams as combModelsDefaults,
+  paramMeta as combModelsMeta,
+} from "@/data/registries/combinatoricsModels";
+import {
+  defaultParams as statSamplingDefaults,
+  paramMeta as statSamplingMeta,
+} from "@/data/registries/statSamplingFeatures";
+import {
+  defaultParams as expLogCompareDefaults,
+  paramMeta as expLogCompareMeta,
+} from "@/data/registries/expLogCompare";
+import {
+  defaultParams as funcGrowthDefaults,
+  paramMeta as funcGrowthMeta,
+} from "@/data/registries/funcGrowthModeling";
+import {
+  defaultParams as gaokaoNewDefDefaults,
+  paramMeta as gaokaoNewDefMeta,
+} from "@/data/registries/gaokaoNewDefinition";
+import {
+  defaultParams as nestedFuncDefaults,
+  paramMeta as nestedFuncMeta,
+} from "@/data/registries/nestedFuncZeros";
+import {
+  defaultParams as ineqMultivarDefaults,
+  paramMeta as ineqMultivarMeta,
+} from "@/data/registries/ineqMultivarExtrema";
+import {
+  defaultParams as conicAsymDefaults,
+  paramMeta as conicAsymMeta,
+} from "@/data/registries/conicAsymmetricVieta";
+import {
+  defaultParams as solidDynamicLocusDefaults,
+  SOLID_DYNAMIC_LOCUS_META as solidDynamicLocusMeta,
+} from "@/data/registries/solidDynamicLocus";
 
 /**
  * 立体几何 registry 的元数据以数组形式导出（同一文件承载十余个页面的 meta），
@@ -1052,6 +1088,202 @@ const fuzzTargets: TopicFuzzTarget[] = [
         label: "乒乓加赛",
         config: { scenarioKey: "game_pingpong" },
         primaryKey: "p11",
+      },
+    ],
+  },
+  {
+    animId: "anim-combinatorics-models",
+    topicName: "排列组合经典模型",
+    defaultParams: combModelsDefaults,
+    paramMeta: combModelsMeta,
+    variants: [
+      { label: "捆绑法", config: { mode: "bundle" }, primaryKey: "n" },
+      { label: "插空法", config: { mode: "gap" }, primaryKey: "m" },
+      {
+        label: "隔板法",
+        config: { mode: "starsBars", allowZero: false },
+        primaryKey: "n",
+      },
+      {
+        label: "分组分配",
+        config: {
+          mode: "grouping",
+          groupingPreset: "equal3",
+          distinctTargets: true,
+        },
+      },
+    ],
+  },
+  {
+    animId: "anim-stat-sampling-features",
+    topicName: "随机抽样与数字特征",
+    defaultParams: statSamplingDefaults,
+    paramMeta: statSamplingMeta,
+    variants: [
+      {
+        label: "分层抽样",
+        config: { mode: "sampling" },
+        primaryKey: "sampleN",
+      },
+      {
+        label: "线性变换",
+        config: { mode: "linearTransform" },
+        primaryKey: "scaleA",
+      },
+      {
+        label: "异常值扰动",
+        config: { mode: "outlierImpact", insertMean: false },
+        primaryKey: "outlierVal",
+      },
+    ],
+  },
+  {
+    animId: "anim-exp-log-compare",
+    topicName: "指对数运算与比大小",
+    defaultParams: expLogCompareDefaults,
+    paramMeta: expLogCompareMeta,
+    variants: [
+      { label: "运算与换底", config: { mode: "logOps" }, primaryKey: "valM" },
+      {
+        label: "中间值搭桥",
+        config: { mode: "medianBridge", activeScenario: "free" },
+        primaryKey: "xSample",
+      },
+      {
+        label: "单调性构造",
+        config: { mode: "monotoneCompare", activeScenario: "free" },
+        primaryKey: "xSample",
+      },
+    ],
+  },
+  {
+    animId: "anim-func-growth-modeling",
+    topicName: "不同函数增长差异与实际建模",
+    defaultParams: funcGrowthDefaults,
+    paramMeta: funcGrowthMeta,
+    variants: [
+      {
+        label: "增长差异",
+        config: { mode: "growthRace" },
+        primaryKey: "xProbe",
+      },
+      {
+        label: "分段计费",
+        config: { mode: "piecewiseBilling" },
+        primaryKey: "usage",
+      },
+      {
+        label: "散点拟合",
+        config: { mode: "scatterFitting", fitModel: "exponential" },
+        primaryKey: "gainScale",
+      },
+    ],
+  },
+  {
+    animId: "anim-gaokao-new-definition",
+    topicName: "新高考19题数列/迭代/度量新定义",
+    defaultParams: gaokaoNewDefDefaults,
+    paramMeta: gaokaoNewDefMeta,
+    variants: [
+      {
+        label: "可分数列",
+        config: { mode: "divisibleSeq" },
+        primaryKey: "seqM",
+      },
+      {
+        label: "迭代不动点",
+        config: { mode: "fixedPointIter" },
+        primaryKey: "iterR",
+      },
+      {
+        label: "曼哈顿几何",
+        config: { mode: "manhattanGeom" },
+        primaryKey: "manRadius",
+      },
+    ],
+  },
+  {
+    animId: "anim-nested-func-zeros",
+    topicName: "嵌套函数零点与复合方程",
+    defaultParams: nestedFuncDefaults,
+    paramMeta: nestedFuncMeta,
+    variants: [
+      {
+        label: "绝对值二次嵌套",
+        config: { mode: "quadraticNested" },
+        primaryKey: "targetA",
+      },
+      {
+        label: "分段函数嵌套",
+        config: { mode: "piecewiseNested" },
+        primaryKey: "targetA",
+      },
+      {
+        label: "参变反解计数",
+        config: { mode: "paramBound" },
+        primaryKey: "paramB",
+      },
+    ],
+  },
+  {
+    animId: "anim-ineq-multivar-extrema",
+    topicName: "多元基本不等式最值通法",
+    defaultParams: ineqMultivarDefaults,
+    paramMeta: ineqMultivarMeta,
+    variants: [
+      { label: "常数1代换", config: { mode: "oneSub" }, primaryKey: "constC" },
+      { label: "消元降维法", config: { mode: "elim" }, primaryKey: "constC" },
+      { label: "齐次化比值", config: { mode: "homog" }, primaryKey: "homogK" },
+      {
+        label: "和积互化法",
+        config: { mode: "sumProd" },
+        primaryKey: "constC",
+      },
+    ],
+  },
+  {
+    animId: "anim-conic-asymmetric-vieta",
+    topicName: "圆锥曲线非对称韦达与隐圆对称",
+    defaultParams: conicAsymDefaults,
+    paramMeta: conicAsymMeta,
+    variants: [
+      {
+        label: "非对称韦达定线",
+        config: { mode: "asymVieta" },
+        primaryKey: "a",
+      },
+      {
+        label: "几何隐圆",
+        config: { mode: "hiddenCircle", circleType: "diameter" },
+        primaryKey: "halfSpan",
+      },
+      {
+        label: "将军饮马对称最值",
+        config: { mode: "symmetryShortest" },
+        primaryKey: "lineB",
+      },
+    ],
+  },
+  {
+    animId: "anim-solid-dynamic-locus",
+    topicName: "立体几何动点轨迹三大问题",
+    defaultParams: solidDynamicLocusDefaults,
+    paramMeta: solidDynamicLocusMeta,
+    variants: [
+      {
+        label: "线面垂直垂面",
+        config: { mode: "perpLineLocus" },
+        primaryKey: "a",
+      },
+      {
+        label: "定距球截圆弧",
+        config: { mode: "constDistCircle" },
+        primaryKey: "rFactor",
+      },
+      {
+        label: "定角圆锥截线",
+        config: { mode: "constAngleConic" },
+        primaryKey: "tiltDeg",
       },
     ],
   },

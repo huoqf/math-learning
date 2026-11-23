@@ -390,11 +390,11 @@ describe("双源定义一致性（knowledgeTree ↔ features/*/meta.ts）", () =
     expect(orphans).toEqual([]);
   });
 
-  it("algebra_basics 专题节点完整性：9 个代数基础节点均存在且声明有效路由", () => {
+  it("algebra_basics 专题节点完整性：10 个代数基础节点均存在且声明有效路由", () => {
     const algebraNodes = knowledgeTree.filter(
       (n) => n.gaokaoTopic === "algebra_basics",
     );
-    expect(algebraNodes.length).toBe(9);
+    expect(algebraNodes.length).toBe(10);
     for (const node of algebraNodes) {
       expect(node.route).toBeDefined();
       expect(typeof node.route).toBe("string");

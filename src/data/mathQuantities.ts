@@ -24,6 +24,14 @@ import { buildProbabilityEventsPanel } from "./builders/probabilityEvents";
 import { buildClassicalProbabilityPanel } from "./builders/probabilityClassical";
 import { buildProbabilityIndependencePanel } from "./builders/probabilityIndependence";
 import { buildProbabilityCountingPanel } from "./builders/probabilityCounting";
+import { buildCombinatoricsModelsPanel } from "./builders/combinatoricsModels";
+import { buildStatSamplingFeaturesPanel } from "./builders/statSamplingFeatures";
+import { buildExpLogComparePanel } from "./builders/expLogCompare";
+import { buildFuncGrowthModelingPanel } from "./builders/funcGrowthModeling";
+import { buildGaokaoNewDefinitionPanel } from "./builders/gaokaoNewDefinition";
+import { buildNestedFuncZerosPanel } from "./builders/nestedFuncZeros";
+import { buildIneqMultivarExtremaPanel } from "./builders/ineqMultivarExtrema";
+import { buildConicAsymmetricVietaPanel } from "./builders/conicAsymmetricVieta";
 import { buildProbabilityBayesPanel } from "./builders/probabilityBayes";
 import { buildProbabilityMarkovPanel } from "./builders/probabilityMarkov";
 import { buildProbabilityDistributionPanel } from "./builders/probabilityDistribution";
@@ -48,6 +56,7 @@ import {
   buildPolyhedronFeaturesPanel,
 } from "./builders/solidGeometry";
 import { buildSphereDerivationPanel } from "./builders/solidSphereDerivation";
+import { buildSolidDynamicLocusPanel } from "./builders/solidDynamicLocus";
 import { buildVector3DBasisPanel } from "./builders/vector3d";
 import { buildSequencePanel } from "./builders/sequence";
 import { buildConicDefinitionPanel } from "./builders/conicDefinition";
@@ -137,6 +146,22 @@ export function buildMathQuantities(
       return buildProbabilityMarkovPanel(params, config);
     case "anim-probability-counting":
       return buildProbabilityCountingPanel(params, config);
+    case "anim-combinatorics-models":
+      return buildCombinatoricsModelsPanel(params, config);
+    case "anim-stat-sampling-features":
+      return buildStatSamplingFeaturesPanel(params, config);
+    case "anim-exp-log-compare":
+      return buildExpLogComparePanel(params, config);
+    case "anim-func-growth-modeling":
+      return buildFuncGrowthModelingPanel(params, config);
+    case "anim-gaokao-new-definition":
+      return buildGaokaoNewDefinitionPanel(params, config);
+    case "anim-nested-func-zeros":
+      return buildNestedFuncZerosPanel(params, config);
+    case "anim-ineq-multivar-extrema":
+      return buildIneqMultivarExtremaPanel(params, config);
+    case "anim-conic-asymmetric-vieta":
+      return buildConicAsymmetricVietaPanel(params, config);
     case "anim-derivative-shift":
       return buildDerivativeShiftPanel(params, config);
     case "anim-derivative-transcendental":
@@ -236,6 +261,8 @@ export function buildMathQuantities(
       return buildSolidAxiomsPanel(params, config);
     case "anim-solid-polyhedron":
       return buildPolyhedronFeaturesPanel(params, config);
+    case "anim-solid-dynamic-locus":
+      return buildSolidDynamicLocusPanel(params, config);
     case "anim-solid-folding":
       return buildSolidFoldingPanel(params, config);
     case "anim-solid-parametric":

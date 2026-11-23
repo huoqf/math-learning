@@ -11,7 +11,11 @@ import {
   TipCard,
 } from "../../components/UI";
 import type { ParamConfig } from "../../components/UI";
-import { useAnimationViewport, useSceneScale } from "../../hooks";
+import {
+  useAnimationViewport,
+  useSceneScale,
+  useGaokaoView,
+} from "../../hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "../../theme";
 import { ProbabilityCountingScene } from "./components/ProbabilityCountingScene";
 import { buildMathQuantities } from "../../data/mathQuantities";
@@ -31,6 +35,7 @@ import {
 } from "../../math/probabilityCounting";
 
 export function ProbabilityCountingAnimation() {
+  const isGaokao = useGaokaoView();
   const [params, setParams] = useState<Record<string, number>>(() => ({
     ...defaultParams,
   }));
@@ -38,7 +43,7 @@ export function ProbabilityCountingAnimation() {
   // 1. 当前活动模式 ('binomial' | 'perm_comb' | 'principles')
   const [activeMode, setActiveMode] = useState<string>("binomial");
   // 子模式切换 (0, 1, 2)
-  const [subMode, setSubMode] = useState<number>(0);
+  const [subMode, setSubMode] = useState<number>(isGaokao ? 1 : 0);
 
   // 2. Viewport 适应与比例尺
   const { containerRef, canvasSize, vp } = useAnimationViewport({

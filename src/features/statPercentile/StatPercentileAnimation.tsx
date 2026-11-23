@@ -12,7 +12,7 @@ import {
 import type { ParamConfig } from "@/components/UI";
 import { SceneLegend } from "@/components/Math";
 import type { SceneLegendItem } from "@/components/Math/SceneLegend";
-import { useAnimationViewport, useSceneScale } from "@/hooks";
+import { useAnimationViewport, useSceneScale, useGaokaoView } from "@/hooks";
 import { CANVAS_PRESETS, MATH_COLORS } from "@/theme";
 import { StatPercentileScene } from "./components/StatPercentileScene";
 import { buildMathQuantities } from "@/data/mathQuantities";
@@ -39,8 +39,11 @@ function clampSampleNToStrata(
 }
 
 export function StatPercentileAnimation() {
+  const isGaokao = useGaokaoView();
   // 一级探究模式：'histogram' | 'cumulative' | 'stratified'
-  const [studyMode, setStudyMode] = useState<StudyMode>("histogram");
+  const [studyMode, setStudyMode] = useState<StudyMode>(
+    isGaokao ? "stratified" : "histogram",
+  );
 
   // 二级典型高考情景预设（首选为 'free' 自由探索）
   const [activeScenario, setActiveScenario] = useState<string>("free");

@@ -16,6 +16,7 @@ export const solidNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "轴截面降维与圆柱圆锥侧面展开最短路径",
     examWeight: 3,
+    crossThemes: ["旋转体侧面展开最短路径", "旋转体与球体切接轴截面分析"],
   },
   {
     id: "know-solid-oblique-drawing",
@@ -31,6 +32,7 @@ export const solidNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "横不变纵减半与直观图面积 2√2 逆向还原",
     examWeight: 4,
+    crossThemes: ["平面图形面积与直观图比例换算", "几何体三视图与空间直观重构"],
   },
   {
     id: "know-solid-pyramid-derivation",
@@ -46,6 +48,7 @@ export const solidNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "三棱柱对角剖分三等分与刘徽阳马鳖臑割体术",
     examWeight: 4,
+    crossThemes: ["中华优秀数学文化刘徽割体术", "三棱锥等体积变换前置基础"],
   },
   {
     id: "know-solid-sphere-derivation",
@@ -61,6 +64,7 @@ export const solidNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "祖暅原理等高截面法与以锥积球分割求和",
     examWeight: 4,
+    crossThemes: ["祖暅原理等截面积等体积", "球体切接截面圆面积计算基础"],
   },
   {
     id: "know-solid-polyhedron",
@@ -76,6 +80,7 @@ export const solidNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "正棱锥核心直角三角形与台体大锥减小锥、三棱锥等体积法",
     examWeight: 5,
+    crossThemes: ["三棱锥等体积法反算点面距离", "正棱锥内高斜高侧棱直角三角"],
   },
   {
     id: "know-solid-axioms",
@@ -91,6 +96,7 @@ export const solidNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "平面的确定推论与两面交线定理、空间等角定理",
     examWeight: 4,
+    crossThemes: ["共面判定与三线共点作图依据", "多面体截面交线基本事实支撑"],
   },
   {
     id: "know-solid-position",
@@ -106,6 +112,10 @@ export const solidNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "线面平行线线平行转化链与面面垂直判定",
     examWeight: 5,
+    crossThemes: [
+      "解答题第1问位置关系规范证明",
+      "平行四边形与中位线构造线线平行",
+    ],
   },
   {
     id: "know-solid-surface-relation",
@@ -121,6 +131,7 @@ export const solidNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "二面角平面角定义法与垂线引路法",
     examWeight: 5,
+    crossThemes: ["线线线面面面垂直闭环互推", "建系垂直底面z轴合法性论证"],
   },
   {
     id: "know-solid-section",
@@ -136,6 +147,7 @@ export const solidNodes: KnowledgeNode[] = [
     questionCategory: "multi_select_hard",
     examMethod: "交线平行定理与延长线交点截面法",
     examWeight: 5,
+    crossThemes: ["面面平行性质作平行截面", "动态动点轨迹平面截多面体"],
   },
   {
     id: "know-solid-folding",
@@ -151,6 +163,7 @@ export const solidNodes: KnowledgeNode[] = [
     questionCategory: "multi_select_hard",
     examMethod: "折痕不变性与二面角极值投影分析",
     examWeight: 5,
+    crossThemes: ["翻折前后边长角度不变量追踪", "翻折二面角建系求空间角与体积"],
   },
   {
     id: "know-vector3d-basis",
@@ -166,6 +179,7 @@ export const solidNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "空间向量基本定理基底分解、四点共面充要条件与数量积坐标运算",
     examWeight: 4,
+    crossThemes: ["斜棱柱无直角用基底求线线角", "四点共面系数和为1推论应用"],
   },
   {
     id: "know-solid-angle",
@@ -181,6 +195,10 @@ export const solidNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "法向量夹角公式与线面面面空间角代数化",
     examWeight: 5,
+    crossThemes: [
+      "异面直线线面角二面角法向量通解",
+      "三角恒等与法向量夹角正余弦转化",
+    ],
   },
   {
     id: "know-solid-distance",
@@ -197,6 +215,10 @@ export const solidNodes: KnowledgeNode[] = [
     examMethod:
       "公垂线双垂直判定与动参数投影极值、线面平行转化法与点面距等体积互验",
     examWeight: 5,
+    crossThemes: [
+      "法向量投影点面距与等体积法互验",
+      "空间距离与函数最值参数求解",
+    ],
   },
   {
     id: "know-solid-parametric",
@@ -212,6 +234,7 @@ export const solidNodes: KnowledgeNode[] = [
     questionCategory: "solution_final",
     examMethod: "动点坐标参数化与二次配方最值",
     examWeight: 5,
+    crossThemes: ["动点比值λ存在性方程判别", "动点角距离转化为二次函数最值"],
   },
   {
     id: "know-solid-ball",
@@ -227,6 +250,10 @@ export const solidNodes: KnowledgeNode[] = [
     questionCategory: "multi_select_hard",
     examMethod: "球心垂心几何交轨与等体积法内切球",
     examWeight: 5,
+    crossThemes: [
+      "正余弦定理求底面外接圆半径",
+      "内切球半径与表面积等体积法联立",
+    ],
   },
   {
     id: "know-solid-ball-models",
@@ -242,6 +269,7 @@ export const solidNodes: KnowledgeNode[] = [
     questionCategory: "multi_select_hard",
     examMethod: "墙角模型、对棱相等补长方体与侧棱垂直柱体",
     examWeight: 5,
+    crossThemes: ["补形法化归长方体体对角线", "直棱柱侧棱垂直底面外接球公式"],
   },
   {
     id: "know-solid-advanced-sphere",
@@ -257,5 +285,26 @@ export const solidNodes: KnowledgeNode[] = [
     questionCategory: "solution_final",
     examMethod: "双外心垂直平分线交点与截面小圆分析",
     examWeight: 5,
+    crossThemes: ["二面角余弦建构球心距勾股方程", "球内接旋转体体积最值优化"],
+  },
+  {
+    id: "know-solid-dynamic-locus",
+    title: "立体几何动点轨迹三大经典问题（垂面/定距圆/定角圆锥曲线）",
+    labTitle: "立体几何动点轨迹实验室",
+    chapter: "立体几何与空间向量",
+    module: "立体几何压轴",
+    importance: "hard",
+    animationIds: ["anim-solid-dynamic-locus"],
+    prerequisites: ["know-solid-position", "know-solid-section"],
+    route: "/solid-dynamic-locus",
+    gaokaoTopic: "solid_geometry",
+    questionCategory: "multi_select_hard",
+    examMethod:
+      "线面垂直定垂面截面、球面勾股降维定圆弧、线线定角圆锥截交平面判定曲线类型",
+    examWeight: 5,
+    crossThemes: [
+      "立体几何动点轨迹与圆锥曲线综合判定",
+      "纯综合几何降维求空间轨迹弧长与周长",
+    ],
   },
 ];

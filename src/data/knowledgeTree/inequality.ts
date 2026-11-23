@@ -1,4 +1,5 @@
 import type { KnowledgeNode } from "../types";
+import { ineqMultivarExtremaNode } from "@/features/ineqMultivarExtrema/meta";
 
 // ========== 2. 不等式 ==========
 export const inequalityNodes: KnowledgeNode[] = [
@@ -16,7 +17,9 @@ export const inequalityNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "一正二定三相等与积定和最小",
     examWeight: 5,
+    crossThemes: ["解三角形周长面积最值", "解析几何弦长面积均值最值"],
   },
+  ineqMultivarExtremaNode,
   {
     id: "know-ineq-absolute",
     title: "绝对值不等式的数轴距离几何模型（拓展 · 选学衔接）",
@@ -31,5 +34,6 @@ export const inequalityNodes: KnowledgeNode[] = [
     questionCategory: "multi_select_hard",
     examMethod: "数轴零点分段与绝对值距离三角不等式",
     examWeight: 2,
+    crossThemes: ["数轴距离与分段函数图像", "含参绝对值存在性与恒成立"],
   },
 ];

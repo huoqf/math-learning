@@ -16,6 +16,7 @@ export const vectorComplexNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "平行四边形三角形法则与三点共线定理",
     examWeight: 4,
+    crossThemes: ["等和线与平面向量线性分解", "复数加减法几何意义前置"],
   },
   {
     id: "know-vector-dot-product",
@@ -31,6 +32,7 @@ export const vectorComplexNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "投影向量数量积与几何代数双解",
     examWeight: 5,
+    crossThemes: ["极化恒等式与建系最值转换", "空间向量数量积与垂直判据前置"],
   },
   {
     id: "know-vector-basis",
@@ -46,6 +48,7 @@ export const vectorComplexNodes: KnowledgeNode[] = [
     questionCategory: "solution_first",
     examMethod: "斜基底分解定理与仿射坐标化",
     examWeight: 5,
+    crossThemes: ["奔驰定理与三角形面积比", "空间向量基本定理二维原型"],
   },
   {
     id: "know-complex-geometry",
@@ -61,5 +64,6 @@ export const vectorComplexNodes: KnowledgeNode[] = [
     questionCategory: "foundation",
     examMethod: "复平面向量模长轨迹与旋转乘法",
     examWeight: 4,
+    crossThemes: ["复数模长轨迹与圆及中垂线", "实系数方程虚根与三角旋转直观"],
   },
 ];
