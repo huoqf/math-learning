@@ -1,3 +1,5 @@
+> ⚠️ **历史归档快照（已过期）**：本文档为 2026-07-31 的阶段性架构分析记录，其中统计数据、遗留问题清单（如 `solidGeometry.ts` 拆分、`SequenceAnimation.tsx`、`meta.ts` 迁移）已与当前代码库脱节。现行权威规范请以根目录 [AGENTS.md](../../AGENTS.md) 与 `.agents/skills/` 为准。
+
 # math-learning 项目架构与代码质量分析（最新更新版）
 
 > 分析与修复状态更新时间：2026-07-31

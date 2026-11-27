@@ -16,7 +16,7 @@ src/data/
 ├── mathQuantities.ts  # 分发路由层（animId → builder 映射）
 ├── routeEntries.ts    # 路由注册（按学科分 10 组）
 ├── types.ts           # 共享类型（MathPanelData 等）
-└── index.ts           # 仅对外聚合导出 knowledgeTree
+└── index.ts           # 对外聚合导出 KnowledgeNode 类型与 knowledgeTree / knowledgeIndex / getKnowledgeNode
 ```
 
 ---
@@ -34,7 +34,7 @@ src/data/
   - 包含 `KnowledgeNode`
   - 任何副作用（打印、订阅、计时器）
 
-**子目录/Barrel 先例**：`builders/solidGeometry.ts`（聚合 11 个 `buildSpatialAnglePanel` 等 ）、
+**子目录/Barrel 先例**：`builders/solidGeometry.ts`（聚合 15 个 `buildSpatialAnglePanel` 等）、
 `builders/tangentScaling.ts`（`export * from "./tangentScaling/index"`）。
 跨域巨型 builder 允许用 barrel 拆分，但顶层路径 `builders/<name>.ts` 必须保持单一入口。
 
@@ -96,20 +96,20 @@ src/data/
 
 ## 5. `registries/` 学科分组索引（文档级分组）
 
-> 采用 **文档级分组**：不移动 55 个文件，仅在此登记学科归属，供人导航与 IDE 认知。
-> 已与 `registries/` 全部 55 个文件逐一核对，无遗漏、无重投。
+> 采用 **文档级分组**：不移动 72 个文件，仅在此登记学科归属，供人导航与 IDE 认知。
+> 已与 `registries/` 全部 72 个文件逐一核对，无遗漏、无重投。
 
-| 学科 barrel（逻辑组）  | 包含的 `registries/*.ts`                                                                                                                                                                           | 数量      |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| `algebra` 代数         | quadratic, funcProperties, funcExpLog, funcZero, transform, composite, inequalityBasic, inequalityAbsolute, nike, constant, set                                                                    | 11        |
-| `trig` 三角            | trigLines, trigIdentity, trigFormulas, trigTangent, trigTransform, triangleSolve, triangleExtrema                                                                                                  | 7         |
-| `derivative` 导数      | derivative, derivativeMonotonicity, secondDerivative, derivativeEndpointTaylor, derivativeShift, transcendental, tangentScaling                                                                    | 7         |
-| `sequence` 数列        | sequence                                                                                                                                                                                           | 1         |
-| `vector` 向量/复数     | vectorLinear, vectorDotProduct, vectorBasis, vectorPolarizationApollonius, complex                                                                                                                 | 5         |
-| `analytic` 解析几何    | lineEquation, lineCircle, circleCircle, conicDefinition, conicProperties, conicLine, conicParam, lineParamT, conicHomogenization, parabola, parabolaArchimedes                                     | 11        |
-| `probability` 概率统计 | probabilityEvents, probabilityClassical, probabilityIndependence, probabilityCounting, probabilityBayes, probabilityMarkov, probabilityDistribution, probabilityNormal, pairedData, statPercentile | 10        |
-| `solid` 立体           | solidGeometry, vector3d, quantifiers                                                                                                                                                               | 3         |
-| **合计**               |                                                                                                                                                                                                    | **55** ✅ |
+| 学科 barrel（逻辑组）  | 包含的 `registries/*.ts`                                                                                                                                                                                                                      | 数量      |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| `algebra` 代数         | quadratic, funcProperties, funcExpLog, expLogCompare, funcGrowthModeling, funcZero, nestedFuncZeros, transform, composite, inequalityBasic, inequalityAbsolute, ineqMultivarExtrema, nike, constant, set                                      | 15        |
+| `trig` 三角            | radianMeasure, trigLines, trigIdentity, trigFormulas, trigTangent, trigTransform, trigModel, triangleSolve, triangleExtrema                                                                                                                   | 9         |
+| `derivative` 导数      | derivative, derivativeFormulas, derivativeOperations, derivativeChain, derivativeMonotonicity, derivativeOptimization, secondDerivative, derivativeEndpointTaylor, derivativeShift, transcendental, tangentScaling                            | 11        |
+| `sequence` 数列        | sequence, gaokaoNewDefinition                                                                                                                                                                                                                 | 2         |
+| `vector` 向量/复数     | vectorLinear, vectorDotProduct, vectorBasis, vectorPolarizationApollonius, complex                                                                                                                                                            | 5         |
+| `analytic` 解析几何    | lineEquation, circleEquation, lineCircle, circleCircle, conicDefinition, conicProperties, conicLine, conicParam, lineParamT, conicHomogenization, conicAsymmetricVieta, conicLocusInvariants, parabola, parabolaArchimedes                    | 14        |
+| `probability` 概率统计 | probabilityEvents, probabilityClassical, probabilityIndependence, probabilityCounting, combinatoricsModels, probabilityBayes, probabilityMarkov, probabilityDistribution, probabilityNormal, pairedData, statPercentile, statSamplingFeatures | 12        |
+| `solid` 立体           | solidGeometry, solidDynamicLocus, vector3d, quantifiers                                                                                                                                                                                       | 4         |
+| **合计**               |                                                                                                                                                                                                                                               | **72** ✅ |
 
 > 该分组**仅供导航**。禁止因此新建学科 barrel 文件并让 `mathQuantities.ts` 或任何消费方改走
 > 聚合入口——现状的「按需单文件引用」利于显式化与 tree-shaking，勿为可读性牺牲。
@@ -118,7 +118,7 @@ src/data/
 
 ## 6. 决策记录（为何不移动文件）
 
-- **不移动 `registries/` 的 55 个文件**：`mathQuantities.ts` 的 70 行 import 全部来自
+- **不移动 `registries/` 的 72 个文件**：`mathQuantities.ts` 的 75+ 条 import 全部来自
   `builders/`，registries 学科 barrel 对压缩它**零收益**；且各消费方（features 1:1、
   builders 类型、tests）均为按需单文件引用，学科聚合入口是死代码。
 - **不移动 `features/` 目录**：见单独 feature 规范化倡议（P2，分批推进）。

@@ -1,3 +1,5 @@
+> ⚠️ **历史归档快照（已过期）**：本文档为 2026-08-12 的早期实施计划，其中引用的 `src/data/knowledgeTree.ts` 等旧路径及未完成状态已过时（实际已拆分为 `src/data/knowledgeTree/*.ts` 且相关专题已落地）。现行权威规范请以根目录 [AGENTS.md](../../AGENTS.md) 与 `.agents/skills/` 为准。
+
 # 新高考数学可视化扩展与优化 — 详细分步实施方案与影响度评估
 
 ## 1. 现有页面影响度评估 (Impact Assessment)

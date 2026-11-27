@@ -40,7 +40,6 @@ playwright-report/
 *.png
 
 # Tool artifacts
-.codebase-memory/
 .git-rewrite/
 
 # ---- 审计取证产物（本地生成、可由 scripts/audit-*.mjs 重新生成，不入库）----

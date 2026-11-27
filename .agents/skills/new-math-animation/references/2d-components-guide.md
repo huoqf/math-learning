@@ -12,6 +12,7 @@
 | **`FunctionGraph`** | `@/components/Math` | `fn`, `scale`, `color`, `domain`, `xRange`, `strokeWidth`, `samples` | ❌ 严禁在 `fn` 中引入未定义域计算（如负数开方、除以 0），必须做 `isNaN/isFinite` 防御。 |
 | **`InteractivePoint`**| `@/components/Math` | `cx`, `cy`, `scale`, `vp`, `onDrag`, `axis`, `snapTo`, `xRange`, `yRange`, `color`, `label`, `labelKey`, `placedLabels` | ❌ `onDrag` 回调参数已是数学坐标对象 `{ x, y }`，**严禁二次调用 `designToMath`**；多点标优先统一交由 `<SceneLabelGroup>` 或传入 `placedLabels` 避让。 |
 | **`MathPoint`** | `@/components/Math` | `cx`, `cy`, `scale`, `color`, `variant` (`'solid' \| 'hollow' \| 'focus' \| 'foot'`) | 纯数学静态交点/零点/焦点，去心点用 `'hollow'`。❌ 严禁手写 `<circle>`。 |
+| **`VectorArrow`** | `@/components/Math` | `from`, `to`, `scale`, `color`, `strokeWidth`, `headLength`, `headWidth`, `label`, `labelPositionRatio`, `labelOffset`, `labelSize`, `fontScale`, `strokeDasharray` | 带箭头平面向量组件。❌ 严禁手写 `<line>` + `<polygon>` 拼箭头；传入 `label` 时须透传 `fontScale`。 |
 | **`TangentLine`** | `@/components/Math` | `fn`, `x0`, `scale`, `color`, `strokeWidth`, `extend`, `h` | 动切线组件（内置数值求导，无需传入导函数 `dfn`）。 |
 | **`SecantLine`** | `@/components/Math` | `fn`, `x1`, `x2`, `scale`, `color`, `strokeWidth`, `showTriangle`, `extend` | 割线逼近组件。 |
 | **`Asymptote`** | `@/components/Math` | `type` (`'vertical' \| 'horizontal' \| 'oblique'`), `value`, `intercept`, `scale`, `color`, `label`, `fontScale` | 渐近线组件，自动虚线化并渲染代号。支持 `fontScale`。 |

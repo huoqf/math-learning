@@ -12,6 +12,11 @@
  * 8. solidFolding.ts            - 空间图形折叠（梯形/矩形/三角形/菱形翻折）
  * 9. solidParametricPoint.ts    - 空间动点存在性与极值问题
  * 10. solidAdvancedSphere.ts    - 进阶切接球专题（垂面共弦/同心球/圆台球/切截极值）
+ * 11. solidSpatialDistance.ts   - 空间距离（异面直线距/点面距/体积极值）
+ * 12. solidPyramidDerivation.ts - 棱锥结构与高/斜高/体积推导
+ * 13. solidObliqueDrawing.ts    - 斜二测画法与直观图还原
+ * 14. solidAxioms.ts            - 立体几何基本事实与平面的确定
+ * 15. solidPolyhedronFeatures.ts - 棱柱/棱锥/棱台结构特征
  */
 
 export { buildSpatialAnglePanel } from "./solidSpatialAngle";

@@ -1,6 +1,6 @@
 # 规范治理与高中数学教学质量保证 — 待办事项
 
-> **状态说明（历史阶段记录）**：本文件为 2026-10-05 治理周期的阶段跟踪档案，当前核心待办为第 6.1.2 节。  
+> **状态说明（历史阶段记录）**：本文件为 2026-10-05 治理周期的阶段跟踪档案，当前核心待办为第 6.1.2 节；正文中的 365 / 502 / 788 / 35 / 180 均为对应历史阶段快照（当前最新门禁水位：39 条审计规则 / 892 扫描文件 / `.audit-baseline.json` 53 处存量 / 235 测试文件）。  
 > **现行全库权威规范以根目录 [AGENTS.md](file:///d:/code/math/math-learning/AGENTS.md) 与 `.agents/skills/` 为准**；P0 提到的旧版 `Template2DAnimation.tsx` 与 6.2 节记录的 `Template3DAnimation.tsx` 语法错误已在后续模板重构中修正。  
 > 历史周期状态：P0 基础设施完成；P1 存量规范治理收官（**`src/features` 502 文件**严格审计 0 违规）；  
 > **P2 门禁范围与课标边界治理**：审计范围扩至全库 `src`、新增超纲术语门禁与学段边界一致性测试。  
@@ -181,9 +181,9 @@ useAnimationViewport({ preset })
 
 ### 6.2 全库存量（与 6.1 无因果关系，一并登记备查）
 
-- [ ] 全库 **119 处** `prettier --check` 格式不符（含 `src/utils/useViewport.ts` 等既有「单引号 + 无分号」风格文件与 `.prettierrc` 的 `semi: true` 长期冲突）；
-- [ ] **19 处**文件带 BOM（判定须用字节级 `git grep -lI $'\xef\xbb\xbf'`，勿用 `grep -r`）；
-- [ ] `.agents/skills/new-3d-math-animation/examples/Template3DAnimation.tsx:157` 存在 1 处 JSX 语法错误（多余 `/>`）。
+- [ ] 全库 `prettier --check` 格式不符存量（含 `src/utils/useViewport.ts` 等既有「单引号 + 无分号」风格文件与 Prettier 默认配置 `semi: true` 的长期冲突，仓内无独立 `.prettierrc`）；
+- [ ] **18 处** `src/` 文件带 BOM（可通过字节检查确认）；
+- [x] `.agents/skills/new-3d-math-animation/examples/Template3DAnimation.tsx:157` 原 JSX 语法错误（多余 `/>`）已在后续模板重构中修正，`npm run audit:examples` 全绿通过。
 
 > ⚠️ 上述三项**长期存在且未阻断任何门禁**（`audit:strict` 的存量基线机制只对「增量」exit(1)）。是否清理需单独裁决。
 > ⚠️ **勿在功能修复的提交里夹带全库重排** —— 格式化工具会连带重排无关行，使 diff 失去可读性。本轮已有一次实际教训：对 `src/utils/useViewport.ts` 误跑 `prettier --write` 产生 `+82 / −42` 无关重排，已 `git checkout` 回退并按原风格改为纯增量 `+26 / −0`（该文件的 prettier warn 属 HEAD 既有存量，用 `git show HEAD:<file> | npx prettier --check --stdin-filepath <file>` 复核确认）。
